@@ -3,6 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     // Tailwind CSS types predate exactOptionalPropertyTypes and are incompatible with it.
     // Disabling only here; all other packages keep the strict base setting.
     "exactOptionalPropertyTypes": false

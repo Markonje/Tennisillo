@@ -126,6 +126,50 @@ export const tokens = {
     xl: '0 16px 48px 0 rgb(0 0 0 / 0.16)',
     card: '0 2px 8px 0 rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.04)',
   },
+  // Glass morphism values — used via style prop (not Tailwind)
+  glass: {
+    cardBg: 'linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05))',
+    cardBgHover: 'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.07))',
+    cardBorder: '1px solid rgba(255,255,255,0.14)',
+    cardBlur: 'blur(26px) saturate(140%)',
+    cardShadow: '0 14px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.18)',
+    cardShadowHover: '0 20px 50px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.2)',
+    inputBg: 'rgba(255,255,255,0.07)',
+    inputBgFocus: 'rgba(255,255,255,0.12)',
+    inputBorder: '1px solid rgba(255,255,255,0.14)',
+    inputBorderFocus: '1px solid rgba(185,255,90,0.5)',
+    inputBlur: 'blur(12px)',
+    modalBg: 'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
+    modalBlur: 'blur(36px) saturate(150%)',
+    overlayBg: 'rgba(0,0,0,0.55)',
+    overlayBlur: 'blur(10px)',
+  },
+
+  // Accent lime
+  accent: {
+    DEFAULT: '#B9FF5A',
+    light: '#C8FF78',
+    dark: '#8EE044',
+    muted: '#B0EF60',
+    text: '#C8FF78',
+    bg: 'rgba(185,255,90,0.12)',
+    bgHover: 'rgba(185,255,90,0.20)',
+    border: 'rgba(185,255,90,0.35)',
+    shadow: 'rgba(185,255,90,0.25)',
+    shadowHover: 'rgba(185,255,90,0.40)',
+  },
+
+  // Status colors
+  status: {
+    confirmed: { bg: 'rgba(185,255,90,0.18)',  border: 'rgba(185,255,90,0.4)',  text: '#C8FF78'  },
+    pending:   { bg: 'rgba(242,211,94,0.18)',  border: 'rgba(242,211,94,0.4)',  text: '#F5D96A'  },
+    completed: { bg: 'rgba(121,167,216,0.18)', border: 'rgba(121,167,216,0.4)', text: '#9ABFDD'  },
+    cancelled: { bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.15)', text: 'rgba(255,255,255,0.5)' },
+    disputed:  { bg: 'rgba(233,109,109,0.18)', border: 'rgba(233,109,109,0.4)', text: '#F09090'  },
+    win:       { bg: 'rgba(185,255,90,0.18)',  border: 'rgba(185,255,90,0.4)',  text: '#C8FF78'  },
+    loss:      { bg: 'rgba(233,109,109,0.18)', border: 'rgba(233,109,109,0.4)', text: '#F09090'  },
+    training:  { bg: 'rgba(121,167,216,0.18)', border: 'rgba(121,167,216,0.4)', text: '#9ABFDD'  },
+  },
 } as const;
 
 export type Tokens = typeof tokens;

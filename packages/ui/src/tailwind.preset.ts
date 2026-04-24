@@ -18,6 +18,18 @@ const preset: Partial<Config> = {
         frequency: tokens.colors.frequency,
         training: tokens.colors.training,
         venue: tokens.colors.venue,
+        accent: {
+          DEFAULT: '#B9FF5A',
+          light: '#C8FF78',
+          dark: '#8EE044',
+          muted: '#B0EF60',
+        },
+        danger: {
+          DEFAULT: '#FF3B30',
+          bg: 'rgba(233,109,109,0.12)',
+          border: 'rgba(233,109,109,0.35)',
+          text: '#F09090',
+        },
         // Semantic CSS variable mappings — required by shadcn/ui and globals.css
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
