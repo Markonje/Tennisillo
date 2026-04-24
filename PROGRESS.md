@@ -16,7 +16,7 @@
 ## Ultima sessione
 
 **Data**: 2026-04-24
-**Focus**: Chiusura Pre-Sprint 1 + scaffolding completo Sprint 1.
+**Focus**: Fix CI — postinstall prisma generate + fix schema Prisma + mapping CSS variables shadcn.
 
 **Fatto**:
 - Aggiornato `.gitignore` (aggiunto `.env.*`, `.vercel`, `**/node_modules/.prisma`).
@@ -33,6 +33,13 @@
 - `apps/web`: `package.json` (Next.js 14), `tsconfig.json`, `next.config.mjs`, `tailwind.config.ts` (usa preset `@tennisillo/ui`), `postcss.config.js`, `components.json` (shadcn), `messages/{en,it}.json`, `src/i18n.ts`, `src/middleware.ts`, `src/app/globals.css`, `src/app/[locale]/{layout,page}.tsx`.
 - `.github/workflows/ci.yml`: install → lint → typecheck → test, cache pnpm.
 - `ROADMAP.md`: aggiornate spunte Pre-Sprint 1 e Sprint 1.
+
+**Fatto (sessioni post-Sprint 1)**:
+- Fix CI: generato e committato `pnpm-lock.yaml` mancante dallo scaffolding Sprint 1.
+- Fix CI: aggiunto `postinstall` in `packages/db` per eseguire `prisma generate` automaticamente dopo `pnpm install`. Risolve `Module '@prisma/client' has no exported member 'PrismaClient'`.
+- Fix schema Prisma: tutti gli enum compatti (multiple valori sulla stessa riga) riformattati in stile canonico Prisma (un valore per riga). Risolveva 45 errori di validazione.
+- Fix Tailwind/Vercel: aggiunti mapping CSS variables shadcn (`--background`, `--foreground`, `--card`, `--border`, `--input`, `--muted`) e override `borderRadius` con `--radius` nel preset `packages/ui`. Risolve `The 'border-border' class does not exist`.
+- CI su `main`: ✅ verde (Install → Lint → Typecheck → Test, run #24908738291).
 
 **Da fare subito** (prerequisiti bloccanti):
 - **Fornire `DATABASE_URL` e `DIRECT_URL`** (Supabase project): senza di essi `pnpm --filter db db:migrate:dev` non può girare.
