@@ -8,45 +8,59 @@
 
 ## Sprint corrente
 
-**Sprint**: Pre-Sprint 1 — setup documentazione e contesto
-**Obiettivo**: Avere il repository inizializzato con tutta la documentazione di riferimento e la struttura base, pronto per partire con lo sviluppo vero e proprio allo Sprint 1.
+**Sprint**: Sprint 1 — Fondamenta (in corso — blocker: DATABASE_URL mancante)
+**Obiettivo**: Avere il monorepo scaffoldato e funzionante con auth Supabase, schema DB validato, CI verde.
 
 ---
 
 ## Ultima sessione
 
-**Data**: 2026-04-23
-**Focus**: Setup iniziale della struttura documentale del progetto.
+**Data**: 2026-04-24
+**Focus**: Chiusura Pre-Sprint 1 + scaffolding completo Sprint 1.
 
 **Fatto**:
-- Creata struttura cartelle `docs/specs`, `docs/decisions`, `docs/context`, `tools/`.
-- Creato `tools/normalize_specs.py` per convertire le specifiche da Word a Markdown pulito (usare dopo ogni revisione dei `.docx`).
-- Creato `CLAUDE.md` (istruzioni permanenti per Claude Code).
-- Creati `PROGRESS.md`, `ROADMAP.md`, `README.md`.
-- Creato `docs/specs/CHANGELOG_SPECS.md` (scheletro).
-- Creati file di contesto: `GLOSSARY.md`, `DOMAIN_RULES.md`, `FAQ.md`.
-- Creati 3 ADR iniziali che consolidano le decisioni principali già prese nelle specs.
+- Aggiornato `.gitignore` (aggiunto `.env.*`, `.vercel`, `**/node_modules/.prisma`).
+- Specs `.md` già presenti nel repo — non rigenerate.
+- `.docx` originali: non trovati nella root — da archiviare manualmente se presenti.
+- Creati file root: `package.json` (pnpm workspaces + turbo), `pnpm-workspace.yaml`, `turbo.json`, `.nvmrc` (Node 20), `tsconfig.base.json` (strict, ES2022, bundler), `.eslintrc.js`, `.prettierrc`, `.prettierignore`.
+- `packages/db`: `package.json`, `tsconfig.json`, `prisma/schema.prisma` completo v2.0 (tutti i modelli: 21 modelli, tutti gli enum), `src/index.ts` (singleton Prisma), `prisma/rls/001_base.sql` (policy RLS commentate), `README.md`.
+- `packages/scoring-engine`: scaffold completo con `types.ts` (da specs §4.2), `index.ts`, test placeholder, `jest.config.ts`, `README.md`.
+- `packages/training-engine`: scaffold con tipi da specs §5 (SparringInput/Output, MasterLessonInput/Output), test placeholder, `README.md`.
+- `packages/matchmaking-engine`: scaffold con tipi da specs §6 (CandidateInput/Output), test placeholder, `README.md`.
+- `packages/shared-types`: `features.ts` (FEATURE_FLAGS da specs §10.1), `locale.ts` (LocaleCode), `index.ts`, `README.md`.
+- `packages/ui`: `tokens.ts` (palette iOS da specs §11 + §11.1: frequency, training, venue), `tailwind.preset.ts`, `index.ts`, `README.md`.
+- `apps/api`: `package.json` (NestJS 10), `tsconfig.json`, `nest-cli.json`, `src/main.ts`, `src/app.module.ts`, `src/prisma/{service,module}.ts`, `src/auth/{auth.module.ts,supabase-jwt.guard.ts}` (verifica HS256 JWT senza libreria esterna), `src/health/health.controller.ts`, `src/me/me.controller.ts`, `.env.example`.
+- `apps/web`: `package.json` (Next.js 14), `tsconfig.json`, `next.config.mjs`, `tailwind.config.ts` (usa preset `@tennisillo/ui`), `postcss.config.js`, `components.json` (shadcn), `messages/{en,it}.json`, `src/i18n.ts`, `src/middleware.ts`, `src/app/globals.css`, `src/app/[locale]/{layout,page}.tsx`.
+- `.github/workflows/ci.yml`: install → lint → typecheck → test, cache pnpm.
+- `ROADMAP.md`: aggiornate spunte Pre-Sprint 1 e Sprint 1.
 
-**Da fare subito** (prerequisiti prima di Sprint 1):
-- **Generare le versioni Markdown delle specifiche** eseguendo lo script
-  `tools/normalize_specs.py` sui due `.docx` originali. Istruzioni in `README.md` §Documentazione.
-  Output attesi: `docs/specs/01_analisi_funzionale.md` e `docs/specs/02_specifiche_sviluppo.md`.
-- Spostare gli originali `.docx` in `docs/specs/archive/` come backup.
+**Da fare subito** (prerequisiti bloccanti):
+- **Fornire `DATABASE_URL` e `DIRECT_URL`** (Supabase project): senza di essi `pnpm --filter db db:migrate:dev` non può girare.
+- **Fornire `SUPABASE_JWT_SECRET`**: il guard `SupabaseJwtGuard` legge questa env var a runtime.
+- Copiare `apps/api/.env.example` → `apps/api/.env` e popolare i valori.
+- Eseguire `pnpm install` dalla root (la prima volta richiede connessione npm).
+- Eseguire `pnpm --filter db db:validate` per verificare il schema Prisma.
+- Eseguire `pnpm --filter db db:migrate:dev` per creare e applicare la prima migration.
+- Creare il repo remoto su GitHub (privato) e fare `git push`.
+- Creare gli account cloud: Supabase, Vercel, Railway, Upstash, Cloudflare R2, Resend (Mapbox e Sentry per sprint successivi).
 
-**Blocchi noti / decisioni aperte**:
-- Nome del prodotto ancora da definire (attuale placeholder: "Portale Leghe Tennis Amatoriali").
-- Account Supabase, Vercel, Railway, Upstash, Cloudflare R2, Resend, Mapbox da creare prima dello Sprint 1.
-- Scelta package manager: il team deve decidere tra pnpm (consigliato per Turborepo) e npm.
+**Decisioni prese in questa sessione**:
+- I modelli "invariati v1.0" (League, Season, SeasonPlayer, ecc.) sono stati ricostruiti dalle FK references del v2.0 e dal contesto di dominio, marcati come `[INFERRED]` nello schema. Se c'è una versione esplicita v1.0, verificare la coerenza dei campi.
+- `SupabaseJwtGuard` usa verifica HMAC-SHA256 nativa (`node:crypto`) senza `@supabase/supabase-js` sul backend, come da vincolo del task.
+- `tsconfig.base.json` usa `moduleResolution: bundler` + `exactOptionalPropertyTypes: true`; NestJS e i package-engine usano override `CommonJS` + `node` per compatibilità.
 
 ---
 
 ## Prossimi task concreti
 
-1. **Convertire le specs** con `tools/normalize_specs.py` (vedi sopra).
-2. **Scegliere il nome del prodotto** e aggiornare `README.md`, `CLAUDE.md`, frontmatter specs.
-3. **Creare gli account cloud** di servizio (Supabase + Vercel + Railway + Upstash + Cloudflare R2 + Resend + Mapbox + Sentry). Raccogliere le API key in un gestore di secrets (1Password / Bitwarden) — **non committare mai `.env`**.
-4. **Inizializzare il repo Git** e pubblicarlo su GitHub (privato).
-5. **Avviare Sprint 1**: scaffolding monorepo Turborepo + Next.js + NestJS + Prisma. Si veda `ROADMAP.md` → Sprint 1 per l'elenco dei task.
+1. **Fornire credenziali Supabase** → abilitare `db:migrate:dev` e testare il guard JWT.
+2. **`pnpm install` e `pnpm -w typecheck`** → verificare che lo schema TS completo sia pulito.
+3. **`pnpm -w lint`** → verificare ESLint su tutti i package.
+4. **`pnpm -w test`** → placeholder test deve passare.
+5. **`pnpm --filter web dev`** → verificare home page i18n EN/IT a `http://localhost:3000`.
+6. **`pnpm --filter api dev`** → verificare `GET /health` → 200, `GET /me` → 401.
+7. **Creare repo remoto GitHub** e impostare branch protection su `main`.
+8. **Sprint 2**: CRUD Utenti (sync Supabase → PostgreSQL), CRUD Leghe, onboarding.
 
 ---
 
@@ -54,8 +68,8 @@
 
 | Sprint | Obiettivo | Stato |
 | --- | --- | --- |
-| Pre-Sprint 1 | Setup documentazione | 🟡 Quasi completo (manca conversione specs) |
-| Sprint 1 | Fondamenta (monorepo, DB schema, auth) | ⏳ Non iniziato |
+| Pre-Sprint 1 | Setup documentazione | ✅ Quasi completo (manca pub. GitHub e account cloud) |
+| Sprint 1 | Fondamenta (monorepo, DB schema, auth) | 🟢 In corso — blocker: DATABASE_URL |
 | Sprint 2 | Utenti e Leghe | ⏳ Non iniziato |
 | Sprint 3 | Stagioni e Partite | ⏳ Non iniziato |
 | Sprint 4 | Scoring Engine | ⏳ Non iniziato |
@@ -69,5 +83,6 @@
 
 Quando riapri Claude Code:
 1. Leggi questo file.
-2. Chiedi all'utente conferma dello sprint attivo e del task da affrontare.
-3. Solo dopo vai a leggere la sezione rilevante di `docs/specs/` indicata nella tabella di `CLAUDE.md` §4.
+2. Chiedi all'utente se ha fornito le credenziali Supabase e se `pnpm install` / `prisma validate` è passato.
+3. Se le credenziali ci sono: esegui `db:migrate:dev`, verifica i check di done dello Sprint 1, poi avvia Sprint 2.
+4. Se non ci sono: guida l'utente a creare il Supabase project e copiare le env.

@@ -1,0 +1,11 @@
+{
+  "home": {
+    "title": "Tennisillo",
+    "subtitle": "La tua lega tennis amatoriale, organizzata."
+  },
+  "nav": {
+    "leagues": "Leghe",
+    "ranking": "Classifica",
+    "profile": "Profilo"
+  }
+}

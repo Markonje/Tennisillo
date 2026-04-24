@@ -1,0 +1,11 @@
+{
+  "home": {
+    "title": "Tennisillo",
+    "subtitle": "Your amateur tennis league, organised."
+  },
+  "nav": {
+    "leagues": "Leagues",
+    "ranking": "Ranking",
+    "profile": "Profile"
+  }
+}
