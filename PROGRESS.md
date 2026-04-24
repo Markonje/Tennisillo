@@ -16,6 +16,24 @@
 ## Ultima sessione
 
 **Data**: 2026-04-24
+**Focus**: Sprint UI 1 — libreria componenti base in `packages/ui`.
+
+**Fatto**:
+- Token aggiornati: aggiunti `glass`, `accent`, `status` in `tokens.ts`; aggiunti `accent` e `danger` in `tailwind.preset.ts`.
+- Utility `cn()` creata in `packages/ui/src/lib/cn.ts` (clsx + tailwind-merge).
+- 10 componenti creati in `packages/ui/src/components/`: `Avatar`, `StatusBadge`, `Button`, `GlassCard`, `GlassInput`, `GlassSelect`, `SegmentedControl`, `KpiCard`, `Toast`, `Modal`.
+- Export barrel `packages/ui/src/index.ts` aggiornato con tutti i componenti.
+- Smoke test visivo in `apps/web/src/app/[locale]/_smoke.tsx` (DEV ONLY, client component).
+- `packages/ui/tsconfig.json`: aggiunti `jsx: react-jsx` e `lib: ["ES2022","DOM","DOM.Iterable"]`.
+- `packages/ui` ha ora `react`/`react-dom` come peerDependencies.
+- PR aperta: https://github.com/Markonje/Tennisillo/pull/2
+- CI: ✅ verde (Lint → Typecheck → Test, run #24910829538, 1m28s).
+
+---
+
+## Sessione precedente
+
+**Data**: 2026-04-24
 **Focus**: Fix CI — postinstall prisma generate + fix schema Prisma + mapping CSS variables shadcn.
 
 **Fatto**:
