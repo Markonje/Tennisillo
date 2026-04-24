@@ -17,9 +17,22 @@ datasource db {
 // ENUMS
 // ─────────────────────────────────────────
 
-enum UserRole { SUPER_ADMIN USER }
-enum LeagueType { PUBLIC PRIVATE }
-enum LeagueSport { TENNIS_SINGLES TENNIS_DOUBLES TENNIS_BOTH PADEL }
+enum UserRole {
+  SUPER_ADMIN
+  USER
+}
+
+enum LeagueType {
+  PUBLIC
+  PRIVATE
+}
+
+enum LeagueSport {
+  TENNIS_SINGLES
+  TENNIS_DOUBLES
+  TENNIS_BOTH
+  PADEL
+}
 
 enum MemberRole {
   ADMIN
@@ -35,7 +48,12 @@ enum MasterMode { // [NEW-v2]
 }
 
 enum SeasonStatus {
-  DRAFT REGISTRATION ACTIVE PLAYOFFS COMPLETED ARCHIVED
+  DRAFT
+  REGISTRATION
+  ACTIVE
+  PLAYOFFS
+  COMPLETED
+  ARCHIVED
 }
 
 enum MatchStatus {
@@ -49,10 +67,21 @@ enum MatchStatus {
   WALKOVER
 }
 
-enum MatchFormat { BEST_OF_1 BEST_OF_3 SUPER_TIEBREAK CUSTOM }
+enum MatchFormat {
+  BEST_OF_1
+  BEST_OF_3
+  SUPER_TIEBREAK
+  CUSTOM
+}
 
 enum PlayerLevel {
-  ROOKIE BRONZE SILVER GOLD PLATINUM DIAMOND ELITE
+  ROOKIE
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+  ELITE
 }
 
 enum TrainingSessionType { // [NEW-v2]
@@ -75,15 +104,22 @@ enum VenueStatus { // [NEW-v2]
 }
 
 enum VenueSurface { // [NEW-v2]
-  CLAY HARD GRASS SYNTHETIC OTHER
+  CLAY
+  HARD
+  GRASS
+  SYNTHETIC
+  OTHER
 }
 
 enum VenueCover { // [NEW-v2]
-  INDOOR OUTDOOR MIXED
+  INDOOR
+  OUTDOOR
+  MIXED
 }
 
 enum FrequencyUnit { // [NEW-v2]
-  WEEKLY MONTHLY
+  WEEKLY
+  MONTHLY
 }
 
 enum AvailabilityOverrideType { // [NEW-v2]
@@ -117,8 +153,17 @@ enum NotificationType {
   AVAILABILITY_MATCH_FOUND
 }
 
-enum DisputeStatus { OPEN UNDER_REVIEW RESOLVED DISMISSED }
-enum SubscriptionTier { FREE PREMIUM }
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+}
 
 // ─────────────────────────────────────────
 // USER
