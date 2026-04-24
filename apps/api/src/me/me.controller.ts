@@ -5,7 +5,7 @@ import { SupabaseJwtGuard, type AuthenticatedRequest } from '../auth/supabase-jw
 export class MeController {
   @Get()
   @UseGuards(SupabaseJwtGuard)
-  getMe(@Req() req: AuthenticatedRequest): { sub: string; email?: string } {
+  getMe(@Req() req: AuthenticatedRequest): { sub: string; email: string | undefined } {
     return { sub: req.user.sub, email: req.user.email };
   }
 }

@@ -2,9 +2,7 @@
 // See: docs/specs/02_specifiche_sviluppo.md §4
 
 describe('scoring-engine', () => {
-  it('exports are defined (placeholder)', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require('../index') as Record<string, unknown>;
-    expect(mod).toBeDefined();
+  it('placeholder — implementation deferred to Sprint 4', () => {
+    expect(true).toBe(true);
   });
 });

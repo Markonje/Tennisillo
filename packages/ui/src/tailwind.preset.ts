@@ -20,10 +20,12 @@ const preset: Partial<Config> = {
         venue: tokens.colors.venue,
       },
       fontFamily: {
-        sans: tokens.typography.fontFamily.sans,
-        mono: tokens.typography.fontFamily.mono,
+        // Spread to convert `readonly` tuple → mutable string[] expected by Tailwind
+        sans: [...tokens.typography.fontFamily.sans],
+        mono: [...tokens.typography.fontFamily.mono],
       },
-      fontSize: tokens.typography.fontSize as Config['theme']['fontSize'],
+      // Cast needed: tokens are `as const` (readonly tuples) but Tailwind expects mutable tuples
+      fontSize: tokens.typography.fontSize as unknown as NonNullable<Config['theme']>['fontSize'],
       spacing: tokens.spacing,
       borderRadius: tokens.borderRadius,
       boxShadow: tokens.shadows,
