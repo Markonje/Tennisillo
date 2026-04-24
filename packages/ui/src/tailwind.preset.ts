@@ -18,6 +18,19 @@ const preset: Partial<Config> = {
         frequency: tokens.colors.frequency,
         training: tokens.colors.training,
         venue: tokens.colors.venue,
+        // Semantic CSS variable mappings — required by shadcn/ui and globals.css
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
       },
       fontFamily: {
         // Spread to convert `readonly` tuple → mutable string[] expected by Tailwind
@@ -27,7 +40,14 @@ const preset: Partial<Config> = {
       // Cast needed: tokens are `as const` (readonly tuples) but Tailwind expects mutable tuples
       fontSize: tokens.typography.fontSize as unknown as NonNullable<Config['theme']>['fontSize'],
       spacing: tokens.spacing,
-      borderRadius: tokens.borderRadius,
+      borderRadius: {
+        // Static tokens from design system
+        ...tokens.borderRadius,
+        // CSS variable overrides — required by shadcn/ui components
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
       boxShadow: tokens.shadows,
     },
   },
