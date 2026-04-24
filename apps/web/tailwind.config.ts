@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { tailwindPreset } from '@tennisillo/ui';
+import tailwindPreset from '@tennisillo/ui/tailwind';
 
 const config: Config = {
   presets: [tailwindPreset as Config],
