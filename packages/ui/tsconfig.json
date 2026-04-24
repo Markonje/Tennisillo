@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    // Tailwind CSS types predate exactOptionalPropertyTypes and are incompatible with it.
+    // Disabling only here; all other packages keep the strict base setting.
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

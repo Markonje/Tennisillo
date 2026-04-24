@@ -26,12 +26,13 @@ lerna-debug.log*
 
 # Environment / secrets — NEVER COMMIT
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.pem
 *.key
+
+# Vercel
+.vercel
 
 # IDE
 .idea/
@@ -50,6 +51,7 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/dev.db*
+**/node_modules/.prisma
 
 # Python (per tools/)
 __pycache__/

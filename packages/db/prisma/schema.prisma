@@ -1,0 +1,803 @@
+// packages/db/prisma/schema.prisma
+// Source of truth: docs/specs/02_specifiche_sviluppo.md §3
+// Models marked [INFERRED] were not redefined in v2.0 specs ("unchanged from v1.0");
+// their structure is derived from FK references in v2.0 and domain rules.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole { SUPER_ADMIN USER }
+enum LeagueType { PUBLIC PRIVATE }
+enum LeagueSport { TENNIS_SINGLES TENNIS_DOUBLES TENNIS_BOTH PADEL }
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  PLAYER
+  GUEST
+  MASTER // [NEW-v2] dedicated role for validating training sessions
+}
+
+enum MasterMode { // [NEW-v2]
+  PURE   // only validates (does not compete)
+  HYBRID // plays + validates
+}
+
+enum SeasonStatus {
+  DRAFT REGISTRATION ACTIVE PLAYOFFS COMPLETED ARCHIVED
+}
+
+enum MatchStatus {
+  PENDING_ACCEPTANCE
+  SCHEDULED
+  PENDING_RESULT
+  PENDING_VALIDATION
+  DISPUTED
+  VALIDATED
+  CANCELLED
+  WALKOVER
+}
+
+enum MatchFormat { BEST_OF_1 BEST_OF_3 SUPER_TIEBREAK CUSTOM }
+
+enum PlayerLevel {
+  ROOKIE BRONZE SILVER GOLD PLATINUM DIAMOND ELITE
+}
+
+enum TrainingSessionType { // [NEW-v2]
+  SPARRING      // between two members; awards fixed points per player
+  MASTER_LESSON // player + master; awards XP only, never season points
+}
+
+enum TrainingSessionStatus { // [NEW-v2]
+  PENDING_VALIDATION
+  VALIDATED
+  REJECTED
+  DISPUTED
+  REVOKED // revoked by admin after validation
+}
+
+enum VenueStatus { // [NEW-v2]
+  ACTIVE
+  PENDING_VALIDATION // player proposal awaiting admin approval
+  ARCHIVED
+}
+
+enum VenueSurface { // [NEW-v2]
+  CLAY HARD GRASS SYNTHETIC OTHER
+}
+
+enum VenueCover { // [NEW-v2]
+  INDOOR OUTDOOR MIXED
+}
+
+enum FrequencyUnit { // [NEW-v2]
+  WEEKLY MONTHLY
+}
+
+enum AvailabilityOverrideType { // [NEW-v2]
+  AVAILABLE   // adds extraordinary availability
+  UNAVAILABLE // blocks a recurring slot
+}
+
+enum NotificationType {
+  CHALLENGE_RECEIVED
+  CHALLENGE_ACCEPTED
+  CHALLENGE_DECLINED
+  MATCH_REMINDER
+  RESULT_PENDING_VALIDATION
+  RESULT_VALIDATED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  RANKING_CHANGE
+  SEASON_STARTING
+  SEASON_ENDING
+  BADGE_EARNED
+  LEAGUE_INVITE
+  // [NEW-v2]
+  SPARRING_PENDING_CONFIRM
+  SPARRING_CONFIRMED
+  MASTER_LESSON_PENDING_VALIDATION
+  MASTER_LESSON_VALIDATED
+  MASTER_LESSON_REJECTED
+  VENUE_PROPOSAL_RECEIVED
+  VENUE_PROPOSAL_APPROVED
+  SPARRING_CAP_REACHED
+  AVAILABILITY_MATCH_FOUND
+}
+
+enum DisputeStatus { OPEN UNDER_REVIEW RESOLVED DISMISSED }
+enum SubscriptionTier { FREE PREMIUM }
+
+// ─────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────
+
+model User {
+  id                      String           @id @default(cuid())
+  supabaseId              String           @unique
+  email                   String           @unique
+  username                String           @unique
+  displayName             String
+  avatarUrl               String?
+  city                    String?
+  birthYear               Int?
+  phone                   String?
+  role                    UserRole         @default(USER)
+  subscriptionTier        SubscriptionTier @default(FREE)
+  subscriptionExpiresAt   DateTime?
+  globalRating            Float            @default(1500)
+  globalLevel             PlayerLevel      @default(ROOKIE)
+  globalExperiencePoints  Int              @default(0) // [NEW-v2] XP from master lessons
+  reputationScore         Float            @default(100)
+  preferredLocale         String           @default("en")
+  onboardingCompleted     Boolean          @default(false)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  deletedAt               DateTime?
+
+  memberships              LeagueMember[]
+  ownedLeagues             League[]              @relation("LeagueOwner") // [INFERRED]
+  sentChallenges           Match[]               @relation("Challenger")
+  notifications            Notification[]
+  achievements             UserAchievement[]
+  auditLogs                AuditLog[]
+  onboarding               UserOnboarding?
+  stripeCustomer           StripeCustomer?
+  // [NEW-v2]
+  masterProfile            MasterProfile?
+  trainingSessionsAsP1     TrainingSession[]     @relation("TrainingP1")
+  trainingSessionsAsP2     TrainingSession[]     @relation("TrainingP2")
+  trainingSessionsAsMaster TrainingSession[]     @relation("TrainingMaster")
+  venueProposals           VenueProposal[]
+}
+
+// ─────────────────────────────────────────
+// LEAGUE  [INFERRED from v1.0]
+// ─────────────────────────────────────────
+
+model League {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?
+  logoUrl     String?
+  type        LeagueType  @default(PRIVATE)
+  sport       LeagueSport @default(TENNIS_SINGLES)
+  ownerId     String
+  owner       User        @relation("LeagueOwner", fields: [ownerId], references: [id])
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  members          LeagueMember[]
+  seasons          Season[]
+  settings         LeagueSettings?
+  venues           Venue[]           // [NEW-v2]
+  trainingSessions TrainingSession[] // [NEW-v2]
+  announcements    Announcement[]
+
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────
+// LEAGUE MEMBER
+// ─────────────────────────────────────────
+
+model LeagueMember {
+  id           String      @id @default(cuid())
+  leagueId     String
+  league       League      @relation(fields: [leagueId], references: [id])
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  role         MemberRole  @default(PLAYER)
+  // [NEW-v2] master configuration (valid when role = MASTER)
+  masterMode   MasterMode?
+  masterBio    String?
+  isAlsoPlayer Boolean     @default(false)
+  nickname     String?
+  bio          String?
+  homeVenueId  String? // [NEW-v2] FK to Venue
+  homeVenue    Venue?  @relation(fields: [homeVenueId], references: [id])
+  leagueRating Float       @default(1500)
+  leagueLevel  PlayerLevel @default(ROOKIE)
+  joinedAt     DateTime    @default(now())
+  isActive     Boolean     @default(true)
+
+  @@unique([leagueId, userId])
+
+  seasonProfiles        SeasonPlayer[]
+  headToHeads           HeadToHead[]            @relation("Player1HTH")
+  headToHeadsOpp        HeadToHead[]            @relation("Player2HTH")
+  // [NEW-v2]
+  availabilityPattern   AvailabilityPattern?
+  availabilityOverrides AvailabilityOverride[]
+  frequencyPreference   PlayerFrequencyPreference?
+  favoriteVenues        PlayerFavoriteVenue[]
+}
+
+// ─────────────────────────────────────────
+// LEAGUE SETTINGS
+// ─────────────────────────────────────────
+
+model LeagueSettings {
+  id       String @id @default(cuid())
+  leagueId String @unique
+  league   League @relation(fields: [leagueId], references: [id])
+
+  defaultMatchFormat         MatchFormat   @default(BEST_OF_3)
+  allowCustomFormat          Boolean       @default(false)
+
+  defaultPointsWin           Int           @default(100)
+  defaultPointsLoss          Int           @default(30)
+  defaultLevelMultiplier     String        @default("NORMAL")
+  defaultBonusConsistency    Boolean       @default(true)
+  defaultBonusDiversity      Boolean       @default(true)
+  defaultHeadToHead          Boolean       @default(true)
+  defaultDecayEnabled        Boolean       @default(true)
+
+  geoVerificationEnabled     Boolean       @default(false)
+  geoVerificationRadius      Int           @default(500)
+  resultWindowHours          Int           @default(12)
+  autoConfirmHours           Int           @default(24)
+
+  reminderHoursBefore        Int[]         @default([24, 2])
+
+  // [NEW-v2] activatable modules
+  sparringEnabled            Boolean       @default(true)
+  sparringPointsPerPlayer    Int           @default(12)
+  sparringWeeklyCapPerPlayer Int           @default(2)
+  masterLessonsEnabled       Boolean       @default(false)
+  masterXpPerSession         Int           @default(20)
+  // [NEW-v2] venues
+  venuesEnabled              Boolean       @default(true)
+  allowPlayerVenueProposals  Boolean       @default(true)
+  // [NEW-v2] calendar / frequency
+  availabilityEnabled        Boolean       @default(true)
+  frequencyPreferenceEnabled Boolean       @default(true)
+  defaultFrequencyUnit       FrequencyUnit @default(WEEKLY)
+}
+
+// ─────────────────────────────────────────
+// SEASON  [INFERRED from v1.0]
+// ─────────────────────────────────────────
+
+model Season {
+  id         String       @id @default(cuid())
+  leagueId   String
+  league     League       @relation(fields: [leagueId], references: [id])
+  name       String
+  status     SeasonStatus @default(DRAFT)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  maxPlayers Int?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  players          SeasonPlayer[]
+  settings         SeasonSettings?
+  matches          Match[]
+  rankings         SeasonRanking[]
+  headToHeads      HeadToHead[]
+  trainingSessions TrainingSession[] // [NEW-v2] SPARRING sessions only (seasonId nullable on MASTER_LESSON)
+  announcements    Announcement[]
+
+  @@index([leagueId, status])
+}
+
+// ─────────────────────────────────────────
+// SEASON SETTINGS  [INFERRED from v1.0]
+// ─────────────────────────────────────────
+
+model SeasonSettings {
+  id       String @id @default(cuid())
+  seasonId String @unique
+  season   Season @relation(fields: [seasonId], references: [id])
+
+  pointsWin               Int     @default(100)
+  pointsLoss              Int     @default(30)
+  levelMultiplierMode     String  @default("NORMAL") // OFF | SOFT | NORMAL | HARD
+  bonusConsistencyEnabled Boolean @default(true)
+  bonusDiversityEnabled   Boolean @default(true)
+  headToHeadEnabled       Boolean @default(true)
+  decayEnabled            Boolean @default(true)
+  decayRateWeek2          Int     @default(0)
+  decayRateWeek3          Int     @default(5)
+  decayRateWeek4          Int     @default(15)
+  decayRateWeek5Plus      Int     @default(25)
+
+  pairLimitOverride    Int? // admin override ±1 on calculated pair limit
+  h2hCooldownDays      Int @default(7)
+  resultWindowHours    Int @default(12)
+  autoConfirmHours     Int @default(24)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────
+// SEASON PLAYER  [INFERRED from v1.0]
+// ─────────────────────────────────────────
+
+model SeasonPlayer {
+  id       String       @id @default(cuid())
+  seasonId String
+  season   Season       @relation(fields: [seasonId], references: [id])
+  memberId String
+  member   LeagueMember @relation(fields: [memberId], references: [id])
+
+  currentPoints Int         @default(0)
+  currentRank   Int?
+  matchesPlayed Int         @default(0)
+  wins          Int         @default(0)
+  losses        Int         @default(0)
+  isEligible    Boolean     @default(true)
+  joinedAt      DateTime    @default(now())
+
+  @@unique([seasonId, memberId])
+
+  matchesAsP1  Match[]        @relation("MatchPlayer1")
+  matchesAsP2  Match[]        @relation("MatchPlayer2")
+  scoreDeltas  ScoreDelta[]
+  rankings     SeasonRanking[]
+
+  @@index([seasonId, currentRank])
+}
+
+// ─────────────────────────────────────────
+// SEASON RANKING SNAPSHOT  [INFERRED]
+// ─────────────────────────────────────────
+
+model SeasonRanking {
+  id         String       @id @default(cuid())
+  seasonId   String
+  season     Season       @relation(fields: [seasonId], references: [id])
+  playerId   String
+  player     SeasonPlayer @relation(fields: [playerId], references: [id])
+  points     Int
+  rank       Int
+  computedAt DateTime     @default(now())
+
+  @@index([seasonId, computedAt])
+}
+
+// ─────────────────────────────────────────
+// MATCH
+// ─────────────────────────────────────────
+
+model Match {
+  id                    String      @id @default(cuid())
+  seasonId              String
+  season                Season      @relation(fields: [seasonId], references: [id])
+  player1Id             String
+  player1               SeasonPlayer @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2Id             String
+  player2               SeasonPlayer @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  challengerId          String
+  challenger            User        @relation("Challenger", fields: [challengerId], references: [id])
+  status                MatchStatus @default(PENDING_ACCEPTANCE)
+  format                MatchFormat @default(BEST_OF_3)
+  scheduledAt           DateTime?
+  // [NEW-v2] venue FK (fallback string kept for legacy / freeform cases)
+  venueId               String?
+  venue                 Venue?      @relation(fields: [venueId], references: [id])
+  venueTextFallback     String?
+  completedAt           DateTime?
+  resultWindowExpiresAt DateTime?
+  pairCount             Int         @default(1)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  result      MatchResult?
+  validation  MatchValidation?
+  dispute     Dispute?
+  scoreDeltas ScoreDelta[]
+
+  @@index([seasonId])
+  @@index([player1Id, player2Id])
+}
+
+// ─────────────────────────────────────────
+// MATCH RESULT  [INFERRED]
+// ─────────────────────────────────────────
+
+model MatchResult {
+  id                String   @id @default(cuid())
+  matchId           String   @unique
+  match             Match    @relation(fields: [matchId], references: [id])
+  // sets: [{ p1: number, p2: number }, ...] — validated by plausibility check
+  sets              Json
+  // winnerId references SeasonPlayer.id
+  winnerId          String
+  submittedById     String   // User.id of the result submitter
+  submittedAt       DateTime @default(now())
+  plausibilityPassed Boolean @default(true)
+  plausibilityNotes String?
+}
+
+// ─────────────────────────────────────────
+// MATCH VALIDATION  [INFERRED]
+// ─────────────────────────────────────────
+
+model MatchValidation {
+  id            String   @id @default(cuid())
+  matchId       String   @unique
+  match         Match    @relation(fields: [matchId], references: [id])
+  validatedById String   // User.id of the validator
+  validatedAt   DateTime @default(now())
+  autoValidated Boolean  @default(false)
+}
+
+// ─────────────────────────────────────────
+// DISPUTE  [INFERRED]
+// ─────────────────────────────────────────
+
+model Dispute {
+  id           String        @id @default(cuid())
+  matchId      String        @unique
+  match        Match         @relation(fields: [matchId], references: [id])
+  status       DisputeStatus @default(OPEN)
+  openedById   String        // User.id
+  resolvedById String?       // User.id of resolving admin
+  resolution   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// ─────────────────────────────────────────
+// SCORE DELTA  [INFERRED]
+// Points awarded to a SeasonPlayer for a validated competitive Match.
+// CRITICAL: TrainingSession awards are NEVER stored here.
+// ─────────────────────────────────────────
+
+model ScoreDelta {
+  id          String       @id @default(cuid())
+  matchId     String
+  match       Match        @relation(fields: [matchId], references: [id])
+  playerId    String
+  player      SeasonPlayer @relation(fields: [playerId], references: [id])
+  deltaPoints Int
+  // breakdown: { base, levelMult, resultMult, consistency, diversity, h2h, repeatPenalty, decay }
+  breakdown   Json
+  computedAt  DateTime     @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+}
+
+// ─────────────────────────────────────────
+// HEAD TO HEAD  [INFERRED]
+// Per-season H2H between two LeagueMembers.
+// CRITICAL: Sparring does NOT update this record.
+// ─────────────────────────────────────────
+
+model HeadToHead {
+  id        String       @id @default(cuid())
+  player1Id String
+  player1   LeagueMember @relation("Player1HTH", fields: [player1Id], references: [id])
+  player2Id String
+  player2   LeagueMember @relation("Player2HTH", fields: [player2Id], references: [id])
+  seasonId  String
+  season    Season       @relation(fields: [seasonId], references: [id])
+
+  // wins/losses from player1's perspective
+  wins        Int      @default(0)
+  losses      Int      @default(0)
+  lastMatchAt DateTime?
+
+  @@unique([player1Id, player2Id, seasonId])
+}
+
+// ─────────────────────────────────────────
+// TRAINING SESSION  [NEW-v2]
+// Unified model for Sparring and Master Lessons.
+// Completely separate from Match — never feeds ScoreDelta or HeadToHead.
+// ─────────────────────────────────────────
+
+model TrainingSession {
+  id       String  @id @default(cuid())
+  leagueId String
+  league   League  @relation(fields: [leagueId], references: [id])
+  seasonId String? // NULL for MASTER_LESSON
+  season   Season? @relation(fields: [seasonId], references: [id])
+
+  type   TrainingSessionType
+  status TrainingSessionStatus @default(PENDING_VALIDATION)
+
+  player1Id String
+  player1   User              @relation("TrainingP1", fields: [player1Id], references: [id])
+  player2Id String?           // NULL for MASTER_LESSON
+  player2   User?             @relation("TrainingP2", fields: [player2Id], references: [id])
+  masterId  String?           // User.id of the master, for MASTER_LESSON
+  master    User?             @relation("TrainingMaster", fields: [masterId], references: [id])
+
+  scheduledAt     DateTime?
+  completedAt     DateTime  @default(now())
+  durationMinutes Int?
+  focusNote       String?
+  venueId         String?
+  venue           Venue?    @relation(fields: [venueId], references: [id])
+
+  pointsAwarded Int @default(0) // SPARRING: +12 per player
+  xpAwarded     Int @default(0) // MASTER_LESSON: +20
+
+  validatedById  String?
+  validatedAt    DateTime?
+  rejectedReason String?
+
+  revokedById   String?
+  revokedAt     DateTime?
+  revokedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leagueId, type])
+  @@index([seasonId])
+  @@index([player1Id])
+  @@index([masterId])
+}
+
+// ─────────────────────────────────────────
+// MASTER PROFILE  [NEW-v2]
+// ─────────────────────────────────────────
+
+model MasterProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  certifications        String[]
+  yearsOfExperience     Int?
+  specializations       String[]
+  totalLessonsValidated Int      @default(0)
+  activeSince           DateTime @default(now())
+}
+
+// ─────────────────────────────────────────
+// AVAILABILITY PATTERN  [NEW-v2]
+// ─────────────────────────────────────────
+
+model AvailabilityPattern {
+  id       String       @id @default(cuid())
+  memberId String       @unique
+  member   LeagueMember @relation(fields: [memberId], references: [id])
+  // slots: [{ dow: 0-6, start: 0-1439, end: 0-1439 }] — granularity: 60 min in app
+  slots     Json
+  updatedAt DateTime    @updatedAt
+  createdAt DateTime    @default(now())
+}
+
+// ─────────────────────────────────────────
+// AVAILABILITY OVERRIDE  [NEW-v2]
+// ─────────────────────────────────────────
+
+model AvailabilityOverride {
+  id       String                   @id @default(cuid())
+  memberId String
+  member   LeagueMember             @relation(fields: [memberId], references: [id])
+  type     AvailabilityOverrideType
+  startsAt DateTime
+  endsAt   DateTime
+  note     String?
+  createdAt DateTime               @default(now())
+
+  @@index([memberId, startsAt])
+}
+
+// ─────────────────────────────────────────
+// PLAYER FREQUENCY PREFERENCE  [NEW-v2]
+// ─────────────────────────────────────────
+
+model PlayerFrequencyPreference {
+  id             String        @id @default(cuid())
+  memberId       String        @unique
+  member         LeagueMember  @relation(fields: [memberId], references: [id])
+  idealFrequency Int
+  maxFrequency   Int
+  unit           FrequencyUnit @default(WEEKLY)
+  updatedAt      DateTime      @updatedAt
+}
+
+// ─────────────────────────────────────────
+// VENUE  [NEW-v2]
+// Scoped per league — no global venue registry.
+// ─────────────────────────────────────────
+
+model Venue {
+  id             String       @id @default(cuid())
+  leagueId       String       // [CRITICAL] no global venues
+  league         League       @relation(fields: [leagueId], references: [id])
+  status         VenueStatus  @default(ACTIVE)
+  name           String
+  address        String
+  latitude       Float?
+  longitude      Float?
+  surface        VenueSurface?
+  cover          VenueCover?
+  courtCount     Int?
+  bookingUrl     String?
+  phone          String?
+  priceRangeLow  Int?         // cents EUR
+  priceRangeHigh Int?         // cents EUR
+  notes          String?
+  createdById    String?      // User.id, NULL if admin-created directly
+  approvedById   String?      // User.id of approving admin
+  archivedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  members          LeagueMember[]
+  matches          Match[]
+  trainingSessions TrainingSession[]
+  proposals        VenueProposal[]
+  favoritedBy      PlayerFavoriteVenue[]
+
+  @@index([leagueId, status])
+  @@index([leagueId, latitude, longitude])
+}
+
+// ─────────────────────────────────────────
+// VENUE PROPOSAL  [NEW-v2]
+// ─────────────────────────────────────────
+
+model VenueProposal {
+  id           String      @id @default(cuid())
+  leagueId     String
+  venueId      String?     // set once proposal is accepted
+  venue        Venue?      @relation(fields: [venueId], references: [id])
+  proposedById String
+  proposedBy   User        @relation(fields: [proposedById], references: [id])
+  proposedData Json        // snapshot of submitted data
+  status       VenueStatus @default(PENDING_VALIDATION)
+  reviewedById String?
+  reviewNotes  String?
+  createdAt    DateTime    @default(now())
+  reviewedAt   DateTime?
+}
+
+// ─────────────────────────────────────────
+// PLAYER FAVORITE VENUE  [NEW-v2]
+// ─────────────────────────────────────────
+
+model PlayerFavoriteVenue {
+  id       String       @id @default(cuid())
+  memberId String
+  member   LeagueMember @relation(fields: [memberId], references: [id])
+  venueId  String
+  venue    Venue        @relation(fields: [venueId], references: [id])
+  priority Int          @default(1) // 1-3, preference order
+
+  @@unique([memberId, venueId])
+  @@unique([memberId, priority])
+}
+
+// ─────────────────────────────────────────
+// ACHIEVEMENT  [INFERRED]
+// ─────────────────────────────────────────
+
+model Achievement {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  name        String
+  description String
+  badgeUrl    String?
+  category    String?
+  createdAt   DateTime          @default(now())
+
+  earnedBy UserAchievement[]
+}
+
+// ─────────────────────────────────────────
+// USER ACHIEVEMENT  [INFERRED]
+// ─────────────────────────────────────────
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  leagueId      String?     // NULL for global badges
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId, leagueId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATION  [INFERRED]
+// ─────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  payload   Json
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+}
+
+// ─────────────────────────────────────────
+// ANNOUNCEMENT  [INFERRED]
+// ─────────────────────────────────────────
+
+model Announcement {
+  id          String    @id @default(cuid())
+  leagueId    String
+  league      League    @relation(fields: [leagueId], references: [id])
+  seasonId    String?
+  season      Season?   @relation(fields: [seasonId], references: [id])
+  title       String
+  body        String
+  authorId    String    // User.id
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([leagueId])
+}
+
+// ─────────────────────────────────────────
+// AUDIT LOG  [INFERRED]
+// Every significant state mutation writes here.
+// ─────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String   // e.g. "MATCH_VALIDATED", "VENUE_ARCHIVED"
+  entityType String   // e.g. "Match", "Venue"
+  entityId   String
+  payload    Json
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────
+// USER ONBOARDING  [INFERRED]
+// ─────────────────────────────────────────
+
+model UserOnboarding {
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id])
+  currentStep   Int         @default(1)
+  skillLevel    PlayerLevel?
+  birthYear     Int?
+  city          String?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────
+// STRIPE CUSTOMER  [INFERRED]
+// Passive integration — active in v1.5
+// ─────────────────────────────────────────
+
+model StripeCustomer {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  stripeCustomerId String   @unique
+  createdAt        DateTime @default(now())
+}

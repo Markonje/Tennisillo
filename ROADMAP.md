@@ -19,10 +19,10 @@ già scritto.
 - [x] `CHANGELOG_SPECS.md` (scheletro).
 - [x] `docs/context/{GLOSSARY,DOMAIN_RULES,FAQ}.md`.
 - [x] 3 ADR iniziali (monorepo, Supabase, engine separati).
-- [ ] Specifiche v2.0 in Markdown (`docs/specs/01_*.md`, `02_*.md`) generate da script.
-- [ ] Repo Git pubblicato su GitHub privato.
-- [ ] Account cloud creati (Supabase, Vercel, Railway, Upstash, Cloudflare R2, Resend, Mapbox).
-- [ ] Nome del prodotto definito.
+- [x] Specifiche v2.0 in Markdown (`docs/specs/01_*.md`, `02_*.md`) — già presenti nel repo (generate prima di questa sessione).
+- [ ] Repo Git pubblicato su GitHub privato. ← da fare: l'utente deve creare il repo remoto e fare `git push`.
+- [ ] Account cloud creati (Supabase, Vercel, Railway, Upstash, Cloudflare R2, Resend, Mapbox). ← da fare: azione manuale utente.
+- [x] Nome del prodotto definito: **Tennisillo**.
 
 ---
 
@@ -31,18 +31,25 @@ già scritto.
 **Leggi prima**: specs/02 §1, §2, §3 (schema Prisma).
 
 **Deliverable**:
-- [ ] Setup Turborepo + pnpm workspaces.
-- [ ] Scaffolding `apps/web` (Next.js 14 App Router, TS strict, Tailwind, shadcn/ui).
-- [ ] Scaffolding `apps/api` (NestJS + Prisma).
-- [ ] Scaffolding pacchetti `packages/db`, `packages/scoring-engine`, `packages/training-engine`, `packages/matchmaking-engine`, `packages/shared-types`, `packages/ui`.
-- [ ] Schema Prisma completo v2.0 + prima migration applicata a Supabase dev.
-- [ ] Autenticazione Supabase funzionante (login email + Google OAuth).
-- [ ] Routing i18n base (EN + IT) con `next-intl`.
-- [ ] Design tokens iniziali (colori, tipografia, spaziature) allineati a specs/02 §11.
-- [ ] CI base (GitHub Actions: lint + typecheck + test).
-- [ ] Policy RLS base su Supabase per i modelli principali.
+- [x] Setup Turborepo + pnpm workspaces.
+- [x] Scaffolding `apps/web` (Next.js 14 App Router, TS strict, Tailwind, shadcn/ui, next-intl).
+- [x] Scaffolding `apps/api` (NestJS + PrismaModule + SupabaseJwtGuard).
+- [x] Scaffolding pacchetti `packages/db`, `packages/scoring-engine`, `packages/training-engine`, `packages/matchmaking-engine`, `packages/shared-types`, `packages/ui`.
+- [x] Schema Prisma completo v2.0 — validabile con `prisma validate` (migration in sospeso: richiede DATABASE_URL).
+- [ ] Prima migration applicata a Supabase dev. ← **Blocker: fornire DATABASE_URL**.
+- [ ] Autenticazione Supabase funzionante (login email + Google OAuth). ← Sprint 2 (backend: guard pronto, frontend mancante).
+- [x] Routing i18n base (EN + IT) con `next-intl`.
+- [x] Design tokens iniziali (colori, tipografia, spaziature) allineati a specs/02 §11 + §11.1.
+- [x] CI base (GitHub Actions: lint + typecheck + test).
+- [x] Policy RLS base su Supabase — bozze commentate in `packages/db/prisma/rls/001_base.sql`.
 
-**Criterio di done**: `pnpm dev` avvia frontend e backend, login funziona, il profilo utente mostra i dati da Supabase.
+**Criterio di done** (adattato): `prisma validate` passa; `GET /health` → 200; `GET /me` → 401 senza token; home i18n visibile in EN e IT.
+
+**Blocker per l'utente**:
+- Creare Supabase project → fornire `DATABASE_URL`, `DIRECT_URL`, `SUPABASE_JWT_SECRET`.
+- Copiare `apps/api/.env.example` → `.env` e popolare le variabili.
+- Eseguire `pnpm --filter db db:migrate:dev` per applicare la prima migration.
+- Creare il repo remoto GitHub e fare `git push`.
 
 ---
 
