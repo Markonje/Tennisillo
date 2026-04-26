@@ -19,11 +19,14 @@ import {
   ChallengeCard,
   type BadgeStatus,
   type ToastItem,
-  type MatchData,
-  type RankingPlayer,
-  type ActivityData,
-  type ChallengeData,
 } from '@tennisillo/ui';
+import type {
+  Player,
+  UpcomingMatch,
+  RecentMatch,
+  Challenge,
+  ActivityFeedItem,
+} from '@tennisillo/shared-types';
 
 const BG: React.CSSProperties = {
   minHeight: '100vh',
@@ -50,67 +53,37 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const UPCOMING_MATCHES: MatchData[] = [
-  {
-    date: '28',
-    month: 'APR',
-    status: 'confirmed',
-    venue: 'Tennis Club Milano — Campo 3',
-    opponentInitials: 'LC',
-    opponentHue: '210',
-    opponentName: 'Luca Conti',
-  },
-  {
-    date: '03',
-    month: 'MAG',
-    status: 'pending',
-    venue: 'Club Parioli — Campo 1',
-    opponentInitials: 'AB',
-    opponentHue: '320',
-    opponentName: 'Andrea Belli',
-  },
+const CURRENT_PLAYER: Player = { id: 'fp', name: 'Fabio Pini',    initials: 'FP', hue: '30',  level: 3, points: 1980, ranking: 5, variation: -8,  winRate: 61, matches: 26, wins: 16, losses: 10 };
+const P_LC: Player            = { id: 'lc', name: 'Luca Conti',    initials: 'LC', hue: '210', level: 4, points: 2840, ranking: 1, variation: 45,  winRate: 78, matches: 32, wins: 25, losses: 7  };
+const P_AB: Player            = { id: 'ab', name: 'Andrea Belli',  initials: 'AB', hue: '320', level: 4, points: 2610, ranking: 2, variation: -20, winRate: 72, matches: 28, wins: 20, losses: 8  };
+const P_MR: Player            = { id: 'mr', name: 'Marco Russo',   initials: 'MR', hue: '142', level: 3, points: 2420, ranking: 3, variation: 0,   winRate: 68, matches: 35, wins: 24, losses: 11 };
+const P_GT: Player            = { id: 'gt', name: 'Giorgio Testa', initials: 'GT', hue: '60',  level: 3, points: 2190, ranking: 4, variation: 12,  winRate: 65, matches: 30, wins: 19, losses: 11 };
+
+const UPCOMING_MATCHES: Array<{ match: UpcomingMatch; opponent: Player }> = [
+  { match: { id: 'um1', date: '28', month: 'APR', opponentId: 'lc', status: 'confirmed', time: '10:00', venue: 'Tennis Club Milano — Campo 3' }, opponent: P_LC },
+  { match: { id: 'um2', date: '03', month: 'MAG', opponentId: 'ab', status: 'pending',   time: '10:00', venue: 'Club Parioli — Campo 1'         }, opponent: P_AB },
 ];
 
-const RECENT_MATCHES: MatchData[] = [
-  {
-    date: '20 Apr',
-    score: '6-4 6-2',
-    result: 'win',
-    opponentInitials: 'GT',
-    opponentHue: '60',
-    opponentName: 'Giorgio Testa',
-  },
-  {
-    date: '14 Apr',
-    score: '3-6 4-6',
-    result: 'loss',
-    opponentInitials: 'MR',
-    opponentHue: '142',
-    opponentName: 'Marco Russo',
-  },
+const RECENT_MATCHES: Array<{ match: RecentMatch; opponent: Player }> = [
+  { match: { id: 'rm1', date: '20 Apr 2026', opponentId: 'gt', score: '6-4 6-2', result: 'win'  }, opponent: P_GT },
+  { match: { id: 'rm2', date: '14 Apr 2026', opponentId: 'mr', score: '3-6 4-6', result: 'loss' }, opponent: P_MR },
 ];
 
-const RANKING: RankingPlayer[] = [
-  { ranking: 1, initials: 'LC', hue: '210', name: 'Luca Conti',   level: 4, points: 2840, variation: 45,  winRate: 78, matches: 32 },
-  { ranking: 2, initials: 'AB', hue: '320', name: 'Andrea Belli', level: 4, points: 2610, variation: -20, winRate: 72, matches: 28 },
-  { ranking: 3, initials: 'MR', hue: '142', name: 'Marco Russo',  level: 3, points: 2420, variation: 0,   winRate: 68, matches: 35 },
-  { ranking: 4, initials: 'GT', hue: '60',  name: 'Giorgio Testa',level: 3, points: 2190, variation: 12,  winRate: 65, matches: 30 },
-  { ranking: 5, initials: 'FP', hue: '30',  name: 'Fabio Pini',   level: 3, points: 1980, variation: -8,  winRate: 61, matches: 26 },
-];
+const RANKING: Player[] = [P_LC, P_AB, P_MR, P_GT, CURRENT_PLAYER];
 
 const CHART_DATA = [1420, 1395, 1450, 1480, 1465, 1510, 1535, 1520, 1560, 1590];
 
-const ACTIVITIES: ActivityData[] = [
-  { type: 'match',        text: 'Partita con Luca Conti confermata per il 28 Aprile',  time: '2 min fa' },
-  { type: 'ranking',      text: 'Hai scalato 3 posizioni in classifica dopo la vittoria', time: '1 ora fa' },
-  { type: 'challenge',    text: 'Andrea Belli ti ha sfidato per il 5 Maggio',            time: '3 ore fa' },
-  { type: 'availability', text: 'Disponibilità aggiornata per la settimana prossima',    time: 'Ieri' },
-  { type: 'badge',        text: 'Nuovo badge sbloccato: "Imbattibile" — 5 vittorie di fila', time: '2 giorni fa' },
+const ACTIVITIES: ActivityFeedItem[] = [
+  { id: 'a1', type: 'match',        text: 'Partita con Luca Conti confermata per il 28 Aprile',         time: '2 min fa'    },
+  { id: 'a2', type: 'ranking',      text: 'Hai scalato 3 posizioni in classifica dopo la vittoria',     time: '1 ora fa'    },
+  { id: 'a3', type: 'challenge',    text: 'Andrea Belli ti ha sfidato per il 5 Maggio',                 time: '3 ore fa'    },
+  { id: 'a4', type: 'availability', text: 'Disponibilità aggiornata per la settimana prossima',         time: 'Ieri'        },
+  { id: 'a5', type: 'badge',        text: 'Nuovo badge sbloccato: "Imbattibile" — 5 vittorie di fila',  time: '2 giorni fa' },
 ];
 
-const CHALLENGES: ChallengeData[] = [
-  { fromInitials: 'LC', fromHue: '210', fromName: 'Luca Conti',   proposedDate: '5 Maggio' },
-  { fromInitials: 'GT', fromHue: '60',  fromName: 'Giorgio Testa', proposedDate: '8 Maggio' },
+const CHALLENGES: Array<{ challenge: Challenge; challenger: Player }> = [
+  { challenge: { id: 'c1', fromId: 'lc', proposedDate: '5 Maggio' }, challenger: P_LC },
+  { challenge: { id: 'c2', fromId: 'gt', proposedDate: '8 Maggio' }, challenger: P_GT },
 ];
 
 export function SmokePage() {
@@ -205,12 +178,12 @@ export function SmokePage() {
 
       <Section title="MatchRow — Prossime partite">
         <GlassCard style={{ padding: '8px 16px', maxWidth: 560 }}>
-          {UPCOMING_MATCHES.map((m, i) => (
+          {UPCOMING_MATCHES.map(({ match, opponent }, i) => (
             <MatchRow
               key={i}
-              match={m}
-              currentPlayerInitials="FP"
-              currentPlayerHue="30"
+              match={match}
+              currentPlayer={CURRENT_PLAYER}
+              opponent={opponent}
               showVenue
             />
           ))}
@@ -219,12 +192,12 @@ export function SmokePage() {
 
       <Section title="MatchRow — Partite recenti">
         <GlassCard style={{ padding: '8px 16px', maxWidth: 560 }}>
-          {RECENT_MATCHES.map((m, i) => (
+          {RECENT_MATCHES.map(({ match, opponent }, i) => (
             <MatchRow
               key={i}
-              match={m}
-              currentPlayerInitials="FP"
-              currentPlayerHue="30"
+              match={match}
+              currentPlayer={CURRENT_PLAYER}
+              opponent={opponent}
             />
           ))}
         </GlassCard>
@@ -236,7 +209,7 @@ export function SmokePage() {
             <RankingRow
               key={p.ranking}
               player={p}
-              isCurrentPlayer={p.ranking === 4}
+              isCurrentPlayer={p.ranking === 5}
               onClick={() => {}}
             />
           ))}
@@ -252,18 +225,19 @@ export function SmokePage() {
 
       <Section title="ActivityItem">
         <GlassCard style={{ padding: '4px 16px', maxWidth: 480 }}>
-          {ACTIVITIES.map((a, i) => <ActivityItem key={i} item={a} />)}
+          {ACTIVITIES.map((a) => <ActivityItem key={a.id} item={a} />)}
         </GlassCard>
       </Section>
 
       <Section title="ChallengeCard">
         <div style={{ maxWidth: 400 }}>
-          {CHALLENGES.map((c, i) => (
+          {CHALLENGES.map(({ challenge, challenger }, i) => (
             <ChallengeCard
               key={i}
-              challenge={c}
-              onAccept={() => alert(`Accettata sfida di ${c.fromName}`)}
-              onReject={() => alert(`Rifiutata sfida di ${c.fromName}`)}
+              challenge={challenge}
+              challenger={challenger}
+              onAccept={() => alert(`Accettata sfida di ${challenger.name}`)}
+              onReject={() => alert(`Rifiutata sfida di ${challenger.name}`)}
             />
           ))}
         </div>

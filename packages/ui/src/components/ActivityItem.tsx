@@ -1,24 +1,8 @@
 import React from 'react';
-
-export type ActivityType =
-  | 'match'
-  | 'availability'
-  | 'ranking'
-  | 'message'
-  | 'badge'
-  | 'sparring'
-  | 'challenge'
-  | 'admin'
-  | 'system';
-
-export interface ActivityData {
-  type: ActivityType;
-  text: string;
-  time: string;
-}
+import type { ActivityFeedItem, ActivityType } from '@tennisillo/shared-types';
 
 export interface ActivityItemProps {
-  item: ActivityData;
+  item: ActivityFeedItem;
 }
 
 const ICONS: Record<ActivityType, string> = {
