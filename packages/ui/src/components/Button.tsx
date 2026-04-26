@@ -8,47 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const BASE =
-  'inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2';
-
-const SIZE: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-};
-
-const VARIANT_CLASS: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'text-[#0a1a0e] focus-visible:ring-[#B9FF5A]/60',
-  secondary: 'text-white/80 hover:text-white focus-visible:ring-white/30',
-  danger: 'text-[#F09090] hover:text-white focus-visible:ring-[#FF3B30]/50',
-};
-
-const VARIANT_STYLE: Record<
-  NonNullable<ButtonProps['variant']>,
-  { default: React.CSSProperties; hover?: React.CSSProperties }
-> = {
-  primary: {
-    default: {
-      background: 'linear-gradient(135deg,#c8ff6a,#8ee044)',
-      borderRadius: 14,
-      boxShadow: '0 4px 20px rgba(185,255,90,0.25)',
-    },
-  },
-  secondary: {
-    default: {
-      background: 'rgba(255,255,255,0.09)',
-      border: '1px solid rgba(255,255,255,0.18)',
-      backdropFilter: 'blur(12px)',
-      borderRadius: 14,
-    },
-  },
-  danger: {
-    default: {
-      background: 'rgba(233,109,109,0.12)',
-      border: '1px solid rgba(233,109,109,0.35)',
-      backdropFilter: 'blur(12px)',
-      borderRadius: 14,
-    },
-  },
-};
+  'inline-flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2';
 
 export function Button({
   variant = 'primary',
@@ -62,24 +22,53 @@ export function Button({
 }: ButtonProps) {
   const [hovered, setHovered] = React.useState(false);
 
-  const baseStyle = VARIANT_STYLE[variant].default;
-  const hoverStyle =
-    variant === 'primary' && hovered
-      ? {
-          background: 'linear-gradient(135deg,#d4ff7a,#9cf050)',
-          boxShadow: '0 6px 28px rgba(185,255,90,0.40)',
-          transform: 'translateY(-1px)',
-        }
-      : variant === 'secondary' && hovered
-        ? { background: 'rgba(255,255,255,0.14)', transform: 'translateY(-1px)' }
-        : variant === 'danger' && hovered
-          ? { background: 'rgba(233,109,109,0.22)', transform: 'translateY(-1px)' }
-          : {};
+  const padding = size === 'sm' ? '7px 16px' : '10px 22px';
+  const fontSize = size === 'sm' ? 12 : 14;
+
+  let computedStyle: React.CSSProperties = {
+    padding,
+    fontSize,
+    borderRadius: 14,
+    transition: 'all 0.18s ease',
+    gap: 6,
+  };
+
+  if (variant === 'primary') {
+    computedStyle = {
+      ...computedStyle,
+      background: hovered
+        ? 'linear-gradient(135deg,#d8ff88,#a0ef5a)'
+        : 'linear-gradient(135deg,#c8ff6a,#8ee044)',
+      color: '#0a1a0e',
+      fontWeight: 700,
+      border: 'none',
+      boxShadow: `0 8px 24px rgba(185,255,90,${hovered ? 0.4 : 0.25})`,
+      transform: hovered ? 'translateY(-1px)' : 'none',
+    };
+  } else if (variant === 'secondary') {
+    computedStyle = {
+      ...computedStyle,
+      background: hovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.09)',
+      color: 'rgba(255,255,255,0.88)',
+      border: '1px solid rgba(255,255,255,0.18)',
+      backdropFilter: 'blur(12px)',
+      fontWeight: 600,
+    };
+  } else {
+    computedStyle = {
+      ...computedStyle,
+      background: hovered ? 'rgba(233,109,109,0.22)' : 'rgba(233,109,109,0.12)',
+      color: '#f09090',
+      border: '1px solid rgba(233,109,109,0.4)',
+      backdropFilter: 'blur(12px)',
+      fontWeight: 600,
+    };
+  }
 
   return (
     <button
-      className={cn(BASE, SIZE[size], VARIANT_CLASS[variant], className)}
-      style={{ ...baseStyle, ...hoverStyle, ...style }}
+      className={cn(BASE, className)}
+      style={{ ...computedStyle, ...style }}
       onMouseEnter={(e) => { setHovered(true); onMouseEnter?.(e); }}
       onMouseLeave={(e) => { setHovered(false); onMouseLeave?.(e); }}
       {...rest}

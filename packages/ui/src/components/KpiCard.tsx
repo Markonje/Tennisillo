@@ -13,22 +13,17 @@ export interface KpiCardProps {
 
 export function KpiCard({ icon, label, value, delta, positive = true, className }: KpiCardProps) {
   return (
-    <GlassCard className={cn('p-4 flex flex-col gap-2', className)}>
-      <div className="flex items-center gap-2">
-        <span className="text-xl leading-none">{icon}</span>
-        <span className="text-xs font-semibold text-white/55 uppercase tracking-wider">{label}</span>
+    <GlassCard style={{ padding: '20px 22px' }} hover className={cn(className)}>
+      <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: 'rgba(255,255,255,0.96)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+        {value}
       </div>
-      <div className="flex items-end gap-2">
-        <span className="text-2xl font-bold text-white leading-none">{value}</span>
-        {delta && (
-          <span
-            className="text-xs font-semibold mb-0.5"
-            style={{ color: positive ? '#C8FF78' : '#F09090' }}
-          >
-            {delta}
-          </span>
-        )}
-      </div>
+      {delta && (
+        <div style={{ fontSize: 12, color: positive ? '#b0ef60' : '#f09090', marginTop: 5, fontWeight: 600 }}>
+          {positive ? '▲' : '▼'} {delta}
+        </div>
+      )}
     </GlassCard>
   );
 }

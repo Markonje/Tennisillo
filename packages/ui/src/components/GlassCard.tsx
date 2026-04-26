@@ -33,7 +33,7 @@ export function GlassCard({
         border: tokens.glass.cardBorder,
         borderRadius: 20,
         boxShadow: isActive ? tokens.glass.cardShadowHover : tokens.glass.cardShadow,
-        transition: 'background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease',
+        transition: 'all 0.22s ease',
         transform: isActive ? 'translateY(-2px)' : 'none',
         ...style,
       }}

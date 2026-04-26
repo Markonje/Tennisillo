@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '../lib/cn';
-import { tokens } from '../tokens';
 
 export interface GlassInputProps {
   label?: string;
@@ -22,9 +21,9 @@ export function GlassInput({
   const [focused, setFocused] = React.useState(false);
 
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn(className)} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       {label && (
-        <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">
+        <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
           {label}
         </label>
       )}
@@ -35,13 +34,19 @@ export function GlassInput({
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/35 outline-none transition-all duration-200"
         style={{
-          background: focused ? tokens.glass.inputBgFocus : tokens.glass.inputBg,
-          backdropFilter: tokens.glass.inputBlur,
-          WebkitBackdropFilter: tokens.glass.inputBlur,
-          border: focused ? tokens.glass.inputBorderFocus : tokens.glass.inputBorder,
-          boxShadow: focused ? `0 0 0 3px rgba(185,255,90,0.12)` : 'none',
+          background: focused ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)',
+          border: `1px solid ${focused ? 'rgba(185,255,90,0.5)' : 'rgba(255,255,255,0.14)'}`,
+          borderRadius: 12,
+          padding: '10px 14px',
+          color: 'rgba(255,255,255,0.9)',
+          fontSize: 14,
+          outline: 'none',
+          width: '100%',
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(12px)',
+          boxShadow: focused ? '0 0 0 3px rgba(185,255,90,0.12)' : 'none',
+          transition: 'all 0.18s ease',
         }}
       />
     </div>
