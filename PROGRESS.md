@@ -3,14 +3,14 @@
 > **Aggiornare questo file alla fine di ogni sessione di lavoro.**
 > Claude Code lo legge all'inizio di ogni chat per sapere da dove ripartire.
 > Formato: conciso, basato sui fatti.
-> **Last updated**: 2026-04-26
+> **Last updated**: 2026-04-27
 
 ---
 
 ## Sprint corrente
 
-**Sprint**: Sprint UI 4 — Tipi di dominio + refactor (chiuso) → prossimo: Sprint 2 backend
-**Stato**: ✅ Sprint 1 + 4 sprint UI completati. Pronti per Sprint 2 (utenti e leghe) appena DATABASE_URL Supabase è disponibile.
+**Sprint**: Sprint 2 — Utenti e Leghe (completato, PR in review)
+**Stato**: ✅ Sprint 2 completato. PR #7 aperta, CI verde. Non mergiare finché l'utente non aggiunge ANON_KEY in `.env.local`.
 
 ---
 
@@ -45,12 +45,46 @@
 
 ---
 
-## Blocker per Sprint 2
+## Cosa c'è su `feat/sprint-2-users-leagues` (PR #7, CI verde)
 
-1. **DATABASE_URL** + **DIRECT_URL** del progetto Supabase dev — necessari per
-   `pnpm --filter db db:migrate:dev` e per testare `apps/api` con DB reale.
-2. **SUPABASE_JWT_SECRET** — necessario per il guard JWT del backend.
-3. **Copia di `apps/api/.env.example` → `.env`** con i valori reali.
+### DB
+- Prima migration applicata su Supabase (`20260426221425_init` — 21 modelli)
+- Campo `inviteCode String? @unique` aggiunto a `League` (via `db push`)
+- `packages/db/.env` creato localmente per prisma CLI (non committato)
+
+### apps/api
+- **UsersModule**: `GET /users/me`, `PUT /users/me`, `GET /users/:id`, `POST /users/sync`
+  - `UserService.upsertFromSupabase()`: lazy sync da JWT Supabase
+  - `UpdateProfileDto` con class-validator
+- **LeaguesModule**: `POST /leagues`, `GET /leagues/me`, `GET /leagues/:id`, join, invite code, approvazione, settings
+  - `CreateLeagueDto`, `UpdateLeagueSettingsDto` con class-validator
+- **OnboardingModule**: `GET /onboarding/status`, `POST /onboarding/complete`
+  - `CompleteOnboardingDto` con class-validator
+- ValidationPipe globale in `main.ts`
+- `MeController` aggiornato: chiama `UserService.upsertFromSupabase` per lazy sync
+
+### apps/web
+- Supabase client helpers: `src/lib/supabase/client.ts`, `server.ts`, `middleware.ts`
+- Middleware: sessione Supabase + intl routing + protezione route `/(app)/**`
+- `(auth)/layout.tsx` + `(auth)/login/page.tsx`: form email/password + Google OAuth
+- `(app)/layout.tsx`: sidebar con voci Dashboard, Leghe, Classifica, Profilo
+- `(app)/dashboard/page.tsx`: KPI card con dati reali da `GET /users/me`
+- `(app)/leagues/page.tsx`: lista leghe, crea lega, join con codice invito
+- `(app)/profile/page.tsx`: form aggiornamento profilo
+- `(app)/onboarding/page.tsx`: wizard 3 step (livello → anno nascita → città)
+- `apps/web/.env.example` creato
+- `apps/web/.env.local` creato con placeholder — **ANON_KEY da aggiungere manualmente**
+
+### i18n
+- `it.json` e `en.json` aggiornati: auth, dashboard, leagues, profile, onboarding
+
+---
+
+## Blocker per produzione
+
+1. **ANON_KEY mancante**: aggiungere `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `apps/web/.env.local`
+   → Supabase Dashboard → Settings → API → anon key pubblica
+2. **SUPABASE_SERVICE_ROLE_KEY** (opzionale per ora): serve per l'hook `POST /users/sync`
 
 ---
 
@@ -58,14 +92,13 @@
 
 In ordine:
 
-1. **Configurare Supabase dev** (utente): creare progetto Supabase, copiare le 3 env vars in `apps/api/.env`.
-2. **Sprint 2 — Utenti e Leghe**:
-   - Sync utenti Supabase Auth → tabella User Postgres
-   - CRUD Profilo utente (globale + per-lega)
-   - Creazione lega (pubblica/privata)
-   - Inviti via codice / link univoco
-   - Onboarding (livello, anno nascita, città)
-   - UI: dashboard "Le mie leghe", dettaglio lega, lista membri (riusa i componenti UI già pronti)
+1. **Utente**: aggiungere ANON_KEY in `apps/web/.env.local`, poi mergiare PR #7
+2. **Sprint 3 — Stagioni e Partite**:
+   - CRUD Stagioni (DRAFT → REGISTRATION → ACTIVE)
+   - Challenge flow: PENDING_ACCEPTANCE → SCHEDULED → PENDING_RESULT → VALIDATED
+   - Risultati partita + validazione (auto-conferma dopo 24h)
+   - SeasonPlayer + SeasonRanking (snapshot)
+   - UI: pagina partite, pagina classifica stagione
 
 ---
 
@@ -74,12 +107,12 @@ In ordine:
 | Sprint | Obiettivo | Stato |
 | --- | --- | --- |
 | Pre-Sprint 1 | Setup documentazione | ✅ Completo |
-| Sprint 1 | Fondamenta (monorepo, DB schema, auth scaffold) | ✅ Completo (migration in attesa di DATABASE_URL) |
+| Sprint 1 | Fondamenta (monorepo, DB schema, auth scaffold) | ✅ Completo |
 | Sprint UI 1 | Componenti base | ✅ Completo |
 | Sprint UI 2 | Componenti di dominio | ✅ Completo |
 | Sprint UI 3 | Visual fidelity | ✅ Completo |
 | Sprint UI 4 | Tipi di dominio + refactor | ✅ Completo |
-| Sprint 2 | Utenti e Leghe | ⏳ Pronto a partire (blocker: Supabase env) |
+| Sprint 2 | Utenti e Leghe | ✅ Completo (PR #7, CI verde — in attesa ANON_KEY) |
 | Sprint 3 | Stagioni e Partite | ⏳ Non iniziato |
 | Sprint 4 | Scoring Engine | ⏳ Non iniziato |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |

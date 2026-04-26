@@ -7,5 +7,34 @@
     "leagues": "Leagues",
     "ranking": "Ranking",
     "profile": "Profile"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "loginWithGoogle": "Sign in with Google",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "noAccount": "No account yet? Create one"
+  },
+  "dashboard": {
+    "greeting": "Hello, {name}!",
+    "subtitle": "Here's what's happening in your league"
+  },
+  "leagues": {
+    "title": "My Leagues",
+    "create": "Create League",
+    "join": "Join",
+    "joinWithCode": "Enter invite code"
+  },
+  "profile": {
+    "title": "Your Profile",
+    "save": "Save Changes"
+  },
+  "onboarding": {
+    "title": "Welcome to Tennisillo",
+    "level": "What is your level?",
+    "city": "In which city do you play?",
+    "birthYear": "Year of birth"
   }
 }

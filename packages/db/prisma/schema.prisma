@@ -223,6 +223,7 @@ model League {
   ownerId     String
   owner       User        @relation("LeagueOwner", fields: [ownerId], references: [id])
   isActive    Boolean     @default(true)
+  inviteCode  String?     @unique
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?

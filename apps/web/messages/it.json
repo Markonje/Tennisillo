@@ -7,5 +7,34 @@
     "leagues": "Leghe",
     "ranking": "Classifica",
     "profile": "Profilo"
+  },
+  "auth": {
+    "login": "Accedi",
+    "register": "Registrati",
+    "email": "Email",
+    "password": "Password",
+    "loginWithGoogle": "Accedi con Google",
+    "alreadyHaveAccount": "Hai già un account? Accedi",
+    "noAccount": "Non hai un account? Registrati"
+  },
+  "dashboard": {
+    "greeting": "Ciao, {name}!",
+    "subtitle": "Ecco cosa succede nella tua lega"
+  },
+  "leagues": {
+    "title": "Le mie leghe",
+    "create": "Crea lega",
+    "join": "Unisciti",
+    "joinWithCode": "Entra con codice invito"
+  },
+  "profile": {
+    "title": "Il tuo profilo",
+    "save": "Salva modifiche"
+  },
+  "onboarding": {
+    "title": "Benvenuto in Tennisillo",
+    "level": "Qual è il tuo livello?",
+    "city": "In quale città giochi?",
+    "birthYear": "Anno di nascita"
   }
 }
