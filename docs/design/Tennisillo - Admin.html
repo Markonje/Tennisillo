@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tennisillo — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #0B1A1C; color: rgba(255,255,255,0.9); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+@keyframes slideIn  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin     { to { transform:rotate(360deg); } }
+input[type="range"] { accent-color: #B9FF5A; }
+select option { background: #0f2430; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback, useRef } = React;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const LEAGUE = { name:'Lega Primavera Milano 2026', sport:'Tennis Singolo', members:12, maxMembers:16 };
+
+const SEASON = {
+  label:'Stagione Primavera 2026', status:'active',
+  startDate:'3 Mar 2026', endDate:'30 Giu 2026',
+  week:7, totalWeeks:13, daysLeft:67,
+  config: {
+    baseWin:100, baseLoss:30,
+    mLivello:'normal', bCostanza:true, bDiversificazione:true,
+    h2h:true, cooldownH2H:21,
+    decayOn:true, decayWeeks:3,
+    sparringOn:true, sparringCap:2, sparringPts:12,
+    maestroOn:false, maestroXP:20,
+    playoffs:false, playoffTop:4,
+    limiteCopper:'auto', formatPartite:'best-of-3',
+  },
+  extensionRequests:1,
+};
+
+const PLAYERS = [
+  { id:'marco',    name:'Marco Verdi',       initials:'MV', hue:'142', ranking:1,  pts:2340, matches:28, wins:20, role:'admin',    rep:98,  status:'active',  warnings:0 },
+  { id:'alex',     name:'Alessandro Neri',   initials:'AN', hue:'210', ranking:2,  pts:2100, matches:25, wins:17, role:'player',   rep:92,  status:'active',  warnings:0 },
+  { id:'giovanni', name:'Giovanni Rossi',    initials:'GR', hue:'0',   ranking:3,  pts:1980, matches:36, wins:23, role:'player',   rep:75,  status:'active',  warnings:1 },
+  { id:'paolo',    name:'Paolo Bianchi',     initials:'PB', hue:'28',  ranking:4,  pts:1780, matches:24, wins:14, role:'player',   rep:88,  status:'active',  warnings:0 },
+  { id:'andrea',   name:'Andrea Colombo',   initials:'AC', hue:'280', ranking:5,  pts:1620, matches:23, wins:13, role:'player',   rep:95,  status:'active',  warnings:0 },
+  { id:'sofia',    name:'Sofia Martini',     initials:'SM', hue:'330', ranking:6,  pts:1540, matches:20, wins:11, role:'player',   rep:90,  status:'active',  warnings:0 },
+  { id:'matteo',   name:'Matteo Ferrari',    initials:'MF', hue:'185', ranking:7,  pts:1480, matches:18, wins:9,  role:'moderator',rep:85,  status:'active',  warnings:0 },
+  { id:'chiara',   name:'Chiara Romano',     initials:'CR', hue:'55',  ranking:8,  pts:1460, matches:22, wins:11, role:'player',   rep:91,  status:'active',  warnings:0 },
+  { id:'roberto',  name:'Roberto Esposito', initials:'RE', hue:'165', ranking:9,  pts:1445, matches:15, wins:7,  role:'player',   rep:44,  status:'warning', warnings:2 },
+  { id:'elena',    name:'Elena Conti',       initials:'EC', hue:'250', ranking:10, pts:1440, matches:17, wins:8,  role:'player',   rep:80,  status:'active',  warnings:0 },
+  { id:'franco',   name:'Franco Ricci',      initials:'FR', hue:'15',  ranking:11, pts:1435, matches:14, wins:6,  role:'player',   rep:62,  status:'watch',   warnings:1 },
+  { id:'luca',     name:'Luca Bianchi',      initials:'LB', hue:'85',  ranking:12, pts:1430, matches:24, wins:15, role:'player',   rep:88,  status:'active',  warnings:0 },
+];
+
+const PENDING_INVITES = [
+  { id:'i1', email:'mario.rossi@email.it',   sentAt:'3 ore fa',  status:'pending' },
+  { id:'i2', email:'anna.ferrari@email.it',  sentAt:'1 giorno fa', status:'pending' },
+  { id:'i3', email:'carlo.bigi@email.it',    sentAt:'3 giorni fa', status:'expired' },
+];
+
+const DISPUTES = [
+  { id:'d1', matchId:'M-041', playerA:PLAYERS[8], playerB:PLAYERS[2], scoreA:'6-3 6-2', scoreB:'4-6 6-4 7-5', date:'20 Mag', status:'open',     priority:'high' },
+  { id:'d2', matchId:'M-038', playerA:PLAYERS[4], playerB:PLAYERS[7], scoreA:'7-5 6-3', scoreB:'7-5 6-3',     date:'18 Mag', status:'resolved',  priority:'low'  },
+  { id:'d3', matchId:'M-035', playerA:PLAYERS[1], playerB:PLAYERS[5], scoreA:'6-4 3-6 6-2', scoreB:'6-4 3-6 4-6', date:'15 Mag', status:'open', priority:'medium'},
+];
+
+const PATTERN_ALERTS = [
+  { id:'a1', type:'collusion',    severity:'high',   players:['roberto','giovanni'], desc:'Alternanza sistematica V/S negli ultimi 6 incontri (A batte B → B batte A × 3)', count:6,  date:'Oggi' },
+  { id:'a2', type:'sparring_cap', severity:'medium', players:['franco'],             desc:'Franco Ricci ha raggiunto il cap sparring 4 settimane consecutive senza partite competitive', count:4, date:'Ieri' },
+  { id:'a3', type:'time_window',  severity:'low',    players:['roberto'],            desc:'3 risultati inseriti oltre la finestra di 12h dall\'orario concordato', count:3, date:'3 giorni fa' },
+];
+
+const FLAGGED_MATCHES = [
+  { id:'f1', matchId:'M-039', players:['roberto','giovanni'], score:'6-0 6-0', flag:'score_anomaly',  desc:'Punteggio statisticamente improbabile dati i livelli', date:'19 Mag', reviewed:false },
+  { id:'f2', matchId:'M-033', players:['franco','roberto'],   score:'6-4 6-3', flag:'time_window',    desc:'Risultato inserito 18h dopo la partita programmata',   date:'14 Mag', reviewed:false },
+  { id:'f3', matchId:'M-028', players:['giovanni','elena'],   score:'7-6 6-4', flag:'geo_mismatch',   desc:'Check-in GPS: giocatori a 2.3 km di distanza',         date:'10 Mag', reviewed:true  },
+];
+
+const CAMPI = [
+  { id:'c1', name:'Tennis Club Milano',   address:'Via Arona 22, Milano',    surface:'Terra rossa', cover:'Scoperto', price:'15-20€/h', link:'https://tennisclubmilano.it', status:'active',  proposedBy:'admin' },
+  { id:'c2', name:'TC Ambrosiano',        address:'Via Tortona 15, Milano',  surface:'Cemento',    cover:'Coperto',  price:'18-25€/h', link:'https://tcambrosiano.it',     status:'active',  proposedBy:'admin' },
+  { id:'c3', name:'Sport Village Assago', address:'Via Roma 1, Assago',      surface:'Sintetico',  cover:'Coperto',  price:'20-28€/h', link:'',                            status:'active',  proposedBy:'admin' },
+  { id:'c4', name:'Circolo Canottieri',   address:'Alzaia Naviglio 1, Milano',surface:'Terra rossa', cover:'Scoperto', price:'12-18€/h', link:'',                          status:'active',  proposedBy:'admin' },
+  { id:'c5', name:'Parco Lambro Tennis',  address:'Via Feltre 55, Milano',   surface:'Terra rossa', cover:'Scoperto', price:'10-15€/h', link:'',                            status:'pending', proposedBy:'Luca Bianchi' },
+];
+
+const ACTIVITY_LOG = [
+  { id:'l1', time:'Oggi 14:22', type:'dispute',  text:'Disputa #M-041 aperta: Roberto E. vs Giovanni R.' },
+  { id:'l2', time:'Oggi 11:05', type:'pattern',  text:'Alert collusion rilevato: Roberto E. / Giovanni R.' },
+  { id:'l3', time:'Ieri 18:30', type:'result',   text:'Risultato confermato: Marco V. 6-3 6-2 su Alex N.' },
+  { id:'l4', time:'Ieri 10:14', type:'campo',    text:'Proposta campo: Parco Lambro Tennis (Luca Bianchi)' },
+  { id:'l5', time:'2g fa',      type:'invite',   text:'Invito inviato a: anna.ferrari@email.it' },
+  { id:'l6', time:'3g fa',      type:'result',   text:'Risultato confermato: Elena C. 6-4 6-2 su Franco R.' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED UI
+// ─────────────────────────────────────────────────────────────────────────────
+const BG = 'radial-gradient(ellipse at 8% 0%, rgba(185,255,90,0.12) 0%, transparent 28%), radial-gradient(ellipse at 85% 15%, rgba(121,167,216,0.18) 0%, transparent 30%), linear-gradient(145deg,#071517 0%,#17304A 52%,#0B1A1C 100%)';
+
+function GlassCard({ children, style, hover, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov && hover ? 'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.07))' : 'linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.05))',
+        border:'1px solid rgba(255,255,255,0.13)', borderRadius:20,
+        backdropFilter:'blur(26px) saturate(140%)',
+        boxShadow: hov && hover ? '0 22px 55px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.2)' : '0 14px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.16)',
+        transform: hov && hover ? 'translateY(-1px)' : 'none',
+        transition:'all 0.2s ease', cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}>{children}</div>
+  );
+}
+
+function GlassInput({ label, value, onChange, placeholder, type='text' }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.5)', fontWeight:500 }}>{label}</label>}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+        style={{
+          background: focus ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)',
+          border:`1px solid ${focus ? 'rgba(185,255,90,0.5)' : 'rgba(255,255,255,0.13)'}`,
+          borderRadius:11, padding:'9px 13px', color:'rgba(255,255,255,0.92)',
+          fontSize:13, outline:'none', width:'100%',
+          boxShadow: focus ? '0 0 0 3px rgba(185,255,90,0.10)' : 'none',
+          transition:'all 0.16s ease',
+        }} />
+    </div>
+  );
+}
+
+function GlassSelect({ label, value, onChange, options }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.5)', fontWeight:500 }}>{label}</label>}
+      <select value={value} onChange={e => onChange(e.target.value)} style={{
+        background:'rgba(10,24,32,0.9)', border:'1px solid rgba(255,255,255,0.13)',
+        borderRadius:11, padding:'9px 13px', color:'rgba(255,255,255,0.92)',
+        fontSize:13, outline:'none', width:'100%', cursor:'pointer',
+      }}>
+        {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function Toggle({ value, onChange, small }) {
+  const w = small ? 36 : 44; const h = small ? 20 : 24; const knob = small ? 14 : 18;
+  return (
+    <button onClick={() => onChange(!value)} style={{
+      width:w, height:h, borderRadius:999, border:'none', cursor:'pointer',
+      background: value ? 'rgba(185,255,90,0.85)' : 'rgba(255,255,255,0.18)',
+      position:'relative', transition:'background 0.2s ease', flexShrink:0,
+    }}>
+      <div style={{
+        position:'absolute', top:(h-knob)/2, left: value ? w-knob-3 : 3,
+        width:knob, height:knob, borderRadius:'50%', background:'white',
+        boxShadow:'0 1px 4px rgba(0,0,0,0.3)', transition:'left 0.2s ease',
+      }} />
+    </button>
+  );
+}
+
+function BtnPrimary({ children, onClick, small, disabled }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background: disabled ? 'rgba(185,255,90,0.3)' : hov ? 'linear-gradient(135deg,#d8ff88,#a0ef5a)' : 'linear-gradient(135deg,#c8ff6a,#8ee044)',
+        color:'#0a1a0e', fontWeight:700, border:'none', cursor: disabled ? 'not-allowed' : 'pointer',
+        padding: small ? '7px 15px' : '10px 20px',
+        borderRadius:12, fontSize: small ? 12 : 13,
+        boxShadow: disabled ? 'none' : `0 6px 20px rgba(185,255,90,${hov?0.38:0.22})`,
+        transform: hov && !disabled ? 'translateY(-1px)' : 'none',
+        transition:'all 0.16s ease',
+        display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap',
+      }}>{children}</button>
+  );
+}
+
+function BtnSecondary({ children, onClick, small, danger, warning }) {
+  const [hov, setHov] = useState(false);
+  const bg  = danger  ? (hov ? 'rgba(233,109,109,0.22)' : 'rgba(233,109,109,0.12)')
+            : warning ? (hov ? 'rgba(242,211,94,0.22)'  : 'rgba(242,211,94,0.12)')
+            : (hov ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)');
+  const clr = danger ? '#f09090' : warning ? '#f5d96a' : 'rgba(255,255,255,0.85)';
+  const bdr = danger ? 'rgba(233,109,109,0.4)' : warning ? 'rgba(242,211,94,0.4)' : 'rgba(255,255,255,0.18)';
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background:bg, color:clr, border:`1px solid ${bdr}`,
+        cursor:'pointer', padding: small ? '7px 15px' : '10px 20px',
+        borderRadius:12, fontSize: small ? 12 : 13, fontWeight:600,
+        transition:'all 0.16s ease', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap',
+      }}>{children}</button>
+  );
+}
+
+function Badge({ children, tone }) {
+  const map = {
+    green:  { bg:'rgba(185,255,90,0.18)',  bdr:'rgba(185,255,90,0.4)',  c:'#c8ff78' },
+    yellow: { bg:'rgba(242,211,94,0.18)',  bdr:'rgba(242,211,94,0.4)',  c:'#f5d96a' },
+    red:    { bg:'rgba(233,109,109,0.18)', bdr:'rgba(233,109,109,0.4)', c:'#f09090' },
+    blue:   { bg:'rgba(121,167,216,0.18)', bdr:'rgba(121,167,216,0.4)', c:'#9abfdd' },
+    gray:   { bg:'rgba(255,255,255,0.08)', bdr:'rgba(255,255,255,0.18)',c:'rgba(255,255,255,0.5)' },
+  };
+  const s = map[tone] ?? map.gray;
+  return (
+    <span style={{ padding:'2px 9px', borderRadius:999, fontSize:11, fontWeight:700,
+      background:s.bg, border:`1px solid ${s.bdr}`, color:s.c, whiteSpace:'nowrap' }}>
+      {children}
+    </span>
+  );
+}
+
+function Avatar({ p, size=32 }) {
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:'50%', flexShrink:0,
+      background:`linear-gradient(135deg,oklch(0.72 0.18 ${p.hue}),oklch(0.55 0.22 ${p.hue}))`,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:size*0.34, fontWeight:700, color:'rgba(0,0,0,0.72)',
+      border:'1.5px solid rgba(255,255,255,0.2)',
+    }}>{p.initials}</div>
+  );
+}
+
+function SectionTitle({ children, sub }) {
+  return (
+    <div style={{ marginBottom:16 }}>
+      <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>{children}</h2>
+      {sub && <p style={{ margin:'4px 0 0', fontSize:13, color:'rgba(255,255,255,0.42)' }}>{sub}</p>}
+    </div>
+  );
+}
+
+function RepBar({ score }) {
+  const color = score >= 80 ? '#B9FF5A' : score >= 60 ? '#F2D35E' : '#E96D6D';
+  const label = score >= 80 ? 'Buona' : score >= 60 ? 'Attenzione' : 'A rischio';
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ flex:1, height:5, borderRadius:999, background:'rgba(255,255,255,0.1)', minWidth:60 }}>
+        <div style={{ height:'100%', width:`${score}%`, borderRadius:999, background:color, transition:'width 0.4s' }} />
+      </div>
+      <span style={{ fontSize:11, fontWeight:700, color, minWidth:40 }}>{score}</span>
+    </div>
+  );
+}
+
+function Toast({ toasts, remove }) {
+  return (
+    <div style={{ position:'fixed', top:20, right:20, zIndex:9999, display:'flex', flexDirection:'column', gap:8, pointerEvents:'none' }}>
+      {toasts.map(t => {
+        const s = { success:{ bg:'rgba(185,255,90,0.15)', bdr:'rgba(185,255,90,0.4)',c:'#c8ff78',icon:'✓' },
+                    info:   { bg:'rgba(121,167,216,0.15)',bdr:'rgba(121,167,216,0.4)',c:'#9abfdd',icon:'ℹ' },
+                    warning:{ bg:'rgba(242,211,94,0.15)', bdr:'rgba(242,211,94,0.4)', c:'#f5d96a',icon:'!' },
+                    danger: { bg:'rgba(233,109,109,0.15)',bdr:'rgba(233,109,109,0.4)',c:'#f09090',icon:'✕' },
+                  }[t.tone] ?? { bg:'rgba(255,255,255,0.1)',bdr:'rgba(255,255,255,0.2)',c:'white',icon:'•' };
+        return (
+          <div key={t.id} style={{
+            background:s.bg, border:`1px solid ${s.bdr}`, borderRadius:13,
+            padding:'11px 15px', backdropFilter:'blur(24px)', pointerEvents:'all',
+            display:'flex', alignItems:'center', gap:10, minWidth:260,
+            boxShadow:'0 10px 30px rgba(0,0,0,0.3)', animation:'slideIn 0.22s ease',
+          }}>
+            <span style={{ color:s.c, fontWeight:700, fontSize:13 }}>{s.icon}</span>
+            <span style={{ fontSize:13, color:'rgba(255,255,255,0.9)', flex:1 }}>{t.message}</span>
+            <button onClick={() => remove(t.id)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', fontSize:13 }}>✕</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREENS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── DASHBOARD ADMIN ───────────────────────────────────────────────────────────
+function ScreenDashboard({ setPage, addToast }) {
+  const openDisputes = DISPUTES.filter(d => d.status === 'open').length;
+  const highAlerts   = PATTERN_ALERTS.filter(a => a.severity === 'high').length;
+  const flagged      = FLAGGED_MATCHES.filter(f => !f.reviewed).length;
+  const pct          = Math.round((SEASON.week / SEASON.totalWeeks) * 100);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Dashboard Admin</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>{LEAGUE.name} · Stagione {SEASON.week}/{SEASON.totalWeeks}</p>
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <a href="Tennisillo.html" style={{ textDecoration:'none' }}>
+            <BtnSecondary small>👁 Vista giocatore</BtnSecondary>
+          </a>
+          <BtnPrimary small onClick={() => addToast({ message:'Annuncio inviato a tutti i giocatori.', tone:'success' })}>
+            📢 Invia annuncio
+          </BtnPrimary>
+        </div>
+      </div>
+
+      {/* KPI */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+        {[
+          { icon:'👥', label:'Giocatori attivi',  value:`${PLAYERS.filter(p=>p.status==='active').length}/${PLAYERS.length}`, delta:'2 inviti pendenti',  tone:'neutral' },
+          { icon:'🎾', label:'Partite stagione',  value:PLAYERS.reduce((s,p)=>s+p.matches,0)/2|0,              delta:`Sett. ${SEASON.week}/${SEASON.totalWeeks}`, tone:'neutral' },
+          { icon:'⚠️', label:'Dispute aperte',    value:openDisputes,                          delta:openDisputes>0?'Azione richiesta':'Tutto ok',   tone: openDisputes>0?'warn':'ok' },
+          { icon:'🚨', label:'Alert anti-frode',  value:highAlerts+flagged,                    delta:`${highAlerts} alta priorità`,                  tone: highAlerts>0?'danger':'ok' },
+        ].map(k => (
+          <GlassCard key={k.label} style={{ padding:'18px 20px' }}>
+            <div style={{ fontSize:20, marginBottom:5 }}>{k.icon}</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:4 }}>{k.label}</div>
+            <div style={{ fontSize:28, fontWeight:900, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.03em', lineHeight:1 }}>{k.value}</div>
+            <div style={{ fontSize:12, marginTop:5, color: k.tone==='danger'?'#f09090':k.tone==='warn'?'#f5d96a':'rgba(255,255,255,0.4)' }}>{k.delta}</div>
+          </GlassCard>
+        ))}
+      </div>
+
+      {/* Urgent alerts */}
+      {(openDisputes > 0 || highAlerts > 0 || flagged > 0) && (
+        <GlassCard style={{ padding:'16px 20px', border:'1px solid rgba(233,109,109,0.3)', background:'rgba(233,109,109,0.07)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+            <span style={{ fontSize:16 }}>🚨</span>
+            <span style={{ fontSize:14, fontWeight:700, color:'#f09090' }}>Azioni richieste</span>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {openDisputes > 0 && (
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px',
+                background:'rgba(233,109,109,0.10)', borderRadius:10, border:'1px solid rgba(233,109,109,0.2)' }}>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.85)' }}>⚔️ {openDisputes} dispute aperte in attesa di arbitrato</span>
+                <BtnSecondary small danger onClick={() => setPage('antifrode')}>Gestisci →</BtnSecondary>
+              </div>
+            )}
+            {highAlerts > 0 && (
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px',
+                background:'rgba(242,211,94,0.10)', borderRadius:10, border:'1px solid rgba(242,211,94,0.2)' }}>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.85)' }}>⚠️ {highAlerts} alert di collusion ad alta priorità</span>
+                <BtnSecondary small warning onClick={() => setPage('antifrode')}>Analizza →</BtnSecondary>
+              </div>
+            )}
+            {flagged > 0 && (
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px',
+                background:'rgba(242,211,94,0.08)', borderRadius:10, border:'1px solid rgba(242,211,94,0.15)' }}>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.85)' }}>🚩 {flagged} partite flaggate non ancora revisionate</span>
+                <BtnSecondary small warning onClick={() => setPage('antifrode')}>Rivedi →</BtnSecondary>
+              </div>
+            )}
+            {SEASON.extensionRequests > 0 && (
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 12px',
+                background:'rgba(121,167,216,0.10)', borderRadius:10, border:'1px solid rgba(121,167,216,0.2)' }}>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.85)' }}>📅 {SEASON.extensionRequests} richiesta di estensione stagione</span>
+                <BtnSecondary small onClick={() => setPage('stagione')}>Valuta →</BtnSecondary>
+              </div>
+            )}
+          </div>
+        </GlassCard>
+      )}
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16 }}>
+        {/* Season health */}
+        <GlassCard style={{ padding:'22px 24px' }}>
+          <SectionTitle sub="Avanzamento e parametri correnti">Salute della stagione</SectionTitle>
+          <div style={{ marginBottom:16 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontSize:13, color:'rgba(255,255,255,0.6)' }}>Settimana {SEASON.week} di {SEASON.totalWeeks}</span>
+              <span style={{ fontSize:13, fontWeight:700, color:'#c8ff78' }}>{pct}% completata</span>
+            </div>
+            <div style={{ height:8, borderRadius:999, background:'rgba(255,255,255,0.08)' }}>
+              <div style={{ height:'100%', width:`${pct}%`, borderRadius:999, background:'linear-gradient(90deg,#8ee044,#c8ff78)', boxShadow:'0 0 12px rgba(185,255,90,0.4)' }} />
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:4 }}>
+              <span>{SEASON.startDate}</span>
+              <span>{SEASON.daysLeft} giorni rimanenti</span>
+              <span>{SEASON.endDate}</span>
+            </div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+            {[
+              { label:'Partite giocate', value: PLAYERS.reduce((s,p)=>s+p.matches,0)/2|0 },
+              { label:'Partite/settimana', value: ((PLAYERS.reduce((s,p)=>s+p.matches,0)/2)/SEASON.week).toFixed(1) },
+              { label:'Giocatori attivi', value: `${PLAYERS.filter(p=>p.matches>0).length}/${PLAYERS.length}` },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign:'center', background:'rgba(255,255,255,0.05)', borderRadius:10, padding:'10px' }}>
+                <div style={{ fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.95)' }}>{s.value}</div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.38)', marginTop:2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:10, marginTop:14 }}>
+            <BtnSecondary small onClick={() => setPage('stagione')}>⚙ Gestisci stagione</BtnSecondary>
+            <BtnPrimary small onClick={() => addToast({ message:'Report stagione esportato.', tone:'info' })}>📊 Esporta report</BtnPrimary>
+          </div>
+        </GlassCard>
+
+        {/* Activity log */}
+        <GlassCard style={{ padding:'20px 22px' }}>
+          <SectionTitle sub="Ultime 24 ore">Log attività</SectionTitle>
+          {ACTIVITY_LOG.map(l => {
+            const icons = { dispute:'⚔️', pattern:'⚠️', result:'🎾', campo:'📍', invite:'✉️' };
+            return (
+              <div key={l.id} style={{ display:'flex', gap:10, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ width:28, height:28, borderRadius:8, background:'rgba(255,255,255,0.07)',
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>
+                  {icons[l.type] ?? '•'}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.78)', lineHeight:1.4 }}>{l.text}</div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{l.time}</div>
+                </div>
+              </div>
+            );
+          })}
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+// ── STAGIONE ──────────────────────────────────────────────────────────────────
+function ScreenStagione({ addToast }) {
+  const [showConfirm, setShowConfirm] = useState(null);
+  const pct = Math.round((SEASON.week / SEASON.totalWeeks) * 100);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <SectionTitle sub="Gestisci la stagione corrente e le azioni disponibili">Gestione Stagione</SectionTitle>
+
+      {/* Status hero */}
+      <GlassCard style={{ padding:'24px 28px' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <div>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <h2 style={{ fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.97)', margin:0 }}>{SEASON.label}</h2>
+              <Badge tone="green">● Stagione attiva</Badge>
+            </div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginTop:4 }}>
+              {SEASON.startDate} — {SEASON.endDate} · {SEASON.daysLeft} giorni rimanenti
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:10 }}>
+            <BtnSecondary small warning onClick={() => setShowConfirm('pause')}>⏸ Pausa stagione</BtnSecondary>
+            <BtnSecondary small danger onClick={() => setShowConfirm('end')}>⏹ Termina stagione</BtnSecondary>
+          </div>
+        </div>
+        <div style={{ marginBottom:8, display:'flex', justifyContent:'space-between' }}>
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>Settimana {SEASON.week} / {SEASON.totalWeeks}</span>
+          <span style={{ fontSize:12, fontWeight:700, color:'#c8ff78' }}>{pct}%</span>
+        </div>
+        <div style={{ height:8, borderRadius:999, background:'rgba(255,255,255,0.08)' }}>
+          <div style={{ height:'100%', width:`${pct}%`, borderRadius:999, background:'linear-gradient(90deg,#8ee044,#c8ff78)' }} />
+        </div>
+      </GlassCard>
+
+      {/* Extension request */}
+      <GlassCard style={{ padding:'18px 22px', border:'1px solid rgba(121,167,216,0.25)', background:'rgba(121,167,216,0.07)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+            <span style={{ fontSize:22 }}>📅</span>
+            <div>
+              <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Richiesta di estensione stagione</div>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2 }}>
+                8/12 giocatori (67%) hanno votato per estendere la stagione di 2 settimane. Soglia richiesta: 67%. ✓ Raggiunta.
+              </div>
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <BtnSecondary small danger onClick={() => addToast({ message:'Estensione rifiutata.', tone:'info' })}>Rifiuta</BtnSecondary>
+            <BtnPrimary small onClick={() => addToast({ message:'Stagione estesa di 2 settimane! Fine: 14 Lug 2026', tone:'success' })}>Approva +2 settimane</BtnPrimary>
+          </div>
+        </div>
+      </GlassCard>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        {/* Playoff */}
+        <GlassCard style={{ padding:'22px 24px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>🏆 Playoff</div>
+            <Toggle value={false} onChange={() => addToast({ message:'Playoff attivati! Si qualificano i top 4.', tone:'success' })} />
+          </div>
+          <p style={{ fontSize:12, color:'rgba(255,255,255,0.45)', lineHeight:1.6, marginBottom:14 }}>
+            Attivando i playoff, i top N giocatori si sfideranno in una fase a eliminazione diretta al termine della stagione regolare.
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <GlassSelect label="Giocatori qualificati" value="4"
+              onChange={() => {}}
+              options={[{value:'4',label:'Top 4'},{value:'8',label:'Top 8'},{value:'16',label:'Top 16'}]} />
+            <GlassSelect label="Formato playoff" value="knockout"
+              onChange={() => {}}
+              options={[{value:'knockout',label:'Eliminazione diretta'},{value:'rr',label:'Round robin finale'}]} />
+          </div>
+          <div style={{ marginTop:14, fontSize:12, color:'rgba(255,255,255,0.35)' }}>
+            Attualmente disattivati — la classifica finale sarà quella della stagione regolare.
+          </div>
+        </GlassCard>
+
+        {/* Post-stagione */}
+        <GlassCard style={{ padding:'22px 24px' }}>
+          <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:14 }}>📋 Post-stagione</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {[
+              { label:'Freeze classifica automatico', desc:'Al termine, la classifica si congela', on:true },
+              { label:'Assegnazione badge automatica', desc:'Badge stagione assegnati a fine stagione', on:true },
+              { label:'Archivia storico partite',     desc:'Tutte le partite archiviate nella storia', on:true },
+              { label:'Apri nuova stagione',          desc:'Proponi automaticamente la stagione successiva', on:false },
+            ].map((opt, i) => (
+              <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+                padding:'9px 12px', background:'rgba(255,255,255,0.05)', borderRadius:10, border:'1px solid rgba(255,255,255,0.08)' }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>{opt.label}</div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:1 }}>{opt.desc}</div>
+                </div>
+                <Toggle value={opt.on} small onChange={() => {}} />
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Confirm modals */}
+      {showConfirm && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)',
+          zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={() => setShowConfirm(null)}>
+          <div style={{ background:'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
+            border:'1px solid rgba(255,255,255,0.2)', borderRadius:22, backdropFilter:'blur(36px)',
+            padding:'28px 32px', maxWidth:420, animation:'fadeUp 0.2s ease' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize:36, marginBottom:12, textAlign:'center' }}>
+              {showConfirm === 'pause' ? '⏸' : '⏹'}
+            </div>
+            <h3 style={{ textAlign:'center', fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.97)', marginBottom:8 }}>
+              {showConfirm === 'pause' ? 'Pausa stagione?' : 'Terminare la stagione?'}
+            </h3>
+            <p style={{ textAlign:'center', fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:20 }}>
+              {showConfirm === 'pause'
+                ? 'La stagione verrà sospesa. I giocatori saranno notificati. Potrai riattvarla in qualsiasi momento.'
+                : 'Questa azione congelerà la classifica e avvierà la fase post-stagione. Non è reversibile.'
+              }
+            </p>
+            <div style={{ display:'flex', gap:10, justifyContent:'center' }}>
+              <BtnSecondary small onClick={() => setShowConfirm(null)}>Annulla</BtnSecondary>
+              <BtnSecondary small danger onClick={() => {
+                addToast({ message: showConfirm==='pause' ? 'Stagione in pausa.' : 'Stagione terminata. Badge assegnati.', tone: showConfirm==='pause'?'warning':'danger' });
+                setShowConfirm(null);
+              }}>
+                {showConfirm === 'pause' ? 'Sì, metti in pausa' : 'Sì, termina stagione'}
+              </BtnSecondary>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CONFIGURAZIONE PUNTEGGIO ──────────────────────────────────────────────────
+function ScreenPunteggio({ addToast }) {
+  const [cfg, setCfg] = useState({ ...SEASON.config });
+  const set = k => v => setCfg(c => ({ ...c, [k]:v }));
+  const save = () => addToast({ message:'Configurazione punteggio salvata.', tone:'success' });
+
+  const calcPreview = () => {
+    const base = cfg.baseWin;
+    const mLiv = { off:1.0, soft:1.25, normal:1.5, hard:2.0 }[cfg.mLivello] ?? 1.0;
+    const cost = cfg.bCostanza ? 10 : 0;
+    const div  = cfg.bDiversificazione ? 15 : 0;
+    return Math.round(base * mLiv + cost + div);
+  };
+
+  const Row = ({ label, children, border=true }) => (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+      padding:'12px 0', borderBottom: border ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+      <span style={{ fontSize:13, color:'rgba(255,255,255,0.7)', flex:1 }}>{label}</span>
+      <div style={{ flexShrink:0, minWidth:160 }}>{children}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <SectionTitle sub="Parametri modificabili prima e durante la stagione (§8.13)">Configurazione Punteggio</SectionTitle>
+        <BtnPrimary small onClick={save}>💾 Salva configurazione</BtnPrimary>
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:16 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+
+          {/* Punti base */}
+          <GlassCard style={{ padding:'20px 24px' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Punti Base</div>
+            <Row label="Punti base vittoria (50–200)">
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <input type="range" min={50} max={200} step={10} value={cfg.baseWin}
+                  onChange={e => set('baseWin')(Number(e.target.value))}
+                  style={{ flex:1, accentColor:'#B9FF5A' }} />
+                <span style={{ fontSize:14, fontWeight:800, color:'#c8ff78', minWidth:36, textAlign:'right' }}>{cfg.baseWin}</span>
+              </div>
+            </Row>
+            <Row label="Punti base sconfitta (0–50)">
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <input type="range" min={0} max={50} step={5} value={cfg.baseLoss}
+                  onChange={e => set('baseLoss')(Number(e.target.value))}
+                  style={{ flex:1 }} />
+                <span style={{ fontSize:14, fontWeight:800, color:'rgba(255,255,255,0.7)', minWidth:36, textAlign:'right' }}>{cfg.baseLoss}</span>
+              </div>
+            </Row>
+          </GlassCard>
+
+          {/* Moltiplicatori */}
+          <GlassCard style={{ padding:'20px 24px' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Moltiplicatori e Bonus</div>
+            <Row label="Intensità moltiplicatore livello">
+              <div style={{ display:'flex', gap:6 }}>
+                {['off','soft','normal','hard'].map(v => (
+                  <button key={v} onClick={() => set('mLivello')(v)} style={{
+                    padding:'5px 10px', borderRadius:8, border:'none', cursor:'pointer', fontSize:11, fontWeight:700,
+                    background: cfg.mLivello === v ? 'rgba(185,255,90,0.25)' : 'rgba(255,255,255,0.08)',
+                    color: cfg.mLivello === v ? '#c8ff78' : 'rgba(255,255,255,0.5)',
+                    transition:'all 0.15s',
+                  }}>{v}</button>
+                ))}
+              </div>
+            </Row>
+            <Row label="Bonus costanza">
+              <Toggle value={cfg.bCostanza} onChange={set('bCostanza')} small />
+            </Row>
+            <Row label="Bonus diversificazione">
+              <Toggle value={cfg.bDiversificazione} onChange={set('bDiversificazione')} small />
+            </Row>
+            <Row label="Sistema testa a testa (B_RIVALSA)">
+              <Toggle value={cfg.h2h} onChange={set('h2h')} small />
+            </Row>
+            {cfg.h2h && (
+              <Row label="Cooldown rivalsa (giorni)">
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <input type="range" min={7} max={30} step={1} value={cfg.cooldownH2H}
+                    onChange={e => set('cooldownH2H')(Number(e.target.value))}
+                    style={{ flex:1 }} />
+                  <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.7)', minWidth:36 }}>{cfg.cooldownH2H}g</span>
+                </div>
+              </Row>
+            )}
+          </GlassCard>
+
+          {/* Decay e Sparring */}
+          <GlassCard style={{ padding:'20px 24px' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Decay e Modalità Extra</div>
+            <Row label="Decay da inattività">
+              <Toggle value={cfg.decayOn} onChange={set('decayOn')} small />
+            </Row>
+            {cfg.decayOn && (
+              <Row label="Settimane prima del decay">
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <input type="range" min={2} max={5} step={1} value={cfg.decayWeeks}
+                    onChange={e => set('decayWeeks')(Number(e.target.value))}
+                    style={{ flex:1 }} />
+                  <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.7)', minWidth:36 }}>{cfg.decayWeeks}w</span>
+                </div>
+              </Row>
+            )}
+            <Row label="Sparring abilitato">
+              <Toggle value={cfg.sparringOn} onChange={set('sparringOn')} small />
+            </Row>
+            {cfg.sparringOn && <>
+              <Row label="Cap sparring settimanale">
+                <div style={{ display:'flex', gap:8 }}>
+                  {[1,2].map(n => (
+                    <button key={n} onClick={() => set('sparringCap')(n)} style={{
+                      padding:'5px 14px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:700,
+                      background: cfg.sparringCap===n ? 'rgba(185,255,90,0.25)' : 'rgba(255,255,255,0.08)',
+                      color: cfg.sparringCap===n ? '#c8ff78' : 'rgba(255,255,255,0.5)',
+                    }}>{n}</button>
+                  ))}
+                </div>
+              </Row>
+              <Row label="Punti sparring (5–15)">
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <input type="range" min={5} max={15} step={1} value={cfg.sparringPts}
+                    onChange={e => set('sparringPts')(Number(e.target.value))}
+                    style={{ flex:1 }} />
+                  <span style={{ fontSize:13, fontWeight:700, color:'#f5d96a', minWidth:36 }}>+{cfg.sparringPts}</span>
+                </div>
+              </Row>
+            </>}
+            <Row label="Allenamento con Maestro" border={false}>
+              <Toggle value={cfg.maestroOn} onChange={set('maestroOn')} small />
+            </Row>
+            {cfg.maestroOn && (
+              <Row label="XP per sessione validata (10–30)" border={false}>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <input type="range" min={10} max={30} step={5} value={cfg.maestroXP}
+                    onChange={e => set('maestroXP')(Number(e.target.value))}
+                    style={{ flex:1 }} />
+                  <span style={{ fontSize:13, fontWeight:700, color:'#9abfdd', minWidth:36 }}>+{cfg.maestroXP}XP</span>
+                </div>
+              </Row>
+            )}
+          </GlassCard>
+        </div>
+
+        {/* Live preview */}
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <GlassCard style={{ padding:'20px 22px', position:'sticky', top:0 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>
+              📊 Anteprima calcolo punti
+            </div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginBottom:12 }}>
+              Scenario: Silver (Lv.3) batte Gold (Lv.4), 2-0 set, 3 partite ultime 4 sett., diversificazione 75%
+            </div>
+            {[
+              { label:'Punti base vittoria',    val:`${cfg.baseWin}`, color:'rgba(255,255,255,0.7)' },
+              { label:`× Moltiplicatore (${{ off:'×1.0',soft:'×1.25',normal:'×1.5',hard:'×2.0' }[cfg.mLivello]})`, val:`=${Math.round(cfg.baseWin * ({ off:1.0,soft:1.25,normal:1.5,hard:2.0 }[cfg.mLivello]??1))}`, color:'#c8ff78' },
+              { label:'× Ris. 2-0 (×1.2)',      val:`=${Math.round(cfg.baseWin * ({ off:1.0,soft:1.25,normal:1.5,hard:2.0 }[cfg.mLivello]??1) * 1.2)}`, color:'#c8ff78' },
+              { label:`+ Costanza (${cfg.bCostanza?'+10':'OFF'})`, val: cfg.bCostanza?'+10':'—', color: cfg.bCostanza?'#9abfdd':'rgba(255,255,255,0.3)' },
+              { label:`+ Diversif. (${cfg.bDiversificazione?'+15':'OFF'})`, val: cfg.bDiversificazione?'+15':'—', color: cfg.bDiversificazione?'#9abfdd':'rgba(255,255,255,0.3)' },
+            ].map((r, i) => (
+              <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0',
+                borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>{r.label}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:r.color }}>{r.val}</span>
+              </div>
+            ))}
+            <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 12px', marginTop:8,
+              background:'rgba(185,255,90,0.12)', borderRadius:10, border:'1px solid rgba(185,255,90,0.3)' }}>
+              <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Totale ΔP</span>
+              <span style={{ fontSize:20, fontWeight:900, color:'#c8ff78' }}>+{calcPreview()} pt</span>
+            </div>
+            <div style={{ marginTop:14 }}>
+              <BtnPrimary small onClick={save}>💾 Salva</BtnPrimary>
+            </div>
+          </GlassCard>
+
+          {/* Warning about active season */}
+          <GlassCard style={{ padding:'14px 16px', border:'1px solid rgba(242,211,94,0.25)', background:'rgba(242,211,94,0.07)' }}>
+            <div style={{ fontSize:12, color:'#f5d96a', fontWeight:600, marginBottom:4 }}>⚠️ Stagione attiva</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)', lineHeight:1.6 }}>
+              Alcune modifiche (punti base, moltiplicatori) avranno effetto solo sulle partite future. Le partite già validate non saranno ricalcolate.
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── GESTIONE GIOCATORI ────────────────────────────────────────────────────────
+function ScreenGiocatori({ addToast }) {
+  const [tab, setTab] = useState('lista');
+  const [players, setPlayers] = useState(PLAYERS);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [showRoleModal, setShowRoleModal] = useState(null);
+
+  const tabs = { lista:'👥 Lista', inviti:'✉️ Inviti', maestri:'🎓 Maestri' };
+
+  const roleColors = { admin:'rgba(185,255,90,0.18)', moderator:'rgba(121,167,216,0.18)', player:'rgba(255,255,255,0.08)' };
+  const roleBdr    = { admin:'rgba(185,255,90,0.4)',  moderator:'rgba(121,167,216,0.4)',  player:'rgba(255,255,255,0.15)' };
+  const roleC      = { admin:'#c8ff78', moderator:'#9abfdd', player:'rgba(255,255,255,0.5)' };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <SectionTitle sub={`${players.length} giocatori · ${PENDING_INVITES.filter(i=>i.status==='pending').length} inviti pendenti`}>Gestione Giocatori</SectionTitle>
+        <BtnPrimary small onClick={() => setTab('inviti')}>✉️ Invita giocatore</BtnPrimary>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:3, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:3, width:'fit-content' }}>
+        {Object.entries(tabs).map(([k, v]) => (
+          <button key={k} onClick={() => setTab(k)} style={{
+            padding:'7px 16px', borderRadius:9, border:'none', cursor:'pointer',
+            background: tab===k ? 'rgba(185,255,90,0.18)' : 'transparent',
+            color: tab===k ? '#c8ff78' : 'rgba(255,255,255,0.55)',
+            fontSize:12, fontWeight: tab===k ? 700 : 500, transition:'all 0.15s',
+          }}>{v}</button>
+        ))}
+      </div>
+
+      {/* Lista */}
+      {tab === 'lista' && (
+        <GlassCard style={{ padding:'20px 24px' }}>
+          {/* Header */}
+          <div style={{
+            display:'grid', gridTemplateColumns:'36px 1fr 80px 80px 90px 100px 80px 110px',
+            padding:'6px 12px', fontSize:10, fontWeight:700,
+            color:'rgba(255,255,255,0.3)', letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4, gap:8,
+          }}>
+            <div>#</div><div>Giocatore</div>
+            <div style={{ textAlign:'right' }}>Punti</div>
+            <div style={{ textAlign:'right' }}>Partite</div>
+            <div style={{ textAlign:'center' }}>Reputazione</div>
+            <div style={{ textAlign:'center' }}>Ruolo</div>
+            <div style={{ textAlign:'center' }}>Stato</div>
+            <div style={{ textAlign:'right' }}>Azioni</div>
+          </div>
+          {players.map(p => (
+            <div key={p.id} style={{
+              display:'grid', gridTemplateColumns:'36px 1fr 80px 80px 90px 100px 80px 110px',
+              alignItems:'center', padding:'10px 12px', borderRadius:12, marginBottom:2, gap:8,
+              background: p.status==='warning' ? 'rgba(233,109,109,0.07)' : p.status==='watch' ? 'rgba(242,211,94,0.05)' : 'transparent',
+              border: p.status==='warning' ? '1px solid rgba(233,109,109,0.2)' : '1px solid transparent',
+            }}>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', fontWeight:700 }}>{p.ranking}</div>
+              <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+                <Avatar p={p} size={30} />
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.92)' }}>{p.name}</div>
+                  {p.warnings > 0 && <div style={{ fontSize:10, color:'#f09090' }}>⚠ {p.warnings} avvis{p.warnings>1?'i':'o'}</div>}
+                </div>
+              </div>
+              <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)', textAlign:'right' }}>{p.pts.toLocaleString()}</div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.6)', textAlign:'right' }}>{p.matches}</div>
+              <RepBar score={p.rep} />
+              <div style={{ display:'flex', justifyContent:'center' }}>
+                <span style={{ padding:'2px 9px', borderRadius:999, fontSize:10, fontWeight:700,
+                  background: roleColors[p.role], border:`1px solid ${roleBdr[p.role]}`, color: roleC[p.role] }}>
+                  {p.role}
+                </span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'center' }}>
+                {p.status === 'warning' ? <Badge tone="red">A rischio</Badge>
+                : p.status === 'watch'  ? <Badge tone="yellow">Monitorato</Badge>
+                : <Badge tone="green">Attivo</Badge>}
+              </div>
+              <div style={{ display:'flex', gap:5, justifyContent:'flex-end' }}>
+                <button onClick={() => setShowRoleModal(p)} title="Gestisci ruolo" style={{
+                  width:28, height:28, borderRadius:8, border:'1px solid rgba(121,167,216,0.3)',
+                  background:'rgba(121,167,216,0.12)', color:'#9abfdd', cursor:'pointer', fontSize:12,
+                }}>⚙</button>
+                <button onClick={() => addToast({ message:`${p.name} segnalato per revisione.`, tone:'warning' })} title="Segnala" style={{
+                  width:28, height:28, borderRadius:8, border:'1px solid rgba(242,211,94,0.3)',
+                  background:'rgba(242,211,94,0.10)', color:'#f5d96a', cursor:'pointer', fontSize:12,
+                }}>⚠</button>
+                <button onClick={() => addToast({ message:`${p.name} rimosso dalla lega.`, tone:'danger' })} title="Rimuovi" style={{
+                  width:28, height:28, borderRadius:8, border:'1px solid rgba(233,109,109,0.3)',
+                  background:'rgba(233,109,109,0.10)', color:'#f09090', cursor:'pointer', fontSize:12,
+                }}>✕</button>
+              </div>
+            </div>
+          ))}
+        </GlassCard>
+      )}
+
+      {/* Inviti */}
+      {tab === 'inviti' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <GlassCard style={{ padding:'22px 24px' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Invita nuovo giocatore</div>
+            <div style={{ display:'flex', gap:10 }}>
+              <div style={{ flex:1 }}>
+                <GlassInput placeholder="email@esempio.it" value={inviteEmail} onChange={setInviteEmail} />
+              </div>
+              <BtnPrimary onClick={() => {
+                if (!inviteEmail.includes('@')) return;
+                addToast({ message:`Invito inviato a ${inviteEmail}!`, tone:'success' });
+                setInviteEmail('');
+              }}>✉️ Invia invito</BtnPrimary>
+            </div>
+            <div style={{ marginTop:12, padding:'10px 14px', background:'rgba(185,255,90,0.07)',
+              borderRadius:10, border:'1px solid rgba(185,255,90,0.2)' }}>
+              <div style={{ fontSize:12, color:'#c8ff78', fontWeight:600, marginBottom:4 }}>🔗 Link invito diretto</div>
+              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                <code style={{ flex:1, fontSize:11, color:'rgba(255,255,255,0.6)',
+                  background:'rgba(0,0,0,0.3)', padding:'6px 10px', borderRadius:8 }}>
+                  https://tennisillo.app/join/TN-2026-PRIMA-XKQZ
+                </code>
+                <button onClick={() => addToast({ message:'Link copiato!', tone:'success' })} style={{
+                  padding:'6px 12px', borderRadius:8, border:'1px solid rgba(185,255,90,0.3)',
+                  background:'rgba(185,255,90,0.12)', color:'#c8ff78', cursor:'pointer', fontSize:12, fontWeight:600,
+                }}>Copia</button>
+              </div>
+            </div>
+          </GlassCard>
+          <GlassCard style={{ padding:'20px 24px' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Inviti inviati</div>
+            {PENDING_INVITES.map(inv => (
+              <div key={inv.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0',
+                borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.88)' }}>{inv.email}</div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', marginTop:2 }}>Inviato {inv.sentAt}</div>
+                </div>
+                {inv.status === 'pending'
+                  ? <Badge tone="yellow">In attesa</Badge>
+                  : <Badge tone="gray">Scaduto</Badge>
+                }
+                {inv.status === 'expired' && (
+                  <button onClick={() => addToast({ message:'Invito rinviato!', tone:'success' })} style={{
+                    padding:'4px 10px', borderRadius:7, border:'1px solid rgba(255,255,255,0.2)',
+                    background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.65)',
+                    cursor:'pointer', fontSize:11, fontWeight:600,
+                  }}>Rinvia</button>
+                )}
+              </div>
+            ))}
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Maestri */}
+      {tab === 'maestri' && (
+        <GlassCard style={{ padding:'22px 24px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:14 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Maestri di lega</div>
+            <BtnPrimary small onClick={() => addToast({ message:'Il modulo Maestro deve essere attivato prima in Configurazione Punteggio.', tone:'warning' })}>
+              + Aggiungi Maestro
+            </BtnPrimary>
+          </div>
+          <div style={{ padding:'40px', textAlign:'center', background:'rgba(255,255,255,0.04)', borderRadius:14, border:'1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize:36, marginBottom:8 }}>🎓</div>
+            <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.6)', marginBottom:6 }}>Nessun Maestro registrato</div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.6, maxWidth:360, margin:'0 auto' }}>
+              Il modulo Allenamento con Maestro è attualmente disattivato. Attivalo in Configurazione Punteggio, poi potrai invitare utenti con il ruolo Maestro.
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Role modal */}
+      {showRoleModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)',
+          zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}
+          onClick={() => setShowRoleModal(null)}>
+          <div style={{ background:'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
+            border:'1px solid rgba(255,255,255,0.2)', borderRadius:22, backdropFilter:'blur(36px)',
+            padding:'26px 30px', maxWidth:380, animation:'fadeUp 0.2s ease', width:'100%' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
+              <Avatar p={showRoleModal} size={42} />
+              <div>
+                <div style={{ fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.97)' }}>{showRoleModal.name}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>Ruolo attuale: {showRoleModal.role}</div>
+              </div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:18 }}>
+              {['player','moderator','maestro'].map(role => (
+                <button key={role} onClick={() => {
+                  addToast({ message:`${showRoleModal.name} → ruolo ${role} assegnato.`, tone:'success' });
+                  setShowRoleModal(null);
+                }} style={{
+                  padding:'10px 14px', borderRadius:11, cursor:'pointer', textAlign:'left',
+                  background: showRoleModal.role===role ? `${roleColors[role] ?? 'rgba(255,255,255,0.1)'}` : 'rgba(255,255,255,0.06)',
+                  border:`1px solid ${showRoleModal.role===role ? (roleBdr[role]??'rgba(255,255,255,0.2)') : 'rgba(255,255,255,0.1)'}`,
+                  color:'rgba(255,255,255,0.88)', fontSize:13, fontWeight:600, transition:'all 0.15s',
+                }}>
+                  {role==='player'?'👤 Giocatore':role==='moderator'?'🛡 Moderatore':'🎓 Maestro'}
+                  {showRoleModal.role===role && <span style={{ color:'#c8ff78', marginLeft:8 }}>← attuale</span>}
+                </button>
+              ))}
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <BtnSecondary small danger onClick={() => {
+                addToast({ message:`${showRoleModal.name} rimosso dalla lega.`, tone:'danger' });
+                setShowRoleModal(null);
+              }}>🚫 Rimuovi dalla lega</BtnSecondary>
+              <BtnSecondary small onClick={() => setShowRoleModal(null)}>Chiudi</BtnSecondary>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CAMPI ─────────────────────────────────────────────────────────────────────
+function ScreenCampi({ addToast }) {
+  const [campi, setCampi]     = useState(CAMPI);
+  const [showForm, setShowForm] = useState(false);
+  const [editField, setEditField] = useState(null);
+  const [form, setForm] = useState({ name:'', address:'', surface:'Terra rossa', cover:'Scoperto', price:'', link:'', phone:'' });
+  const setF = k => v => setForm(f => ({ ...f, [k]:v }));
+
+  const surfaceIcon = { 'Terra rossa':'🔶', 'Cemento':'⬜', 'Sintetico':'🟩', 'Erba':'🌿' };
+  const coverIcon   = { 'Scoperto':'☀️', 'Coperto':'🏗', 'Misto':'⛅' };
+
+  const approve = (id) => {
+    setCampi(c => c.map(f => f.id===id ? { ...f, status:'active' } : f));
+    addToast({ message:'Campo approvato e pubblicato!', tone:'success' });
+  };
+  const archive = (id) => {
+    setCampi(c => c.map(f => f.id===id ? { ...f, status:'archived' } : f));
+    addToast({ message:'Campo archiviato.', tone:'info' });
+  };
+
+  const pending  = campi.filter(c => c.status==='pending');
+  const active   = campi.filter(c => c.status==='active');
+  const archived = campi.filter(c => c.status==='archived');
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <SectionTitle sub={`${active.length} attivi · ${pending.length} in attesa · ${archived.length} archiviati`}>Anagrafica Campi</SectionTitle>
+        <BtnPrimary small onClick={() => { setEditField(null); setForm({ name:'',address:'',surface:'Terra rossa',cover:'Scoperto',price:'',link:'',phone:'' }); setShowForm(true); }}>
+          + Aggiungi campo
+        </BtnPrimary>
+      </div>
+
+      {/* Pending proposals */}
+      {pending.length > 0 && (
+        <GlassCard style={{ padding:'16px 20px', border:'1px solid rgba(242,211,94,0.25)', background:'rgba(242,211,94,0.07)' }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#f5d96a', marginBottom:10 }}>⏳ Proposte in attesa di validazione</div>
+          {pending.map(c => (
+            <div key={c.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px',
+              background:'rgba(242,211,94,0.08)', borderRadius:11, border:'1px solid rgba(242,211,94,0.2)', marginBottom:6 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{c.name}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2 }}>
+                  {c.address} · Proposto da: <strong style={{ color:'#f5d96a' }}>{c.proposedBy}</strong>
+                </div>
+              </div>
+              <BtnSecondary small danger onClick={() => archive(c.id)}>Rifiuta</BtnSecondary>
+              <BtnPrimary small onClick={() => approve(c.id)}>✓ Approva</BtnPrimary>
+            </div>
+          ))}
+        </GlassCard>
+      )}
+
+      {/* Active courts table */}
+      <GlassCard style={{ padding:'20px 24px' }}>
+        <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Campi attivi</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 90px 90px 110px 1fr 100px',
+          padding:'5px 12px', fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.3)',
+          letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4, gap:8 }}>
+          <div>Nome e indirizzo</div><div>Superficie</div><div>Copertura</div>
+          <div>Prezzo</div><div>Link prenotazione</div><div style={{ textAlign:'right' }}>Azioni</div>
+        </div>
+        {active.map(c => (
+          <div key={c.id} style={{ display:'grid', gridTemplateColumns:'1fr 90px 90px 110px 1fr 100px',
+            alignItems:'center', padding:'11px 12px', borderRadius:11, marginBottom:2, gap:8,
+            transition:'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.92)' }}>{c.name}</div>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.38)', marginTop:1 }}>{c.address}</div>
+            </div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)' }}>{surfaceIcon[c.surface] ?? '⬜'} {c.surface}</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)' }}>{coverIcon[c.cover] ?? ''} {c.cover}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.8)' }}>{c.price || '—'}</div>
+            <div>
+              {c.link
+                ? <a href={c.link} target="_blank" rel="noreferrer" style={{ fontSize:12, color:'rgba(121,167,216,0.9)', textDecoration:'none' }}>
+                    🔗 {c.link.replace('https://','').split('/')[0]}
+                  </a>
+                : <span style={{ fontSize:12, color:'rgba(255,255,255,0.28)' }}>—</span>
+              }
+            </div>
+            <div style={{ display:'flex', gap:5, justifyContent:'flex-end' }}>
+              <button onClick={() => { setEditField(c); setForm(c); setShowForm(true); }} style={{
+                width:28, height:28, borderRadius:7, border:'1px solid rgba(255,255,255,0.15)',
+                background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.6)',
+                cursor:'pointer', fontSize:12,
+              }}>✏</button>
+              <button onClick={() => archive(c.id)} style={{
+                width:28, height:28, borderRadius:7, border:'1px solid rgba(242,211,94,0.3)',
+                background:'rgba(242,211,94,0.10)', color:'#f5d96a',
+                cursor:'pointer', fontSize:12,
+              }}>📦</button>
+            </div>
+          </div>
+        ))}
+      </GlassCard>
+
+      {/* Add/Edit modal */}
+      {showForm && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(10px)',
+          zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}
+          onClick={() => setShowForm(false)}>
+          <div style={{ background:'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
+            border:'1px solid rgba(255,255,255,0.2)', borderRadius:22, backdropFilter:'blur(36px)',
+            padding:'26px 30px', maxWidth:500, width:'100%', animation:'fadeUp 0.2s ease' }}
+            onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize:17, fontWeight:800, color:'rgba(255,255,255,0.97)', marginBottom:18 }}>
+              {editField ? 'Modifica campo' : 'Aggiungi campo'}
+            </h3>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              <GlassInput label="Nome campo *" value={form.name} onChange={setF('name')} placeholder="es. Tennis Club Milano — Campo 3" />
+              <GlassInput label="Indirizzo *" value={form.address} onChange={setF('address')} placeholder="Via Roma 1, Milano" />
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                <GlassSelect label="Superficie" value={form.surface} onChange={setF('surface')}
+                  options={['Terra rossa','Cemento','Sintetico','Erba'].map(v=>({value:v,label:v}))} />
+                <GlassSelect label="Copertura" value={form.cover} onChange={setF('cover')}
+                  options={['Scoperto','Coperto','Misto'].map(v=>({value:v,label:v}))} />
+              </div>
+              <GlassInput label="Prezzo indicativo (es. 15-20€/h)" value={form.price} onChange={setF('price')} placeholder="15-20€/h" />
+              <GlassInput label="Link prenotazione (opzionale)" value={form.link} onChange={setF('link')} placeholder="https://…" />
+              <GlassInput label="Telefono (opzionale)" value={form.phone} onChange={setF('phone')} placeholder="02 123456" />
+            </div>
+            <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>
+              <BtnSecondary small onClick={() => setShowForm(false)}>Annulla</BtnSecondary>
+              <BtnPrimary small onClick={() => {
+                if (!form.name || !form.address) return;
+                addToast({ message: editField ? 'Campo aggiornato!' : 'Campo aggiunto!', tone:'success' });
+                setShowForm(false);
+              }}>
+                {editField ? '💾 Salva modifiche' : '＋ Aggiungi'}
+              </BtnPrimary>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ANTI-FRODE ────────────────────────────────────────────────────────────────
+function ScreenAntiFrode({ addToast }) {
+  const [disputes, setDisputes] = useState(DISPUTES);
+  const [flagged, setFlagged]   = useState(FLAGGED_MATCHES);
+  const [tab, setTab] = useState('dispute');
+
+  const tabs = { dispute:'⚔️ Dispute', pattern:'⚠️ Pattern alert', flag:'🚩 Partite flaggate', rep:'🔒 Reputazione' };
+  const pColors = { high:'#f09090', medium:'#f5d96a', low:'rgba(255,255,255,0.5)' };
+
+  const resolveDispute = (id, decision) => {
+    setDisputes(d => d.map(x => x.id===id ? { ...x, status:'resolved' } : x));
+    addToast({ message:`Disputa ${id} risolta: "${decision}" applicato.`, tone:'success' });
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <SectionTitle sub="Dispute, pattern anomali, partite flaggate e reputazione giocatori">Anti-Frode</SectionTitle>
+
+      <div style={{ display:'flex', gap:3, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:3, width:'fit-content' }}>
+        {Object.entries(tabs).map(([k, v]) => {
+          const count = k==='dispute' ? disputes.filter(d=>d.status==='open').length
+            : k==='pattern' ? PATTERN_ALERTS.filter(a=>a.severity==='high').length
+            : k==='flag' ? flagged.filter(f=>!f.reviewed).length : 0;
+          return (
+            <button key={k} onClick={() => setTab(k)} style={{
+              padding:'7px 14px', borderRadius:9, border:'none', cursor:'pointer',
+              background: tab===k ? (k==='dispute'||k==='flag' ? 'rgba(233,109,109,0.18)' : k==='pattern' ? 'rgba(242,211,94,0.18)' : 'rgba(185,255,90,0.18)') : 'transparent',
+              color: tab===k ? (k==='dispute'||k==='flag' ? '#f09090' : k==='pattern' ? '#f5d96a' : '#c8ff78') : 'rgba(255,255,255,0.55)',
+              fontSize:12, fontWeight: tab===k ? 700 : 500, transition:'all 0.15s',
+              display:'flex', alignItems:'center', gap:5,
+            }}>
+              {v}
+              {count > 0 && <span style={{
+                background:'rgba(233,109,109,0.3)', color:'#f09090', borderRadius:999, padding:'0 6px', fontSize:10, fontWeight:800,
+              }}>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* DISPUTE */}
+      {tab === 'dispute' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {disputes.map(d => (
+            <GlassCard key={d.id} style={{ padding:'18px 22px',
+              border: d.status==='open' ? `1px solid ${d.priority==='high'?'rgba(233,109,109,0.3)':'rgba(242,211,94,0.2)'}` : '1px solid rgba(255,255,255,0.1)',
+              background: d.status==='open' ? (d.priority==='high'?'rgba(233,109,109,0.07)':'rgba(242,211,94,0.05)') : 'linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.03))',
+            }}>
+              <div style={{ display:'flex', alignItems:'flex-start', gap:14 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.4)' }}>{d.matchId}</span>
+                    {d.status==='open'
+                      ? <Badge tone={d.priority==='high'?'red':d.priority==='medium'?'yellow':'gray'}>
+                          {d.priority==='high'?'🔴 Alta priorità':d.priority==='medium'?'🟡 Media':'🟢 Bassa'}
+                        </Badge>
+                      : <Badge tone="gray">✓ Risolta</Badge>
+                    }
+                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)', marginLeft:'auto' }}>{d.date}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                    <Avatar p={d.playerA} size={32} />
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{d.playerA.name}</div>
+                      <div style={{ fontSize:12, color:'#c8ff78', fontFamily:'monospace', fontWeight:700 }}>{d.scoreA}</div>
+                    </div>
+                    <div style={{ padding:'4px 10px', background:'rgba(255,255,255,0.08)', borderRadius:8,
+                      fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.5)' }}>VS</div>
+                    <Avatar p={d.playerB} size={32} />
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{d.playerB.name}</div>
+                      <div style={{ fontSize:12, color:'#f09090', fontFamily:'monospace', fontWeight:700 }}>{d.scoreB}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', padding:'8px 10px',
+                    background:'rgba(255,255,255,0.05)', borderRadius:8 }}>
+                    I due giocatori riportano punteggi diversi. Arbitrato admin richiesto.
+                  </div>
+                </div>
+                {d.status==='open' && (
+                  <div style={{ display:'flex', flexDirection:'column', gap:8, flexShrink:0 }}>
+                    <BtnPrimary small onClick={() => resolveDispute(d.id, `Vince ${d.playerA.name} ${d.scoreA}`)}>
+                      ✓ Versione {d.playerA.name.split(' ')[0]}
+                    </BtnPrimary>
+                    <BtnPrimary small onClick={() => resolveDispute(d.id, `Vince ${d.playerB.name} ${d.scoreB}`)}>
+                      ✓ Versione {d.playerB.name.split(' ')[0]}
+                    </BtnPrimary>
+                    <BtnSecondary small danger onClick={() => resolveDispute(d.id, 'Partita annullata')}>
+                      Annulla partita
+                    </BtnSecondary>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+
+      {/* PATTERN */}
+      {tab === 'pattern' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {PATTERN_ALERTS.map(a => (
+            <GlassCard key={a.id} style={{ padding:'18px 22px',
+              border:`1px solid ${a.severity==='high'?'rgba(233,109,109,0.3)':a.severity==='medium'?'rgba(242,211,94,0.25)':'rgba(255,255,255,0.1)'}`,
+              background: a.severity==='high'?'rgba(233,109,109,0.07)':a.severity==='medium'?'rgba(242,211,94,0.05)':'rgba(255,255,255,0.04)',
+            }}>
+              <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                <div style={{ width:38, height:38, borderRadius:12, flexShrink:0,
+                  background: a.severity==='high'?'rgba(233,109,109,0.18)':'rgba(242,211,94,0.15)',
+                  border:`1px solid ${a.severity==='high'?'rgba(233,109,109,0.4)':'rgba(242,211,94,0.3)'}`,
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
+                  {a.type==='collusion'?'👥':a.type==='sparring_cap'?'⚡':'⏱'}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:4 }}>
+                    <Badge tone={a.severity==='high'?'red':a.severity==='medium'?'yellow':'gray'}>
+                      {a.severity==='high'?'Alta priorità':a.severity==='medium'?'Media':'Bassa'}
+                    </Badge>
+                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)' }}>{a.date}</span>
+                  </div>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', lineHeight:1.5, marginBottom:8 }}>{a.desc}</div>
+                  <div style={{ display:'flex', gap:6 }}>
+                    {a.players.map(pid => {
+                      const p = PLAYERS.find(x=>x.id===pid);
+                      return p ? (
+                        <div key={pid} style={{ display:'flex', alignItems:'center', gap:5, padding:'3px 8px',
+                          background:'rgba(255,255,255,0.08)', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)' }}>
+                          <Avatar p={p} size={18} />
+                          <span style={{ fontSize:11, color:'rgba(255,255,255,0.7)' }}>{p.name}</span>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                  <BtnSecondary small onClick={() => addToast({ message:'Avviso inviato ai giocatori.', tone:'warning' })}>⚠ Avvisa</BtnSecondary>
+                  <BtnSecondary small danger onClick={() => addToast({ message:'Alert archiviato.', tone:'info' })}>Archivia</BtnSecondary>
+                </div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+
+      {/* FLAGGED */}
+      {tab === 'flag' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {flagged.map(f => (
+            <GlassCard key={f.id} style={{ padding:'16px 20px',
+              opacity: f.reviewed ? 0.6 : 1,
+              border: f.reviewed ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(242,211,94,0.25)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:36, height:36, borderRadius:11, flexShrink:0,
+                  background:'rgba(242,211,94,0.15)', border:'1px solid rgba(242,211,94,0.3)',
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+                  🚩
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3 }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)' }}>{f.matchId}</span>
+                    <Badge tone={f.reviewed?'gray':'yellow'}>{f.reviewed?'Revisionata':'Da revisionare'}</Badge>
+                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)' }}>{f.date}</span>
+                  </div>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.85)', marginBottom:3 }}>
+                    {f.players.join(' vs ')} · <span style={{ fontFamily:'monospace', color:'#c8ff78' }}>{f.score}</span>
+                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>{f.desc}</div>
+                </div>
+                {!f.reviewed && (
+                  <div style={{ display:'flex', gap:6 }}>
+                    <BtnSecondary small onClick={() => {
+                      setFlagged(prev => prev.map(x => x.id===f.id ? { ...x, reviewed:true } : x));
+                      addToast({ message:'Partita approvata, flag rimosso.', tone:'success' });
+                    }}>✓ Approva</BtnSecondary>
+                    <BtnSecondary small danger onClick={() => {
+                      setFlagged(prev => prev.map(x => x.id===f.id ? { ...x, reviewed:true } : x));
+                      addToast({ message:'Partita annullata.', tone:'danger' });
+                    }}>✕ Annulla</BtnSecondary>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+
+      {/* REPUTAZIONE */}
+      {tab === 'rep' && (
+        <GlassCard style={{ padding:'20px 24px' }}>
+          <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginBottom:16, lineHeight:1.6 }}>
+            Il punteggio di reputazione è visibile solo agli admin. Scende con dispute perse, annullamenti, pattern sospetti. Sale con conferme rapide e fair play.
+          </div>
+          {PLAYERS.sort((a,b) => a.rep-b.rep).map(p => (
+            <div key={p.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0',
+              borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+              <Avatar p={p} size={32} />
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ fontSize:13, fontWeight:600, color: p.rep < 60 ? '#f09090' : p.rep < 80 ? '#f5d96a' : 'rgba(255,255,255,0.9)' }}>
+                    {p.name}
+                    {p.warnings > 0 && <span style={{ color:'#f09090', marginLeft:8, fontSize:11 }}>⚠ {p.warnings} avvisi</span>}
+                  </span>
+                  <Badge tone={p.rep>=80?'green':p.rep>=60?'yellow':'red'}>
+                    {p.rep >= 80 ? 'Ottima' : p.rep >= 60 ? 'Attenzione' : 'A rischio'}
+                  </Badge>
+                </div>
+                <RepBar score={p.rep} />
+              </div>
+            </div>
+          ))}
+        </GlassCard>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIDEBAR + APP
+// ─────────────────────────────────────────────────────────────────────────────
+const NAV = [
+  { id:'dashboard', label:'Dashboard',   icon:'⊞' },
+  { id:'stagione',  label:'Stagione',    icon:'📅' },
+  { id:'punteggio', label:'Punteggio',   icon:'⚙' },
+  { id:'giocatori', label:'Giocatori',   icon:'👥' },
+  { id:'campi',     label:'Campi',       icon:'📍' },
+  { id:'antifrode', label:'Anti-Frode',  icon:'🛡', alert:true },
+];
+
+function App() {
+  const [page, setPage]   = useState('dashboard');
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = useCallback((t) => {
+    const id = Date.now();
+    setToasts(ts => [...ts, { ...t, id }]);
+    setTimeout(() => setToasts(ts => ts.filter(x => x.id !== id)), 3500);
+  }, []);
+
+  const openDisputes = DISPUTES.filter(d => d.status === 'open').length;
+  const alerts       = PATTERN_ALERTS.filter(a => a.severity === 'high').length + FLAGGED_MATCHES.filter(f => !f.reviewed).length;
+
+  const renderPage = () => {
+    const props = { addToast, setPage };
+    if (page === 'dashboard') return <ScreenDashboard {...props} />;
+    if (page === 'stagione')  return <ScreenStagione {...props} />;
+    if (page === 'punteggio') return <ScreenPunteggio {...props} />;
+    if (page === 'giocatori') return <ScreenGiocatori {...props} />;
+    if (page === 'campi')     return <ScreenCampi {...props} />;
+    if (page === 'antifrode') return <ScreenAntiFrode {...props} />;
+    return null;
+  };
+
+  return (
+    <div style={{ width:'100vw', height:'100vh', overflow:'hidden', background:BG, display:'flex', fontFamily:"'Inter',system-ui,sans-serif" }}>
+      <div style={{ display:'flex', gap:14, padding:14, width:'100%', height:'100%' }}>
+        {/* Sidebar */}
+        <div style={{
+          width:230, flexShrink:0, display:'flex', flexDirection:'column',
+          background:'linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.06))',
+          border:'1px solid rgba(255,255,255,0.13)', borderRadius:22,
+          backdropFilter:'blur(28px) saturate(140%)',
+          boxShadow:'0 24px 70px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.18)',
+          padding:'18px 12px', height:'100%', overflow:'hidden',
+        }}>
+          {/* Logo + admin badge */}
+          <div style={{ padding:'0 4px 16px', borderBottom:'1px solid rgba(255,255,255,0.09)', marginBottom:4 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+              <div style={{ width:32, height:32, borderRadius:10, flexShrink:0,
+                background:'linear-gradient(135deg,oklch(0.85 0.22 85),oklch(0.62 0.24 85))',
+                boxShadow:'0 0 18px oklch(0.75 0.22 85 / 0.4)', position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', top:4, left:5, width:22, height:22, borderRadius:'50%', border:'1.5px solid rgba(0,0,0,0.2)' }} />
+                <div style={{ position:'absolute', top:4, left:5, width:22, height:22, borderRadius:'50%', borderLeft:'1.5px solid rgba(255,255,255,0.65)', transform:'rotate(-30deg)' }} />
+              </div>
+              <div>
+                <div style={{ fontSize:12, fontWeight:800, color:'rgba(255,255,255,0.95)', letterSpacing:'-0.01em' }}>Tennisillo</div>
+                <div style={{ fontSize:9, color:'rgba(255,255,255,0.38)' }}>Admin Panel</div>
+              </div>
+            </div>
+            <div style={{ padding:'5px 10px', background:'rgba(185,255,90,0.12)', border:'1px solid rgba(185,255,90,0.3)', borderRadius:8, textAlign:'center' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#c8ff78' }}>🔒 Marco Verdi — Admin</div>
+              <div style={{ fontSize:10, color:'rgba(185,255,90,0.6)', marginTop:1 }}>{LEAGUE.name.slice(0,22)}…</div>
+            </div>
+          </div>
+          {/* Nav */}
+          <nav style={{ flex:1, display:'flex', flexDirection:'column', gap:2, overflowY:'auto' }}>
+            {NAV.map(item => {
+              const on = page === item.id;
+              const badge = item.id==='antifrode' ? openDisputes+alerts : 0;
+              return (
+                <button key={item.id} onClick={() => setPage(item.id)} style={{
+                  display:'flex', alignItems:'center', gap:9, padding:'9px 11px', borderRadius:11,
+                  border: on ? '1px solid rgba(185,255,90,0.35)' : '1px solid transparent',
+                  background: on ? 'rgba(185,255,90,0.18)' : 'transparent',
+                  cursor:'pointer', color: on ? '#c8ff78' : 'rgba(255,255,255,0.6)',
+                  fontSize:13, fontWeight: on ? 700 : 500, transition:'all 0.16s', textAlign:'left',
+                }}
+                onMouseEnter={e=>{ if(!on){ e.currentTarget.style.background='rgba(255,255,255,0.07)'; e.currentTarget.style.color='rgba(255,255,255,0.9)'; }}}
+                onMouseLeave={e=>{ if(!on){ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(255,255,255,0.6)'; }}}>
+                  <span style={{ fontSize:14, width:18, textAlign:'center', flexShrink:0 }}>{item.icon}</span>
+                  <span style={{ flex:1 }}>{item.label}</span>
+                  {badge > 0 && (
+                    <span style={{ background:'rgba(233,109,109,0.25)', border:'1px solid rgba(233,109,109,0.4)',
+                      color:'#f09090', borderRadius:999, padding:'0px 6px', fontSize:10, fontWeight:800 }}>{badge}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+          {/* Switch to player view */}
+          <div style={{ borderTop:'1px solid rgba(255,255,255,0.09)', paddingTop:12, marginTop:4 }}>
+            <a href="Tennisillo.html" style={{ textDecoration:'none' }}>
+              <button style={{
+                width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 11px', borderRadius:11,
+                border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.06)',
+                color:'rgba(255,255,255,0.55)', cursor:'pointer', fontSize:12, fontWeight:600,
+              }}>
+                <span>🎾</span> <span>Vista giocatore →</span>
+              </button>
+            </a>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <main style={{
+          flex:1, overflowY:'auto', borderRadius:22,
+          background:'linear-gradient(135deg,rgba(255,255,255,0.10),rgba(255,255,255,0.05))',
+          border:'1px solid rgba(255,255,255,0.12)', backdropFilter:'blur(18px) saturate(130%)',
+          boxShadow:'0 14px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
+          padding:'26px 30px',
+        }}>
+          <div style={{ maxWidth:1060, animation:'fadeUp 0.3s ease' }}>
+            {renderPage()}
+          </div>
+        </main>
+      </div>
+      <Toast toasts={toasts} remove={id => setToasts(ts => ts.filter(t => t.id !== id))} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
