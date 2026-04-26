@@ -44,6 +44,12 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
+# Claude Code — local config and agent skills (never commit)
+.claude/
+.agents/
+.trae/
+skills-lock.json
+
 # Misc
 *.tgz
 .cache/
