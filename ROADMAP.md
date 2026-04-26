@@ -20,8 +20,8 @@ già scritto.
 - [x] `docs/context/{GLOSSARY,DOMAIN_RULES,FAQ}.md`.
 - [x] 3 ADR iniziali (monorepo, Supabase, engine separati).
 - [x] Specifiche v2.0 in Markdown (`docs/specs/01_*.md`, `02_*.md`) — già presenti nel repo (generate prima di questa sessione).
-- [ ] Repo Git pubblicato su GitHub privato. ← da fare: l'utente deve creare il repo remoto e fare `git push`.
-- [ ] Account cloud creati (Supabase, Vercel, Railway, Upstash, Cloudflare R2, Resend, Mapbox). ← da fare: azione manuale utente.
+- [x] Repo Git pubblicato su GitHub privato.
+- [x] Account cloud creati: Supabase, Vercel, Railway. Pendenti: Upstash, Cloudflare R2, Resend, Mapbox.
 - [x] Nome del prodotto definito: **Tennisillo**.
 
 ---
@@ -50,6 +50,36 @@ già scritto.
 - Copiare `apps/api/.env.example` → `.env` e popolare le variabili.
 - Eseguire `pnpm --filter db db:migrate:dev` per applicare la prima migration.
 - Creare il repo remoto GitHub e fare `git push`.
+
+---
+
+## Sprint UI (intermedi, completati post-Sprint 1)
+
+Sprint trasversali per portare il design system Tennisillo nel monorepo.
+Eseguiti dopo Sprint 1 e prima di Sprint 2 perché i componenti UI sono
+riutilizzati da tutti gli sprint funzionali successivi.
+
+### Sprint UI 1 — Componenti base
+- [x] Token estesi: `glass`, `accent`, `status` in `tokens.ts`; `accent`, `danger` nel preset Tailwind.
+- [x] Utility `cn()` in `packages/ui/src/lib/cn.ts`.
+- [x] 10 componenti base: Avatar, StatusBadge, Button, GlassCard, GlassInput, GlassSelect, SegmentedControl, KpiCard, Toast, Modal.
+- [x] Smoke test visivo in `apps/web/src/app/[locale]/_smoke.tsx`.
+- [x] Fix Vercel: separato entry point Tailwind via `package.json#exports`.
+
+### Sprint UI 2 — Componenti di dominio
+- [x] 5 componenti dominio: MatchRow, RankingRow, MiniLineChart, ActivityItem, ChallengeCard.
+- [x] File del prototipo design copiati in `docs/design/` come riferimento visivo.
+
+### Sprint UI 3 — Visual fidelity
+- [x] Riscrittura pixel-perfect di tutti i componenti rispetto a `docs/design/tennisillo-components.jsx`.
+
+### Sprint UI 4 — Tipi di dominio
+- [x] Tipi `Player`, `Match`, `Challenge`, `ActivityFeedItem` in `packages/shared-types`.
+- [x] Refactor componenti dominio per consumare tipi di dominio invece di tipi locali piatti.
+- [x] CLAUDE.md aggiornato con regola NO `git worktree`.
+
+**Criterio di done globale Sprint UI**: design system completo, fedele al prototipo,
+tipato con tipi di dominio, pronto per essere consumato da Sprint 2 in poi.
 
 ---
 

@@ -1,22 +1,11 @@
 import React from 'react';
+import type { Player } from '@tennisillo/shared-types';
 import { Avatar } from './Avatar';
 
-export interface RankingPlayer {
-  ranking: number;
-  initials: string;
-  hue: string;
-  name: string;
-  level: number;
-  points: number;
-  variation: number;
-  winRate: number;
-  matches: number;
-}
-
 export interface RankingRowProps {
-  player: RankingPlayer;
+  player: Player;
   isCurrentPlayer?: boolean;
-  onClick?: (player: RankingPlayer) => void;
+  onClick?: (player: Player) => void;
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];

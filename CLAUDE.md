@@ -179,6 +179,11 @@ Quando le specifiche cambiano:
 
 ## 8. Cosa NON fare
 
+- **Non usare `git worktree`** in nessun caso. Ogni task deve essere svolto
+  con `git checkout -b <branch>` nel repo principale. I worktree creano
+  cartelle in `.claude/worktrees/` che Windows non riesce a eliminare per
+  via dei path lunghi su `node_modules`. Branch naming: `feat/<descrizione>`,
+  `fix/<descrizione>`, `chore/<descrizione>`.
 - Non inventare endpoint, campi di schema o parametri di configurazione che non
   siano già nelle specs o in un ADR.
 - Non introdurre nuove dipendenze npm senza discuterlo prima con l'utente.

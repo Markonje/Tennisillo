@@ -1,20 +1,15 @@
 import React from 'react';
+import type { Challenge, Player } from '@tennisillo/shared-types';
 import { Avatar } from './Avatar';
 
-export interface ChallengeData {
-  fromInitials: string;
-  fromHue: string;
-  fromName: string;
-  proposedDate: string;
-}
-
 export interface ChallengeCardProps {
-  challenge: ChallengeData;
+  challenge: Challenge;
+  challenger: Player;
   onAccept: () => void;
   onReject: () => void;
 }
 
-export function ChallengeCard({ challenge, onAccept, onReject }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, challenger, onAccept, onReject }: ChallengeCardProps) {
   return (
     <div style={{
       display: 'flex',
@@ -26,9 +21,9 @@ export function ChallengeCard({ challenge, onAccept, onReject }: ChallengeCardPr
       marginBottom: 8,
       border: '1px solid rgba(255,255,255,0.1)',
     }}>
-      <Avatar initials={challenge.fromInitials} hue={challenge.fromHue} size={38} />
+      <Avatar initials={challenger.initials} hue={challenger.hue} size={38} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{challenge.fromName}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{challenger.name}</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Sfida per il {challenge.proposedDate}</div>
       </div>
       <button
