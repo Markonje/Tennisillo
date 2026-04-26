@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '../lib/cn';
-import { tokens } from '../tokens';
 
 export interface SegmentedControlProps {
   options: string[];
@@ -12,12 +11,14 @@ export interface SegmentedControlProps {
 export function SegmentedControl({ options, value, onChange, className }: SegmentedControlProps) {
   return (
     <div
-      className={cn('inline-flex rounded-xl p-1 gap-1', className)}
+      className={cn(className)}
       style={{
-        background: tokens.glass.inputBg,
-        backdropFilter: tokens.glass.inputBlur,
-        WebkitBackdropFilter: tokens.glass.inputBlur,
-        border: tokens.glass.inputBorder,
+        display: 'inline-flex',
+        background: 'rgba(255,255,255,0.07)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: 12,
+        padding: 3,
+        gap: 2,
       }}
     >
       {options.map((opt) => {
@@ -27,18 +28,18 @@ export function SegmentedControl({ options, value, onChange, className }: Segmen
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className={cn(
-              'px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer',
-              active ? 'text-[#0a1a0e]' : 'text-white/60 hover:text-white/90',
-            )}
-            style={
-              active
-                ? {
-                    background: 'linear-gradient(135deg,#c8ff6a,#8ee044)',
-                    boxShadow: '0 2px 8px rgba(185,255,90,0.30)',
-                  }
-                : {}
-            }
+            style={{
+              padding: '6px 14px',
+              borderRadius: 10,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+              transition: 'all 0.18s ease',
+              background: active ? 'rgba(185,255,90,0.2)' : 'transparent',
+              color: active ? '#c8ff78' : 'rgba(255,255,255,0.5)',
+              boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.15)' : 'none',
+            }}
           >
             {opt}
           </button>

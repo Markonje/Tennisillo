@@ -1,5 +1,4 @@
 import React from 'react';
-import { cn } from '../lib/cn';
 
 export type ToastTone = 'success' | 'info' | 'warning' | 'danger';
 
@@ -14,18 +13,11 @@ interface ToastProps {
   onRemove: (id: number) => void;
 }
 
-const TONE_STYLE: Record<ToastTone, { bg: string; border: string; icon: string }> = {
-  success: { bg: 'rgba(185,255,90,0.15)', border: 'rgba(185,255,90,0.4)', icon: '✓' },
-  info:    { bg: 'rgba(121,167,216,0.15)', border: 'rgba(121,167,216,0.4)', icon: 'ℹ' },
-  warning: { bg: 'rgba(242,211,94,0.15)', border: 'rgba(242,211,94,0.4)', icon: '⚠' },
-  danger:  { bg: 'rgba(233,109,109,0.15)', border: 'rgba(233,109,109,0.4)', icon: '✕' },
-};
-
-const TONE_TEXT: Record<ToastTone, string> = {
-  success: '#C8FF78',
-  info:    '#9ABFDD',
-  warning: '#F5D96A',
-  danger:  '#F09090',
+const TONE: Record<ToastTone, { bg: string; border: string; icon: string; color: string }> = {
+  success: { bg: 'rgba(185,255,90,0.15)',  border: 'rgba(185,255,90,0.4)',  icon: '✓', color: '#c8ff78' },
+  info:    { bg: 'rgba(121,167,216,0.15)', border: 'rgba(121,167,216,0.4)', icon: 'ℹ', color: '#9abfdd' },
+  warning: { bg: 'rgba(242,211,94,0.15)',  border: 'rgba(242,211,94,0.4)',  icon: '!', color: '#f5d96a' },
+  danger:  { bg: 'rgba(233,109,109,0.15)', border: 'rgba(233,109,109,0.4)', icon: '✕', color: '#f09090' },
 };
 
 export function Toast({ toasts, onRemove }: ToastProps) {
@@ -36,38 +28,46 @@ export function Toast({ toasts, onRemove }: ToastProps) {
           from { transform: translateX(110%); opacity: 0; }
           to   { transform: translateX(0);    opacity: 1; }
         }
-        ._toast-item { animation: _toast-slide-in 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+        ._toast-item { animation: _toast-slide-in 0.25s ease both; }
       `}</style>
-      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2 max-w-xs w-full pointer-events-none">
+      <div style={{
+        position: 'fixed',
+        top: 20,
+        right: 20,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        pointerEvents: 'none',
+      }}>
         {toasts.map((t) => {
-          const s = TONE_STYLE[t.tone];
+          const s = TONE[t.tone];
           return (
             <div
               key={t.id}
-              className={cn(
-                '_toast-item pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-2xl',
-              )}
+              className="_toast-item"
               style={{
                 background: s.bg,
                 border: `1px solid ${s.border}`,
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
+                borderRadius: 14,
+                padding: '12px 16px',
+                backdropFilter: 'blur(24px)',
+                pointerEvents: 'all',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                minWidth: 260,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
               }}
             >
-              <span
-                className="shrink-0 mt-0.5 text-sm font-bold w-5 h-5 flex items-center justify-center rounded-full"
-                style={{ color: TONE_TEXT[t.tone] }}
-              >
-                {s.icon}
-              </span>
-              <p className="flex-1 text-sm text-white/90">{t.message}</p>
+              <span style={{ color: s.color, fontWeight: 700, fontSize: 14 }}>{s.icon}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', flex: 1 }}>{t.message}</span>
               <button
                 type="button"
                 onClick={() => onRemove(t.id)}
-                className="shrink-0 text-white/40 hover:text-white/80 transition-colors mt-0.5 cursor-pointer"
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: 0 }}
               >
-                ×
+                ✕
               </button>
             </div>
           );
