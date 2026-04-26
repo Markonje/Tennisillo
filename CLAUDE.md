@@ -155,7 +155,28 @@ python3 tools/normalize_specs.py <in.md> <out.md>
 
 ---
 
-## 7. Flusso di lavoro con Claude Code
+## 7. Supabase MCP
+
+Il progetto usa il server MCP Supabase per interagire direttamente
+con il DB in sessioni Claude Code.
+
+- Project ref: `xmtrfkphtvqgxmscfcgw`
+- Region: eu-central-1
+- MCP server: `https://mcp.supabase.com/mcp?project_ref=xmtrfkphtvqgxmscfcgw`
+
+**Autenticazione**: il primo utilizzo richiede `claude /mcp` →
+seleziona `supabase` → `Authenticate` (flusso browser, fatto una volta sola).
+
+**Cosa puoi fare con MCP attivo**:
+- Leggere schema DB in tempo reale
+- Applicare e verificare migration
+- Gestire policy RLS
+- Vedere log e query lente
+- Creare/modificare tabelle e funzioni
+
+---
+
+## 8. Flusso di lavoro con Claude Code
 
 All'inizio di ogni sessione:
 1. Leggi questo file (`CLAUDE.md`) — già automatico.
@@ -177,7 +198,7 @@ Quando le specifiche cambiano:
 
 ---
 
-## 8. Cosa NON fare
+## 9. Cosa NON fare
 
 - **Non usare `git worktree`** in nessun caso. Ogni task deve essere svolto
   con `git checkout -b <branch>` nel repo principale. I worktree creano
@@ -197,7 +218,7 @@ Quando le specifiche cambiano:
 
 ---
 
-## 9. Contatti / priorità di escalation
+## 10. Contatti / priorità di escalation
 
 - Se un requisito è ambiguo: chiedi all'utente in chat, non tirare a indovinare.
 - Se una regola di `DOMAIN_RULES.md` sembra contraddire una spec: segnalalo,
