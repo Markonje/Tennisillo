@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tennisillo — Accesso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #0B1A1C; color: rgba(255,255,255,0.9); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+@keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes slideIn  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+input[type="range"] { accent-color: #B9FF5A; }
+select option { background: #0f2430; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback, useRef, useEffect } = React;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const MY_LEAGUES = [
+  {
+    id:'lg1', name:'Lega Primavera Milano 2026', sport:'Tennis Singolo', sportIcon:'🎾',
+    type:'private', members:12, maxMembers:16,
+    season:{ label:'Stagione Primavera 2026', week:7, totalWeeks:13, status:'active' },
+    myRanking:12, myPoints:1430, myVariation:2,
+    pendingNotifications:0, myRole:'player',
+    description:'La lega storica del Tennis Club Milano, attiva dal 2020.',
+    admin:{ name:'Marco Verdi', initials:'MV', hue:'142' },
+    bg:'142',
+  },
+  {
+    id:'lg2', name:'Old Boys Forever', sport:'Tennis Singolo', sportIcon:'🎾',
+    type:'private', members:8, maxMembers:10,
+    season:{ label:'Stagione Estate 2026', week:3, totalWeeks:8, status:'active' },
+    myRanking:3, myPoints:980, myVariation:1,
+    pendingNotifications:2, myRole:'player',
+    description:'Amici di lunga data che si sfidano da 5 anni.',
+    admin:{ name:'Gianni Russo', initials:'GR', hue:'28' },
+    bg:'28',
+  },
+  {
+    id:'lg3', name:'Padel Navigli', sport:'Padel', sportIcon:'🏓',
+    type:'public', members:16, maxMembers:24,
+    season:{ label:'Stagione Autunno 2026', week:0, totalWeeks:10, status:'pre-season' },
+    myRanking:null, myPoints:0, myVariation:0,
+    pendingNotifications:1, myRole:'player',
+    description:'Lega pubblica dedicata al Padel nei circoli del Naviglio.',
+    admin:{ name:'Sara Neri', initials:'SN', hue:'330' },
+    bg:'210',
+  },
+];
+
+const PUBLIC_LEAGUES = [
+  { id:'p1', name:'TC Milano Open', sport:'Tennis Singolo', sportIcon:'🎾', members:18, maxMembers:24, type:'public', season:'Stagione attiva', level:'Intermedio–Avanzato', bg:'85' },
+  { id:'p2', name:'Circolo Canottieri League', sport:'Tennis Singolo', sportIcon:'🎾', members:10, maxMembers:16, type:'public', season:'Stagione attiva', level:'Tutti i livelli', bg:'185' },
+  { id:'p3', name:'Padel Porta Romana', sport:'Padel', sportIcon:'🏓', members:12, maxMembers:20, type:'public', season:'Pre-stagione', level:'Intermedio', bg:'280' },
+  { id:'p4', name:'Milano Doppio Club', sport:'Tennis Doppio', sportIcon:'🎾', members:8, maxMembers:16, type:'public', season:'Stagione attiva', level:'Avanzato', bg:'55' },
+  { id:'p5', name:'Sport Village Assago', sport:'Tennis Singolo', sportIcon:'🎾', members:22, maxMembers:30, type:'public', season:'Stagione attiva', level:'Tutti i livelli', bg:'0' },
+  { id:'p6', name:'Parco Lambro Tennis', sport:'Tennis Singolo + Doppio', sportIcon:'🎾', members:6, maxMembers:16, type:'public', season:'Pre-stagione', level:'Principiante–Intermedio', bg:'165' },
+];
+
+const LEAGUE_MEMBERS = [
+  { name:'Marco Verdi', initials:'MV', hue:'142', ranking:1, level:8, role:'admin' },
+  { name:'Alessandro Neri', initials:'AN', hue:'210', ranking:2, level:7, role:'player' },
+  { name:'Giovanni Rossi', initials:'GR', hue:'0', ranking:3, level:7, role:'player' },
+  { name:'Paolo Bianchi', initials:'PB', hue:'28', ranking:4, level:6, role:'player' },
+  { name:'Luca Bianchi', initials:'LB', hue:'85', ranking:12, level:7, role:'player' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DESIGN TOKENS & HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const BG = 'radial-gradient(ellipse at 15% 0%, rgba(185,255,90,0.13) 0%, transparent 32%), radial-gradient(ellipse at 80% 20%, rgba(121,167,216,0.20) 0%, transparent 32%), linear-gradient(145deg,#071517 0%,#17304A 52%,#0B1A1C 100%)';
+
+function GlassPanel({ children, style, hover, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov && hover
+          ? 'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.07))'
+          : 'linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05))',
+        border:'1px solid rgba(255,255,255,0.14)', borderRadius:22,
+        backdropFilter:'blur(28px) saturate(145%)',
+        boxShadow: hov && hover
+          ? '0 22px 55px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.2)'
+          : '0 14px 42px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.16)',
+        transform: hov && hover ? 'translateY(-2px)' : 'none',
+        transition:'all 0.22s ease', cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}>{children}</div>
+  );
+}
+
+function Input({ label, type='text', value, onChange, placeholder, error }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500 }}>{label}</label>}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+        style={{
+          background: focus ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)',
+          border:`1px solid ${error ? 'rgba(233,109,109,0.6)' : focus ? 'rgba(185,255,90,0.5)' : 'rgba(255,255,255,0.14)'}`,
+          borderRadius:12, padding:'11px 14px', color:'rgba(255,255,255,0.92)',
+          fontSize:14, outline:'none', width:'100%',
+          backdropFilter:'blur(12px)', transition:'all 0.18s ease',
+          boxShadow: focus ? '0 0 0 3px rgba(185,255,90,0.12)' : 'none',
+        }} />
+      {error && <span style={{ fontSize:11, color:'#f09090' }}>{error}</span>}
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500 }}>{label}</label>}
+      <select value={value} onChange={e => onChange(e.target.value)} style={{
+        background:'rgba(12,28,36,0.9)', border:'1px solid rgba(255,255,255,0.14)',
+        borderRadius:12, padding:'11px 14px', color:'rgba(255,255,255,0.92)',
+        fontSize:14, outline:'none', width:'100%', cursor:'pointer',
+      }}>
+        {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function BtnPrimary({ children, onClick, disabled, full, small }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background: disabled ? 'rgba(185,255,90,0.3)' : hov
+          ? 'linear-gradient(135deg,#d8ff88,#a0ef5a)'
+          : 'linear-gradient(135deg,#c8ff6a,#8ee044)',
+        color:'#0a1a0e', fontWeight:700, border:'none', cursor: disabled ? 'not-allowed' : 'pointer',
+        padding: small ? '8px 18px' : '12px 24px',
+        borderRadius:14, fontSize: small ? 13 : 14,
+        boxShadow: disabled ? 'none' : `0 8px 24px rgba(185,255,90,${hov?0.4:0.25})`,
+        transform: hov && !disabled ? 'translateY(-1px)' : 'none',
+        transition:'all 0.18s ease',
+        width: full ? '100%' : undefined,
+        display:'flex', alignItems:'center', justifyContent:'center', gap:7,
+      }}>{children}</button>
+  );
+}
+
+function BtnSecondary({ children, onClick, full, small }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)',
+        color:'rgba(255,255,255,0.88)', border:'1px solid rgba(255,255,255,0.18)',
+        cursor:'pointer', padding: small ? '8px 18px' : '12px 24px',
+        borderRadius:14, fontSize: small ? 13 : 14, fontWeight:600,
+        transition:'all 0.18s ease', backdropFilter:'blur(12px)',
+        width: full ? '100%' : undefined,
+        display:'flex', alignItems:'center', justifyContent:'center', gap:7,
+      }}>{children}</button>
+  );
+}
+
+function BtnGhost({ children, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      background:'none', border:'none', color:'rgba(185,255,90,0.85)',
+      cursor:'pointer', fontSize:13, fontWeight:600, padding:'4px 0',
+    }}>{children}</button>
+  );
+}
+
+function Logo({ size = 'md' }) {
+  const sz = size === 'lg' ? 48 : size === 'sm' ? 28 : 38;
+  const fs = sz * 0.36;
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap: sz * 0.28 }}>
+      <div style={{
+        width:sz, height:sz, borderRadius: sz * 0.33, flexShrink:0,
+        background:'linear-gradient(135deg,oklch(0.85 0.22 85),oklch(0.62 0.24 85))',
+        boxShadow:'0 0 24px oklch(0.75 0.22 85 / 0.45)',
+        position:'relative', overflow:'hidden',
+      }}>
+        <div style={{ position:'absolute', top:sz*0.14, left:sz*0.17, width:sz*0.65, height:sz*0.65, borderRadius:'50%', border:`${sz*0.04}px solid rgba(0,0,0,0.18)` }} />
+        <div style={{ position:'absolute', top:sz*0.14, left:sz*0.17, width:sz*0.65, height:sz*0.65, borderRadius:'50%', borderLeft:`${sz*0.04}px solid rgba(255,255,255,0.65)`, transform:'rotate(-30deg)' }} />
+      </div>
+      {size !== 'sm' && (
+        <div>
+          <div style={{ fontSize: size === 'lg' ? 22 : 15, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', lineHeight:1.1 }}>Tennisillo</div>
+          {size === 'lg' && <div style={{ fontSize:12, color:'rgba(255,255,255,0.38)', fontWeight:500, marginTop:1 }}>friendly neighborhood racket</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Avatar({ initials, hue, size = 34 }) {
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:'50%', flexShrink:0,
+      background:`linear-gradient(135deg,oklch(0.72 0.18 ${hue}),oklch(0.55 0.22 ${hue}))`,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:size*0.35, fontWeight:700, color:'rgba(0,0,0,0.75)',
+      border:'1.5px solid rgba(255,255,255,0.22)',
+      boxShadow:`0 0 12px oklch(0.65 0.18 ${hue} / 0.3)`,
+      letterSpacing:'-0.02em',
+    }}>{initials}</div>
+  );
+}
+
+function StepDots({ total, current }) {
+  return (
+    <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+      {Array.from({ length:total }).map((_,i) => (
+        <div key={i} style={{
+          width: i === current ? 22 : 8, height:8, borderRadius:999,
+          background: i < current ? 'rgba(185,255,90,0.5)' : i === current ? '#B9FF5A' : 'rgba(255,255,255,0.15)',
+          transition:'all 0.3s ease',
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function Toast({ toasts, remove }) {
+  return (
+    <div style={{ position:'fixed', top:20, right:20, zIndex:9999, display:'flex', flexDirection:'column', gap:8, pointerEvents:'none' }}>
+      {toasts.map(t => {
+        const colors = {
+          success:{ bg:'rgba(185,255,90,0.15)', border:'rgba(185,255,90,0.4)', c:'#c8ff78', icon:'✓' },
+          info:   { bg:'rgba(121,167,216,0.15)',border:'rgba(121,167,216,0.4)',c:'#9abfdd', icon:'ℹ' },
+          warning:{ bg:'rgba(242,211,94,0.15)', border:'rgba(242,211,94,0.4)', c:'#f5d96a', icon:'!' },
+        };
+        const s = colors[t.tone] ?? colors.info;
+        return (
+          <div key={t.id} style={{
+            background:s.bg, border:`1px solid ${s.border}`, borderRadius:14,
+            padding:'12px 16px', backdropFilter:'blur(24px)', pointerEvents:'all',
+            display:'flex', alignItems:'center', gap:10, minWidth:260,
+            boxShadow:'0 10px 30px rgba(0,0,0,0.3)', animation:'slideIn 0.25s ease',
+          }}>
+            <span style={{ color:s.c, fontWeight:700, fontSize:14 }}>{s.icon}</span>
+            <span style={{ fontSize:13, color:'rgba(255,255,255,0.9)', flex:1 }}>{t.message}</span>
+            <button onClick={() => remove(t.id)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', fontSize:14, padding:0 }}>✕</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────────────────────────────────────────
+function LoginPage({ navigate }) {
+  const [email, setEmail]     = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors]   = useState({});
+
+  const submit = () => {
+    const e = {};
+    if (!email.includes('@')) e.email = 'Email non valida';
+    if (password.length < 6)  e.password = 'Minimo 6 caratteri';
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setLoading(true);
+    setTimeout(() => { setLoading(false); navigate('hub'); }, 900);
+  };
+
+  return (
+    <div style={{
+      width:'100vw', height:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+      background: BG, padding:24,
+    }}>
+      {/* Left decorative side */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', maxWidth:480, padding:'0 48px' }}>
+        <div style={{ animation:'fadeUp 0.6s ease both' }}>
+          <Logo size="lg" />
+          <p style={{ marginTop:20, fontSize:16, color:'rgba(255,255,255,0.55)', lineHeight:1.7, maxWidth:340 }}>
+            La piattaforma per organizzare la tua lega di tennis amatoriale. Sfide, classifica, stagioni — tutto in un posto.
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:28 }}>
+            {[
+              { icon:'🏆', text:'Classifica ELO dinamica con bonus e malus' },
+              { icon:'📅', text:'Calendario disponibilità e smart matchmaking' },
+              { icon:'🎾', text:'Supporto tennis singolo, doppio e padel' },
+            ].map(f => (
+              <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{
+                  width:32, height:32, borderRadius:10, flexShrink:0,
+                  background:'rgba(185,255,90,0.12)', border:'1px solid rgba(185,255,90,0.25)',
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:15,
+                }}>{f.icon}</div>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.6)' }}>{f.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Login panel */}
+      <div style={{ animation:'fadeUp 0.7s 0.1s ease both', opacity:0, animationFillMode:'forwards' }}>
+        <GlassPanel style={{ width:420, padding:'36px 40px' }}>
+          <div style={{ marginBottom:28 }}>
+            <h1 style={{ fontSize:22, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', marginBottom:4 }}>Bentornato 👋</h1>
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)' }}>Accedi al tuo account Tennisillo</p>
+          </div>
+
+          {/* Google */}
+          <BtnSecondary full onClick={() => navigate('hub')}>
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFF" fillOpacity=".9" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.1-2.7-.5-4z"/></svg>
+            Continua con Google
+          </BtnSecondary>
+
+          <div style={{ display:'flex', alignItems:'center', gap:12, margin:'20px 0' }}>
+            <div style={{ flex:1, height:1, background:'rgba(255,255,255,0.1)' }} />
+            <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)', fontWeight:500 }}>oppure</span>
+            <div style={{ flex:1, height:1, background:'rgba(255,255,255,0.1)' }} />
+          </div>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <Input label="Email" type="email" value={email} onChange={setEmail}
+              placeholder="luca@example.com" error={errors.email} />
+            <Input label="Password" type="password" value={password} onChange={setPassword}
+              placeholder="••••••••" error={errors.password} />
+          </div>
+
+          <div style={{ textAlign:'right', marginTop:8, marginBottom:20 }}>
+            <BtnGhost onClick={() => {}}>Password dimenticata?</BtnGhost>
+          </div>
+
+          <BtnPrimary full onClick={submit} disabled={loading}>
+            {loading
+              ? <div style={{ width:18, height:18, border:'2px solid rgba(0,0,0,0.3)', borderTopColor:'#0a1a0e', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+              : '→ Accedi'
+            }
+          </BtnPrimary>
+
+          <div style={{ textAlign:'center', marginTop:20, fontSize:13, color:'rgba(255,255,255,0.45)' }}>
+            Non hai un account?{' '}
+            <BtnGhost onClick={() => navigate('register')}>Registrati</BtnGhost>
+          </div>
+        </GlassPanel>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGISTRAZIONE
+// ─────────────────────────────────────────────────────────────────────────────
+function RegisterPage({ navigate }) {
+  const [form, setForm] = useState({ firstName:'', lastName:'', email:'', password:'', confirm:'' });
+  const set = k => v => setForm(f => ({ ...f, [k]:v }));
+  const [loading, setLoading] = useState(false);
+
+  const submit = () => {
+    setLoading(true);
+    setTimeout(() => { setLoading(false); navigate('onboarding'); }, 700);
+  };
+
+  return (
+    <div style={{
+      width:'100vw', height:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+      background: BG, padding:24,
+    }}>
+      <GlassPanel style={{ width:460, padding:'36px 40px', animation:'fadeUp 0.55s ease' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+          <Logo size="md" />
+          <BtnGhost onClick={() => navigate('login')}>← Accedi</BtnGhost>
+        </div>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', marginBottom:4 }}>Crea il tuo account</h1>
+        <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginBottom:24 }}>Unisciti alla community di tennisti amatori</p>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <Input label="Nome" value={form.firstName} onChange={set('firstName')} placeholder="Luca" />
+            <Input label="Cognome" value={form.lastName}  onChange={set('lastName')}  placeholder="Bianchi" />
+          </div>
+          <Input label="Email" type="email" value={form.email} onChange={set('email')} placeholder="luca@example.com" />
+          <Input label="Password" type="password" value={form.password} onChange={set('password')} placeholder="Minimo 8 caratteri" />
+          <Input label="Conferma password" type="password" value={form.confirm} onChange={set('confirm')} placeholder="••••••••" />
+        </div>
+
+        <div style={{ margin:'18px 0', fontSize:12, color:'rgba(255,255,255,0.35)', lineHeight:1.6 }}>
+          Continuando accetti i{' '}
+          <span style={{ color:'rgba(185,255,90,0.8)', cursor:'pointer' }}>Termini di Servizio</span>{' '}
+          e la{' '}
+          <span style={{ color:'rgba(185,255,90,0.8)', cursor:'pointer' }}>Privacy Policy</span>.
+        </div>
+
+        <BtnPrimary full onClick={submit} disabled={loading}>
+          {loading
+            ? <div style={{ width:18, height:18, border:'2px solid rgba(0,0,0,0.3)', borderTopColor:'#0a1a0e', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+            : 'Crea account →'
+          }
+        </BtnPrimary>
+
+        {/* Social */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'16px 0' }}>
+          <div style={{ flex:1, height:1, background:'rgba(255,255,255,0.1)' }} />
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>oppure</span>
+          <div style={{ flex:1, height:1, background:'rgba(255,255,255,0.1)' }} />
+        </div>
+        <BtnSecondary full onClick={() => navigate('onboarding')}>
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFF" fillOpacity=".9" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.1-2.7-.5-4z"/></svg>
+          Registrati con Google
+        </BtnSecondary>
+      </GlassPanel>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ONBOARDING WIZARD (5 step)
+// ─────────────────────────────────────────────────────────────────────────────
+const ONBOARDING_STEPS = [
+  { id:'anagrafica', title:'Dati anagrafici', subtitle:'Raccontaci di te' },
+  { id:'livello',    title:'Il tuo livello',   subtitle:'Come valuti il tuo gioco?' },
+  { id:'esperienza', title:'Esperienza',        subtitle:'Quanta storia hai sul campo?' },
+  { id:'preferenze', title:'Preferenze di gioco', subtitle:'Come e quanto giochi?' },
+  { id:'riepilogo',  title:'Tutto pronto!',     subtitle:'Controlla i tuoi dati' },
+];
+
+function OnboardingWizard({ navigate }) {
+  const [step, setStep] = useState(0);
+  const [data, setData] = useState({
+    username:'', city:'', birthYear:'',
+    fitRanking:'', level:'intermedio',
+    years:'3-5', background:'amatoriale',
+    frequency:'2', sport:'singolo', playStyle:'baseline',
+  });
+  const set = k => v => setData(d => ({ ...d, [k]:v }));
+  const [loading, setLoading] = useState(false);
+
+  const next = () => step < 4 ? setStep(s => s+1) : finish();
+  const prev = () => step > 0 && setStep(s => s-1);
+  const finish = () => { setLoading(true); setTimeout(() => { setLoading(false); navigate('hub'); }, 800); };
+
+  const LEVEL_OPTIONS = [
+    { value:'rookie',    label:'Rookie',    desc:'Sto imparando le basi',         icon:'🌱' },
+    { value:'bronze',    label:'Bronze',    desc:'Gioco regolarmente da poco',     icon:'🥉' },
+    { value:'silver',    label:'Silver',    desc:'Giocatore intermedio',           icon:'🥈' },
+    { value:'gold',      label:'Gold',      desc:'Buon giocatore amatoriale',      icon:'🥇' },
+    { value:'platinum',  label:'Platinum',  desc:'Avanzato, pratico tornei',       icon:'💎' },
+    { value:'agonista',  label:'Agonista',  desc:'Gioco o ho giocato agonistico',  icon:'⚡' },
+  ];
+
+  const renderStep = () => {
+    switch (step) {
+      case 0: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <Input label="Username (visibile agli altri)" value={data.username} onChange={set('username')} placeholder="es. lucaB_tennis" />
+          <Input label="Città o zona" value={data.city} onChange={set('city')} placeholder="es. Milano, Zona Navigli" />
+          <Input label="Anno di nascita" type="number" value={data.birthYear} onChange={set('birthYear')} placeholder="es. 1990" />
+        </div>
+      );
+      case 1: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:4 }}>
+            Seleziona il livello che meglio descrive il tuo gioco attuale. Potrai aggiornarlo in seguito.
+          </p>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            {LEVEL_OPTIONS.map(opt => (
+              <div key={opt.value} onClick={() => set('level')(opt.value)} style={{
+                padding:'12px 14px', borderRadius:14, cursor:'pointer',
+                background: data.level === opt.value ? 'rgba(185,255,90,0.15)' : 'rgba(255,255,255,0.05)',
+                border: data.level === opt.value ? '1px solid rgba(185,255,90,0.45)' : '1px solid rgba(255,255,255,0.1)',
+                transition:'all 0.15s ease',
+              }}>
+                <div style={{ fontSize:22, marginBottom:4 }}>{opt.icon}</div>
+                <div style={{ fontSize:13, fontWeight:700, color: data.level === opt.value ? '#c8ff78' : 'rgba(255,255,255,0.9)' }}>{opt.label}</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', marginTop:2 }}>{opt.desc}</div>
+              </div>
+            ))}
+          </div>
+          <Input label="Ranking FIT / USTA / UTR (opzionale)" value={data.fitRanking} onChange={set('fitRanking')} placeholder="es. 4.1 NTRP, 2.3 UTR" />
+        </div>
+      );
+      case 2: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <Select label="Anni di esperienza tennistica" value={data.years} onChange={set('years')} options={[
+            { value:'<1',   label:'Meno di 1 anno' },
+            { value:'1-2',  label:'1–2 anni' },
+            { value:'3-5',  label:'3–5 anni' },
+            { value:'6-10', label:'6–10 anni' },
+            { value:'>10',  label:'Più di 10 anni' },
+          ]} />
+          <Select label="Background tennistico" value={data.background} onChange={set('background')} options={[
+            { value:'principiante', label:'Principiante assoluto' },
+            { value:'amatoriale',   label:'Amatoriale — gioco per divertimento' },
+            { value:'circolo',      label:'Membro di circolo con corsi' },
+            { value:'tornei',       label:'Partecipo a tornei amatoriali FIT' },
+            { value:'agonista',     label:'Agonista (ho giocato classificati FIT)' },
+          ]} />
+          {/* Experience bar visualization */}
+          <div style={{ background:'rgba(255,255,255,0.05)', borderRadius:12, padding:'14px 16px', border:'1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginBottom:8 }}>Livello stimato in base all'esperienza</div>
+            <div style={{ display:'flex', gap:4 }}>
+              {['Rookie','Bronze','Silver','Gold','Platinum','Elite'].map((l, i) => (
+                <div key={l} style={{ flex:1, height:6, borderRadius:3,
+                  background: i <= ['<1','1-2','3-5','6-10','>10','>10'].indexOf(data.years)
+                    ? 'rgba(185,255,90,0.6)' : 'rgba(255,255,255,0.1)' }} />
+              ))}
+            </div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:4 }}>Questo è solo un punto di partenza — il tuo rating reale si calcola dalle partite</div>
+          </div>
+        </div>
+      );
+      case 3: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div>
+            <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500, display:'block', marginBottom:8 }}>
+              Frequenza di gioco ideale (partite / settimana)
+            </label>
+            <div style={{ display:'flex', gap:8 }}>
+              {[1,2,3,'4+'].map(n => (
+                <button key={n} onClick={() => set('frequency')(String(n))} style={{
+                  flex:1, padding:'10px', borderRadius:12, border:'none', cursor:'pointer',
+                  background: data.frequency === String(n) ? 'rgba(185,255,90,0.2)' : 'rgba(255,255,255,0.07)',
+                  border: data.frequency === String(n) ? '1px solid rgba(185,255,90,0.45)' : '1px solid rgba(255,255,255,0.1)',
+                  color: data.frequency === String(n) ? '#c8ff78' : 'rgba(255,255,255,0.7)',
+                  fontSize:16, fontWeight:800, transition:'all 0.15s',
+                }}>{n}</button>
+              ))}
+            </div>
+          </div>
+          <Select label="Sport preferito" value={data.sport} onChange={set('sport')} options={[
+            { value:'singolo',         label:'Tennis Singolo' },
+            { value:'doppio',          label:'Tennis Doppio' },
+            { value:'singolo+doppio',  label:'Tennis Singolo + Doppio' },
+            { value:'padel',           label:'Padel' },
+          ]} />
+          <Select label="Stile di gioco" value={data.playStyle} onChange={set('playStyle')} options={[
+            { value:'baseline',  label:'Fondista — resto in fondo al campo' },
+            { value:'serve',     label:'Gioco su servizio' },
+            { value:'net',       label:'Serve & Volley — attacco a rete' },
+            { value:'allround',  label:'All round — adatto al gioco' },
+          ]} />
+        </div>
+      );
+      case 4: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ textAlign:'center', marginBottom:8 }}>
+            <div style={{ fontSize:48, marginBottom:8 }}>🎾</div>
+            <h2 style={{ fontSize:20, fontWeight:800, color:'rgba(255,255,255,0.97)', marginBottom:4 }}>Profilo creato con successo!</h2>
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)' }}>Ecco un riepilogo del tuo profilo tennistico</p>
+          </div>
+          {[
+            { label:'Username', value: data.username || 'Non inserito' },
+            { label:'Città', value: data.city || 'Non inserita' },
+            { label:'Livello dichiarato', value: LEVEL_OPTIONS.find(l=>l.value===data.level)?.label ?? data.level },
+            { label:'Esperienza', value: { '<1':'< 1 anno','1-2':'1–2 anni','3-5':'3–5 anni','6-10':'6–10 anni','>10':'> 10 anni' }[data.years] },
+            { label:'Frequenza ideale', value: `${data.frequency} partite / settimana` },
+            { label:'Sport preferito', value: { singolo:'Tennis Singolo', doppio:'Tennis Doppio', 'singolo+doppio':'Singolo + Doppio', padel:'Padel' }[data.sport] },
+          ].map(r => (
+            <div key={r.label} style={{ display:'flex', justifyContent:'space-between', padding:'9px 12px',
+              background:'rgba(255,255,255,0.05)', borderRadius:10, border:'1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ fontSize:13, color:'rgba(255,255,255,0.5)' }}>{r.label}</span>
+              <span style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{r.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div style={{
+      width:'100vw', height:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+      background: BG, padding:24, overflow:'auto',
+    }}>
+      <GlassPanel style={{ width:540, padding:'36px 40px', animation:'fadeUp 0.55s ease' }}>
+        {/* Header */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+          <Logo size="sm" />
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)', fontWeight:500 }}>
+            Passo {step+1} di {ONBOARDING_STEPS.length}
+          </span>
+        </div>
+        <StepDots total={ONBOARDING_STEPS.length} current={step} />
+
+        {/* Title */}
+        <div style={{ margin:'22px 0 20px' }}>
+          <h2 style={{ fontSize:20, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.01em', marginBottom:4 }}>
+            {ONBOARDING_STEPS[step].title}
+          </h2>
+          <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)' }}>{ONBOARDING_STEPS[step].subtitle}</p>
+        </div>
+
+        {/* Step content */}
+        <div style={{ minHeight:240 }}>{renderStep()}</div>
+
+        {/* Navigation */}
+        <div style={{ display:'flex', gap:10, marginTop:24, justifyContent: step > 0 ? 'space-between' : 'flex-end' }}>
+          {step > 0 && <BtnSecondary onClick={prev}>← Indietro</BtnSecondary>}
+          <BtnPrimary onClick={next} disabled={loading}>
+            {loading
+              ? <div style={{ width:16, height:16, border:'2px solid rgba(0,0,0,0.3)', borderTopColor:'#0a1a0e', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+              : step === 4 ? 'Entra in Tennisillo 🎾' : 'Continua →'
+            }
+          </BtnPrimary>
+        </div>
+      </GlassPanel>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEAGUE HUB
+// ─────────────────────────────────────────────────────────────────────────────
+function LeagueHub({ navigate }) {
+  const [tab, setTab] = useState('mie');
+  const [inviteCode, setInviteCode] = useState('');
+  const [search, setSearch] = useState('');
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (t) => {
+    const id = Date.now();
+    setToasts(ts => [...ts, { ...t, id }]);
+    setTimeout(() => setToasts(ts => ts.filter(x => x.id !== id)), 3200);
+  };
+
+  const sportColors = { 'Tennis Singolo':'#B9FF5A', 'Tennis Doppio':'#79A7D8', 'Padel':'#F2D35E', 'Tennis Singolo + Doppio':'#B9FF5A' };
+
+  const statusLabel = { active:'Stagione attiva', 'pre-season':'Pre-stagione', finished:'Stagione conclusa' };
+  const statusColor = { active:'rgba(185,255,90,0.18)', 'pre-season':'rgba(242,211,94,0.15)', finished:'rgba(255,255,255,0.08)' };
+  const statusBdr   = { active:'rgba(185,255,90,0.35)', 'pre-season':'rgba(242,211,94,0.3)',  finished:'rgba(255,255,255,0.15)' };
+  const statusC     = { active:'#c8ff78', 'pre-season':'#f5d96a', finished:'rgba(255,255,255,0.5)' };
+
+  function LeagueCard({ league, onClick }) {
+    const st = league.season?.status ?? 'active';
+    const pct = league.season ? Math.round((league.season.week/league.season.totalWeeks)*100) : 0;
+    const accentColor = `oklch(0.75 0.18 ${league.bg})`;
+    return (
+      <GlassPanel hover onClick={onClick} style={{
+        padding:'22px 24px', cursor:'pointer', position:'relative', overflow:'hidden',
+      }}>
+        {/* Background glow */}
+        <div style={{
+          position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%',
+          background:`oklch(0.75 0.18 ${league.bg} / 0.08)`,
+          pointerEvents:'none',
+        }} />
+        {/* Notification dot */}
+        {league.pendingNotifications > 0 && (
+          <div style={{
+            position:'absolute', top:14, right:14,
+            background:'#B9FF5A', color:'#0a1a0e', borderRadius:999,
+            padding:'2px 8px', fontSize:11, fontWeight:800,
+          }}>{league.pendingNotifications}</div>
+        )}
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:14 }}>
+          <div style={{
+            width:42, height:42, borderRadius:13, flexShrink:0,
+            background:`oklch(0.75 0.18 ${league.bg} / 0.18)`,
+            border:`1px solid oklch(0.75 0.18 ${league.bg} / 0.35)`,
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:22,
+          }}>{league.sportIcon}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:15, fontWeight:800, color:'rgba(255,255,255,0.97)', lineHeight:1.2, marginBottom:2 }}>
+              {league.name}
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>{league.sport}</span>
+              <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)' }}>·</span>
+              <span style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>{league.members}/{league.maxMembers} giocatori</span>
+              <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)' }}>·</span>
+              <span style={{ fontSize:11, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)',
+                borderRadius:6, padding:'1px 7px', color:'rgba(255,255,255,0.4)' }}>
+                {league.type === 'private' ? '🔒 Privata' : '🌐 Pubblica'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Season status */}
+        {league.season && (
+          <div style={{ marginBottom:12 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                <span style={{
+                  background: statusColor[st], border:`1px solid ${statusBdr[st]}`,
+                  borderRadius:999, padding:'2px 9px', fontSize:11, fontWeight:700, color: statusC[st],
+                }}>{statusLabel[st]}</span>
+                {st === 'active' && (
+                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>
+                    sett. {league.season.week}/{league.season.totalWeeks}
+                  </span>
+                )}
+              </div>
+              {league.myRanking && (
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>La mia pos.</span>
+                  <span style={{ fontSize:14, fontWeight:800, color: accentColor }}>#{league.myRanking}</span>
+                </div>
+              )}
+            </div>
+            {st === 'active' && (
+              <div style={{ height:4, borderRadius:999, background:'rgba(255,255,255,0.08)', overflow:'hidden' }}>
+                <div style={{
+                  height:'100%', width:`${pct}%`, borderRadius:999,
+                  background:`linear-gradient(90deg, oklch(0.62 0.24 ${league.bg}), oklch(0.82 0.22 ${league.bg}))`,
+                  transition:'width 0.5s ease',
+                }} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CTA */}
+        <div style={{ display:'flex', justifyContent:'flex-end' }}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700,
+            color: accentColor,
+          }}>
+            Entra nella lega <span style={{ fontSize:16 }}>→</span>
+          </div>
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  const filteredPublic = PUBLIC_LEAGUES.filter(l =>
+    l.name.toLowerCase().includes(search.toLowerCase()) ||
+    l.sport.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{
+      width:'100vw', height:'100vh', background: BG,
+      display:'flex', flexDirection:'column', overflow:'hidden',
+    }}>
+      {/* Top bar */}
+      <div style={{
+        padding:'16px 28px', display:'flex', alignItems:'center', justifyContent:'space-between',
+        borderBottom:'1px solid rgba(255,255,255,0.08)',
+        backdropFilter:'blur(20px)',
+        background:'rgba(255,255,255,0.04)',
+      }}>
+        <Logo size="md" />
+        <div style={{ display:'flex', gap:6 }}>
+          {['mie','scopri','crea','invito'].map(t => {
+            const labels = { mie:'🏠 Le mie leghe', scopri:'🔍 Scopri', crea:'＋ Crea lega', invito:'🔑 Invito' };
+            const on = tab === t;
+            return (
+              <button key={t} onClick={() => setTab(t)} style={{
+                padding:'8px 16px', borderRadius:11, border: on ? '1px solid rgba(185,255,90,0.35)' : '1px solid transparent',
+                background: on ? 'rgba(185,255,90,0.15)' : 'transparent',
+                color: on ? '#c8ff78' : 'rgba(255,255,255,0.6)',
+                cursor:'pointer', fontSize:13, fontWeight: on ? 700 : 500, transition:'all 0.18s',
+              }}>{labels[t]}</button>
+            );
+          })}
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <Avatar initials="LB" hue="85" size={34} />
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Luca Bianchi</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Livello 7</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ flex:1, overflowY:'auto', padding:'28px 32px' }}>
+
+        {/* LE MIE LEGHE */}
+        {tab === 'mie' && (
+          <div style={{ maxWidth:900, margin:'0 auto' }}>
+            <div style={{ marginBottom:24 }}>
+              <h1 style={{ fontSize:26, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Le mie leghe</h1>
+              <p style={{ fontSize:14, color:'rgba(255,255,255,0.45)', marginTop:4 }}>
+                Sei iscritto a {MY_LEAGUES.length} leghe attive
+              </p>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              {MY_LEAGUES.map(lg => (
+                <LeagueCard key={lg.id} league={lg}
+                  onClick={() => navigate('league-detail', lg)} />
+              ))}
+            </div>
+            <div style={{ marginTop:20, textAlign:'center' }}>
+              <BtnGhost onClick={() => setTab('scopri')}>Scopri altre leghe →</BtnGhost>
+            </div>
+          </div>
+        )}
+
+        {/* SCOPRI */}
+        {tab === 'scopri' && (
+          <div style={{ maxWidth:900, margin:'0 auto' }}>
+            <div style={{ marginBottom:20 }}>
+              <h1 style={{ fontSize:26, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', marginBottom:12 }}>Scopri leghe pubbliche</h1>
+              <Input placeholder="Cerca per nome o sport…" value={search} onChange={setSearch} />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+              {filteredPublic.map(lg => {
+                const accentC = `oklch(0.75 0.18 ${lg.bg})`;
+                return (
+                  <GlassPanel key={lg.id} hover onClick={() => addToast({ message:`Richiesta di iscrizione inviata a "${lg.name}"!`, tone:'success' })}
+                    style={{ padding:'18px 20px', cursor:'pointer', position:'relative', overflow:'hidden' }}>
+                    <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, borderRadius:'50%',
+                      background:`oklch(0.75 0.18 ${lg.bg} / 0.07)`, pointerEvents:'none' }} />
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                      <div style={{
+                        width:36, height:36, borderRadius:11, flexShrink:0,
+                        background:`oklch(0.75 0.18 ${lg.bg} / 0.18)`,
+                        border:`1px solid oklch(0.75 0.18 ${lg.bg} / 0.35)`,
+                        display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
+                      }}>{lg.sportIcon}</div>
+                      <div>
+                        <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{lg.name}</div>
+                        <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)' }}>{lg.sport}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:12 }}>
+                      <span>👥 {lg.members}/{lg.maxMembers}</span>
+                      <span>🎯 {lg.level}</span>
+                      <span style={{ color: lg.season === 'Stagione attiva' ? '#c8ff78' : '#f5d96a' }}>● {lg.season}</span>
+                    </div>
+                    <div style={{ textAlign:'right', fontSize:12, fontWeight:700, color: accentC }}>
+                      Richiedi iscrizione →
+                    </div>
+                  </GlassPanel>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CREA LEGA */}
+        {tab === 'crea' && <CreateLeagueForm navigate={navigate} addToast={addToast} />}
+
+        {/* INVITO */}
+        {tab === 'invito' && (
+          <div style={{ maxWidth:480, margin:'60px auto 0' }}>
+            <GlassPanel style={{ padding:'36px 40px', textAlign:'center' }}>
+              <div style={{ fontSize:48, marginBottom:12 }}>🔑</div>
+              <h2 style={{ fontSize:22, fontWeight:800, color:'rgba(255,255,255,0.97)', marginBottom:8 }}>Hai ricevuto un invito?</h2>
+              <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:24, lineHeight:1.6 }}>
+                Inserisci il codice invito ricevuto dall'admin della lega per accedere direttamente.
+              </p>
+              <div style={{ marginBottom:16 }}>
+                <input value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                  placeholder="es. TN-2026-ALFA"
+                  style={{
+                    width:'100%', textAlign:'center', letterSpacing:'0.12em', fontSize:18, fontWeight:700,
+                    background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)',
+                    borderRadius:12, padding:'14px', color:'rgba(255,255,255,0.95)', outline:'none',
+                  }} />
+              </div>
+              <BtnPrimary full onClick={() => {
+                if (inviteCode.length < 4) return;
+                addToast({ message:'Codice valido! Sei stato aggiunto alla lega 🎾', tone:'success' });
+                setTimeout(() => navigate('hub'), 1200);
+              }}>Accedi con codice</BtnPrimary>
+              <div style={{ marginTop:16, fontSize:12, color:'rgba(255,255,255,0.3)' }}>
+                Oppure chiedi all'admin di inviarti un link diretto
+              </div>
+            </GlassPanel>
+          </div>
+        )}
+      </div>
+
+      <Toast toasts={toasts} remove={id => setToasts(ts => ts.filter(t => t.id !== id))} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREA LEGA WIZARD
+// ─────────────────────────────────────────────────────────────────────────────
+function CreateLeagueForm({ navigate, addToast }) {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    name:'', sport:'singolo', type:'private', description:'',
+    minPlayers:'4', maxPlayers:'16',
+    format:'best-of-3', duration:'', sparring:'on', sparringCap:'2',
+    scoring:'normal', decay:'on', playoffs:'off',
+  });
+  const set = k => v => setForm(f => ({ ...f, [k]:v }));
+
+  const steps = ['Informazioni base','Partecipanti','Regole di gioco','Punteggio'];
+
+  const next = () => step < steps.length - 1 ? setStep(s=>s+1) : create();
+  const prev = () => step > 0 && setStep(s=>s-1);
+  const create = () => {
+    addToast({ message:`Lega "${form.name}" creata! 🎉`, tone:'success' });
+    setTimeout(() => navigate('hub'), 800);
+  };
+
+  const renderStep = () => {
+    switch(step) {
+      case 0: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <Input label="Nome della lega *" value={form.name} onChange={set('name')} placeholder="es. Lega Primavera 2026" />
+          <Input label="Descrizione (opzionale)" value={form.description} onChange={set('description')} placeholder="Una breve descrizione per i giocatori…" />
+          <Select label="Sport" value={form.sport} onChange={set('sport')} options={[
+            { value:'singolo',        label:'🎾 Tennis Singolo' },
+            { value:'doppio',         label:'🎾 Tennis Doppio' },
+            { value:'singolo+doppio', label:'🎾 Tennis Singolo + Doppio' },
+            { value:'padel',          label:'🏓 Padel' },
+          ]} />
+          <div>
+            <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500, display:'block', marginBottom:8 }}>Tipo di lega</label>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              {[
+                { value:'private', icon:'🔒', label:'Privata', desc:'Solo su invito' },
+                { value:'public',  icon:'🌐', label:'Pubblica', desc:'Visibile a tutti' },
+              ].map(opt => (
+                <div key={opt.value} onClick={() => set('type')(opt.value)} style={{
+                  padding:'12px 14px', borderRadius:12, cursor:'pointer',
+                  background: form.type === opt.value ? 'rgba(185,255,90,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: form.type === opt.value ? '1px solid rgba(185,255,90,0.45)' : '1px solid rgba(255,255,255,0.1)',
+                  transition:'all 0.15s',
+                }}>
+                  <div style={{ fontSize:18, marginBottom:3 }}>{opt.icon}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color: form.type === opt.value ? '#c8ff78' : 'rgba(255,255,255,0.9)' }}>{opt.label}</div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>{opt.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+      case 1: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <Select label="Min. giocatori" value={form.minPlayers} onChange={set('minPlayers')}
+              options={['4','5','6','8'].map(v=>({ value:v, label:`${v} giocatori` }))} />
+            <Select label="Max giocatori" value={form.maxPlayers} onChange={set('maxPlayers')}
+              options={['8','10','12','16','20','24','30'].map(v=>({ value:v, label:`${v} giocatori` }))} />
+          </div>
+          <Select label="Formato partite" value={form.format} onChange={set('format')} options={[
+            { value:'best-of-1',   label:'Best of 1 set' },
+            { value:'best-of-3',   label:'Best of 3 set (standard)' },
+            { value:'super-tb',    label:'Best of 3 con Super Tie-Break' },
+            { value:'custom',      label:'Formato personalizzato' },
+          ]} />
+          <div style={{ background:'rgba(185,255,90,0.07)', border:'1px solid rgba(185,255,90,0.2)', borderRadius:12, padding:'12px 14px' }}>
+            <div style={{ fontSize:12, color:'#c8ff78', fontWeight:600, marginBottom:4 }}>💡 Suggerimento</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.55)', lineHeight:1.6 }}>
+              Con {form.maxPlayers} giocatori, la stagione ideale dura{' '}
+              <strong style={{ color:'rgba(255,255,255,0.85)' }}>
+                {Math.min(24, Math.max(8, Math.round(Number(form.maxPlayers) * 0.8)))} settimane
+              </strong>.
+            </div>
+          </div>
+        </div>
+      );
+      case 2: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          {[
+            { key:'sparring', label:'⚡ Modalità Sparring', desc:'Permette sessioni di allenamento consensuale tra giocatori (+12 pt fissi, non modifica la classifica competitiva)' },
+            { key:'decay',    label:'📉 Decay da inattività', desc:'Penalizza i giocatori inattivi per più di 2 settimane consecutive' },
+            { key:'playoffs', label:'🏆 Playoff finali',     desc:'I top N giocatori si qualificano per una fase a eliminazione diretta' },
+          ].map(opt => (
+            <div key={opt.key} style={{
+              display:'flex', alignItems:'flex-start', gap:12, padding:'14px',
+              background:'rgba(255,255,255,0.05)', borderRadius:12, border:'1px solid rgba(255,255,255,0.08)',
+            }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:3 }}>{opt.label}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', lineHeight:1.5 }}>{opt.desc}</div>
+              </div>
+              <button onClick={() => set(opt.key)(form[opt.key] === 'on' ? 'off' : 'on')} style={{
+                width:44, height:24, borderRadius:999, border:'none', cursor:'pointer', flexShrink:0,
+                background: form[opt.key] === 'on' ? 'rgba(185,255,90,0.85)' : 'rgba(255,255,255,0.15)',
+                position:'relative', transition:'background 0.2s',
+              }}>
+                <div style={{
+                  position:'absolute', top:3, left: form[opt.key]==='on' ? 23 : 3,
+                  width:18, height:18, borderRadius:'50%', background:'white',
+                  boxShadow:'0 1px 4px rgba(0,0,0,0.3)', transition:'left 0.2s',
+                }} />
+              </button>
+            </div>
+          ))}
+          {form.sparring === 'on' && (
+            <Select label="Cap sparring settimanale" value={form.sparringCap} onChange={set('sparringCap')} options={[
+              { value:'1', label:'1 sparring a settimana' },
+              { value:'2', label:'2 sparring a settimana (default)' },
+            ]} />
+          )}
+        </div>
+      );
+      case 3: return (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <Select label="Intensità moltiplicatore livello" value={form.scoring} onChange={set('scoring')} options={[
+            { value:'off',    label:'Disattivato — punti fissi' },
+            { value:'soft',   label:'Soft — variazioni moderate' },
+            { value:'normal', label:'Normal — standard (consigliato)' },
+            { value:'hard',   label:'Hard — variazioni amplificate' },
+          ]} />
+          {/* Preview */}
+          <div style={{ background:'rgba(255,255,255,0.05)', borderRadius:12, padding:'16px', border:'1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginBottom:10, fontWeight:600 }}>
+              Esempio calcolo punti (vittoria Silver vs Gold)
+            </div>
+            {[
+              { label:'Punti base vittoria',       value:'100 pt' },
+              { label:'× Moltiplicatore livello',  value:{ off:'× 1.0', soft:'× 1.25', normal:'× 1.5', hard:'× 2.0' }[form.scoring] },
+              { label:'+ Bonus costanza',           value:'+10 pt' },
+              { label:'+ Bonus diversificazione',   value:'+15 pt' },
+              { label:'= Totale',                   value:{ off:'125 pt', soft:'160 pt', normal:'190 pt', hard:'240 pt' }[form.scoring], bold:true },
+            ].map(r => (
+              <div key={r.label} style={{ display:'flex', justifyContent:'space-between', padding:'5px 0',
+                borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>{r.label}</span>
+                <span style={{ fontSize:13, fontWeight: r.bold ? 800 : 600, color: r.bold ? '#c8ff78' : 'rgba(255,255,255,0.85)' }}>{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div style={{ maxWidth:580, margin:'0 auto' }}>
+      <h1 style={{ fontSize:26, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', marginBottom:6 }}>Crea una nuova lega</h1>
+      <p style={{ fontSize:14, color:'rgba(255,255,255,0.45)', marginBottom:22 }}>Configura la tua lega in pochi passi</p>
+
+      {/* Step tabs */}
+      <div style={{ display:'flex', gap:0, marginBottom:22, background:'rgba(255,255,255,0.06)',
+        border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:3, overflow:'hidden' }}>
+        {steps.map((s, i) => (
+          <button key={s} onClick={() => i <= step && setStep(i)} style={{
+            flex:1, padding:'7px 4px', borderRadius:9, border:'none', cursor: i <= step ? 'pointer' : 'not-allowed',
+            background: i === step ? 'rgba(185,255,90,0.18)' : 'transparent',
+            color: i === step ? '#c8ff78' : i < step ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)',
+            fontSize:11, fontWeight: i === step ? 700 : 500, transition:'all 0.15s',
+          }}>
+            {i < step ? '✓ ' : `${i+1}. `}{s}
+          </button>
+        ))}
+      </div>
+
+      <GlassPanel style={{ padding:'24px 28px' }}>
+        <div style={{ minHeight:280 }}>{renderStep()}</div>
+        <div style={{ display:'flex', gap:10, marginTop:24, justifyContent: step > 0 ? 'space-between' : 'flex-end' }}>
+          {step > 0 && <BtnSecondary onClick={prev}>← Indietro</BtnSecondary>}
+          <BtnPrimary onClick={next} disabled={step === 0 && !form.name.trim()}>
+            {step === steps.length - 1 ? '🎾 Crea lega' : 'Continua →'}
+          </BtnPrimary>
+        </div>
+      </GlassPanel>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEAGUE DETAIL (pre-entry)
+// ─────────────────────────────────────────────────────────────────────────────
+function LeagueDetail({ league, navigate }) {
+  const accentC = `oklch(0.78 0.20 ${league.bg})`;
+  const pct = league.season ? Math.round((league.season.week/league.season.totalWeeks)*100) : 0;
+  return (
+    <div style={{
+      width:'100vw', height:'100vh', background: BG,
+      display:'flex', flexDirection:'column', overflow:'hidden',
+    }}>
+      {/* Top bar */}
+      <div style={{
+        padding:'14px 28px', display:'flex', alignItems:'center', gap:14,
+        borderBottom:'1px solid rgba(255,255,255,0.08)',
+        backdropFilter:'blur(20px)', background:'rgba(255,255,255,0.04)',
+      }}>
+        <button onClick={() => navigate('hub')} style={{
+          width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.09)',
+          border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+          cursor:'pointer', fontSize:16,
+        }}>←</button>
+        <Logo size="sm" />
+        <div style={{ flex:1 }} />
+        <Avatar initials="LB" hue="85" size={32} />
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'28px 32px' }}>
+        <div style={{ maxWidth:820, margin:'0 auto', display:'flex', flexDirection:'column', gap:18 }}>
+
+          {/* Hero */}
+          <GlassPanel style={{ padding:'28px 32px', overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:-60, right:-60, width:280, height:280, borderRadius:'50%',
+              background:`oklch(0.75 0.18 ${league.bg} / 0.08)`, pointerEvents:'none' }} />
+            <div style={{ display:'flex', alignItems:'flex-start', gap:18 }}>
+              <div style={{
+                width:58, height:58, borderRadius:18, flexShrink:0,
+                background:`oklch(0.75 0.18 ${league.bg} / 0.2)`,
+                border:`1px solid oklch(0.75 0.18 ${league.bg} / 0.45)`,
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize:30,
+              }}>{league.sportIcon}</div>
+              <div style={{ flex:1 }}>
+                <h1 style={{ fontSize:24, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', marginBottom:4 }}>
+                  {league.name}
+                </h1>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:8 }}>
+                  {league.sport} · {league.members}/{league.maxMembers} giocatori ·{' '}
+                  {league.type === 'private' ? '🔒 Privata' : '🌐 Pubblica'}
+                </div>
+                <p style={{ fontSize:13, color:'rgba(255,255,255,0.55)', lineHeight:1.6 }}>{league.description}</p>
+              </div>
+              <div style={{ flexShrink:0 }}>
+                <BtnPrimary onClick={() => window.location.href='Tennisillo.html'}>
+                  Entra nella lega →
+                </BtnPrimary>
+              </div>
+            </div>
+
+            {/* Season bar */}
+            {league.season?.status === 'active' && (
+              <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>{league.season.label}</span>
+                    <span style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginLeft:8 }}>
+                      Settimana {league.season.week} di {league.season.totalWeeks}
+                    </span>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:700, color: accentC }}>
+                    La tua posizione: #{league.myRanking}
+                  </span>
+                </div>
+                <div style={{ height:6, borderRadius:999, background:'rgba(255,255,255,0.08)', overflow:'hidden' }}>
+                  <div style={{
+                    height:'100%', width:`${pct}%`, borderRadius:999,
+                    background:`linear-gradient(90deg, oklch(0.62 0.24 ${league.bg}), oklch(0.82 0.22 ${league.bg}))`,
+                  }} />
+                </div>
+              </div>
+            )}
+          </GlassPanel>
+
+          {/* Stats + Members */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+            {/* My stats */}
+            <GlassPanel style={{ padding:'20px 22px' }}>
+              <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>Le mie statistiche</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                {[
+                  { label:'Ranking', value:`#${league.myRanking ?? '—'}` },
+                  { label:'Punti', value: league.myPoints > 0 ? league.myPoints.toLocaleString() : '—' },
+                  { label:'Variazione', value: league.myVariation > 0 ? `▲${league.myVariation}` : league.myVariation < 0 ? `▼${Math.abs(league.myVariation)}` : '—' },
+                  { label:'Stato', value: league.season?.status === 'active' ? '🟢 Attivo' : '🟡 Pre-stagione' },
+                ].map(s => (
+                  <div key={s.label} style={{ textAlign:'center', background:'rgba(255,255,255,0.05)', borderRadius:10, padding:'10px' }}>
+                    <div style={{ fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.95)' }}>{s.value}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </GlassPanel>
+
+            {/* Members */}
+            <GlassPanel style={{ padding:'20px 22px' }}>
+              <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:14 }}>
+                Top giocatori
+              </div>
+              {LEAGUE_MEMBERS.slice(0,4).map((m,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 0',
+                  borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.4)', width:20 }}>{m.ranking}</div>
+                  <Avatar initials={m.initials} hue={m.hue} size={28} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{m.name}</div>
+                    {m.role === 'admin' && <span style={{ fontSize:10, color:'#c8ff78', fontWeight:700 }}>Admin</span>}
+                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>Lv.{m.level}</div>
+                </div>
+              ))}
+              <button onClick={() => window.location.href='Tennisillo.html'} style={{
+                marginTop:10, width:'100%', background:'none', border:'1px solid rgba(255,255,255,0.12)',
+                borderRadius:10, padding:'8px', color:'rgba(255,255,255,0.5)',
+                cursor:'pointer', fontSize:12, fontWeight:600,
+              }}>Vedi tutti i {league.members} giocatori →</button>
+            </GlassPanel>
+          </div>
+
+          {/* Enter CTA */}
+          <div style={{ textAlign:'center', padding:'10px 0 20px' }}>
+            <BtnPrimary onClick={() => window.location.href='Tennisillo.html'}>
+              🎾 Entra nella lega
+            </BtnPrimary>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:8 }}>
+              Vai alla dashboard completa della lega
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APP ROOT
+// ─────────────────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage]   = useState('login');
+  const [leagueData, setLeagueData] = useState(null);
+
+  const navigate = (p, data) => {
+    setPage(p);
+    if (data) setLeagueData(data);
+  };
+
+  if (page === 'login')         return <LoginPage navigate={navigate} />;
+  if (page === 'register')      return <RegisterPage navigate={navigate} />;
+  if (page === 'onboarding')    return <OnboardingWizard navigate={navigate} />;
+  if (page === 'hub')           return <LeagueHub navigate={navigate} />;
+  if (page === 'league-detail') return <LeagueDetail league={leagueData} navigate={navigate} />;
+  return <LoginPage navigate={navigate} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

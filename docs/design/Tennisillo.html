@@ -1,0 +1,2936 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tennisillo — A friendly neighborhood racket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #0B1A1C; color: rgba(255,255,255,0.9); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+@keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+input[type="range"] { accent-color: #B9FF5A; }
+select option { background: #0f2430; color: rgba(255,255,255,0.9); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// Tennisillo — Mock Data & Design Tokens
+const PLAYERS = [
+  { id:'marco',    name:'Marco Verdi',       level:8, points:2340, ranking:1,  variation:0,  winRate:72, matches:28, wins:20, losses:8,  initials:'MV', hue:'142' },
+  { id:'alex',     name:'Alessandro Neri',   level:7, points:2100, ranking:2,  variation:1,  winRate:68, matches:25, wins:17, losses:8,  initials:'AN', hue:'210' },
+  { id:'giovanni', name:'Giovanni Rossi',    level:7, points:1980, ranking:3,  variation:-1, winRate:65, matches:36, wins:23, losses:13, initials:'GR', hue:'0'   },
+  { id:'paolo',    name:'Paolo Bianchi',     level:6, points:1780, ranking:4,  variation:3,  winRate:60, matches:24, wins:14, losses:10, initials:'PB', hue:'28'  },
+  { id:'andrea',   name:'Andrea Colombo',   level:6, points:1620, ranking:5,  variation:0,  winRate:58, matches:23, wins:13, losses:10, initials:'AC', hue:'280' },
+  { id:'sofia',    name:'Sofia Martini',     level:5, points:1540, ranking:6,  variation:2,  winRate:55, matches:20, wins:11, losses:9,  initials:'SM', hue:'330' },
+  { id:'matteo',   name:'Matteo Ferrari',    level:5, points:1480, ranking:7,  variation:-1, winRate:52, matches:18, wins:9,  losses:9,  initials:'MF', hue:'185' },
+  { id:'chiara',   name:'Chiara Romano',     level:5, points:1460, ranking:8,  variation:0,  winRate:51, matches:22, wins:11, losses:11, initials:'CR', hue:'55'  },
+  { id:'roberto',  name:'Roberto Esposito', level:4, points:1445, ranking:9,  variation:-2, winRate:50, matches:15, wins:7,  losses:8,  initials:'RE', hue:'165' },
+  { id:'elena',    name:'Elena Conti',       level:4, points:1440, ranking:10, variation:1,  winRate:49, matches:17, wins:8,  losses:9,  initials:'EC', hue:'250' },
+  { id:'franco',   name:'Franco Ricci',      level:4, points:1435, ranking:11, variation:0,  winRate:48, matches:14, wins:6,  losses:8,  initials:'FR', hue:'15'  },
+  { id:'luca',     name:'Luca Bianchi',      level:7, points:1430, ranking:12, variation:2,  winRate:62, matches:24, wins:15, losses:9,  initials:'LB', hue:'85'  },
+];
+
+const CURRENT_PLAYER = PLAYERS.find(p => p.id === 'luca');
+
+const UPCOMING_MATCHES = [
+  { id:'u1', date:'24', month:'MAG', opponentId:'marco',    status:'confirmed', time:'10:00', venue:'Tennis Club Milano'  },
+  { id:'u2', date:'27', month:'MAG', opponentId:'alex',     status:'pending',   time:'18:30', venue:'TC Ambrosiano'        },
+  { id:'u3', date:'31', month:'MAG', opponentId:'giovanni', status:'confirmed', time:'15:00', venue:'Tennis Club Milano'  },
+];
+
+const RECENT_MATCHES = [
+  { id:'r1', date:'12 Apr 2026', opponentId:'paolo',   score:'6-4  6-2',       result:'win'  },
+  { id:'r2', date:'05 Apr 2026', opponentId:'andrea',  score:'3-6  7-5  6-3',  result:'win'  },
+  { id:'r3', date:'28 Mar 2026', opponentId:'marco',   score:'2-6  4-6',       result:'loss' },
+  { id:'r4', date:'20 Mar 2026', opponentId:'sofia',   score:'6-2  6-1',       result:'win'  },
+  { id:'r5', date:'15 Mar 2026', opponentId:'matteo',  score:'6-4  5-7  7-6',  result:'win'  },
+];
+
+const CHALLENGES = [
+  { id:'c1', fromId:'alex',  proposedDate:'28 Maggio', venue:'Tennis Club Milano' },
+  { id:'c2', fromId:'paolo', proposedDate:'30 Maggio', venue:'TC Ambrosiano'       },
+];
+
+const ACTIVITY = [
+  { id:'a1', text:'Marco Verdi ha accettato la sfida',              time:'2h fa',  type:'match'        },
+  { id:'a2', text:'Nuova partita creata vs Alessandro Neri',         time:'5h fa',  type:'match'        },
+  { id:'a3', text:'Giovanni Rossi ha aggiornato la disponibilità',  time:'1g fa',  type:'availability' },
+  { id:'a4', text:'Paolo Bianchi ha confermato la partita',          time:'2g fa',  type:'match'        },
+  { id:'a5', text:'La classifica è stata aggiornata',                time:'2g fa',  type:'ranking'      },
+];
+
+const POINTS_HISTORY = [1200, 1260, 1310, 1280, 1350, 1390, 1430];
+const POINTS_DATES   = ['22 Apr','25 Apr','28 Apr','1 Mag','5 Mag','10 Mag','20 Mag'];
+
+const CALENDAR_EVENTS = [
+  { date:8,  type:'match',    title:'vs Sofia M.',      status:'confirmed' },
+  { date:15, type:'sparring', title:'Allenamento',       status:'training'  },
+  { date:19, type:'sparring', title:'Allenamento',       status:'training'  },
+  { date:24, type:'match',    title:'vs Marco V.',       status:'confirmed' },
+  { date:27, type:'match',    title:'vs Alessandro N.', status:'pending'   },
+  { date:31, type:'match',    title:'vs Giovanni R.',   status:'confirmed' },
+];
+
+// availability[row][col]: row=Mattina/Pomeriggio/Sera, col=LUN–DOM
+const AVAILABILITY = [
+  [true,  true,  true,  true,  false, true,  true ],
+  [false, true,  false, true,  true,  true,  false],
+  [false, false, true,  false, true,  false, false],
+];
+
+const VENUES = ['Tennis Club Milano','TC Ambrosiano','Sport Village Assago','Circolo Canottieri','Parco Lambro Tennis'];
+
+Object.assign(window, {
+  PLAYERS, CURRENT_PLAYER,
+  UPCOMING_MATCHES, RECENT_MATCHES,
+  CHALLENGES, ACTIVITY,
+  POINTS_HISTORY, POINTS_DATES,
+  CALENDAR_EVENTS, AVAILABILITY, VENUES,
+});
+
+// Tennisillo — Extended Mock Data v2
+
+// ── Frequency / Availability ─────────────────────────────────────────────────
+// frequencyStatus: 'green'|'yellow'|'red', weeklyPlayed/weeklyMax
+const PLAYER_STATUS = {
+  marco:    { freq:'red',    weeklyPlayed:3, weeklyMax:3, hot:true  },
+  alex:     { freq:'yellow', weeklyPlayed:2, weeklyMax:3, hot:true  },
+  giovanni: { freq:'green',  weeklyPlayed:0, weeklyMax:2, hot:false },
+  paolo:    { freq:'green',  weeklyPlayed:1, weeklyMax:3, hot:true  },
+  andrea:   { freq:'yellow', weeklyPlayed:2, weeklyMax:2, hot:true  },
+  sofia:    { freq:'green',  weeklyPlayed:0, weeklyMax:2, hot:false },
+  matteo:   { freq:'red',    weeklyPlayed:2, weeklyMax:2, hot:true  },
+  chiara:   { freq:'green',  weeklyPlayed:1, weeklyMax:3, hot:true  },
+  roberto:  { freq:'green',  weeklyPlayed:0, weeklyMax:2, hot:false },
+  elena:    { freq:'yellow', weeklyPlayed:1, weeklyMax:2, hot:false },
+  franco:   { freq:'green',  weeklyPlayed:0, weeklyMax:3, hot:false },
+  luca:     { freq:'yellow', weeklyPlayed:2, weeklyMax:3, hot:true  },
+};
+
+// ── Head to Head ─────────────────────────────────────────────────────────────
+const H2H = {
+  marco:    { wins:2, losses:4, lastResult:'loss' },
+  alex:     { wins:3, losses:2, lastResult:'win'  },
+  giovanni: { wins:1, losses:3, lastResult:'loss' },
+  paolo:    { wins:4, losses:1, lastResult:'win'  },
+  andrea:   { wins:5, losses:0, lastResult:'win'  },
+  sofia:    { wins:3, losses:1, lastResult:'win'  },
+  matteo:   { wins:2, losses:2, lastResult:'win'  },
+  chiara:   { wins:4, losses:2, lastResult:'win'  },
+};
+
+// ── Sfide Inviate / Ricevute ──────────────────────────────────────────────────
+const SFIDE_RICEVUTE = [
+  { id:'sr1', fromId:'alex',   type:'match',    proposedDate:'28 Maggio', venue:'TC Ambrosiano',       time:'18:30', status:'pending',  createdAt:'2h fa' },
+  { id:'sr2', fromId:'paolo',  type:'match',    proposedDate:'30 Maggio', venue:'Tennis Club Milano', time:'10:00', status:'pending',  createdAt:'5h fa' },
+  { id:'sr3', fromId:'chiara', type:'sparring', proposedDate:'25 Maggio', venue:'Sport Village',       time:'09:00', status:'pending',  createdAt:'1g fa' },
+];
+const SFIDE_INVIATE = [
+  { id:'si1', toId:'marco',    type:'match',    proposedDate:'24 Maggio', venue:'Tennis Club Milano', time:'10:00', status:'confirmed', createdAt:'1g fa' },
+  { id:'si2', toId:'giovanni', type:'match',    proposedDate:'31 Maggio', venue:'Tennis Club Milano', time:'15:00', status:'pending',   createdAt:'3h fa' },
+  { id:'si3', toId:'sofia',    type:'sparring', proposedDate:'26 Maggio', venue:'TC Ambrosiano',       time:'17:00', status:'rejected',  createdAt:'2g fa' },
+];
+
+// ── Sparring History ──────────────────────────────────────────────────────────
+const SPARRING_HISTORY = [
+  { id:'sp1', opponentId:'alex',   date:'18 Mag', points:12, status:'completed' },
+  { id:'sp2', opponentId:'chiara', date:'12 Mag', points:12, status:'completed' },
+  { id:'sp3', opponentId:'paolo',  date:'5 Mag',  points:12, status:'completed' },
+  { id:'sp4', opponentId:'sofia',  date:'28 Apr', points:12, status:'completed' },
+];
+
+// ── Badge ─────────────────────────────────────────────────────────────────────
+const BADGES = [
+  { id:'b1',  icon:'🏆', name:'Campione',       desc:'Ha vinto la classifica stagione',             earned:false, progress:null },
+  { id:'b2',  icon:'🔥', name:'In Fiamme',       desc:'5 vittorie consecutive vs avversari diversi',earned:false, progress:'3/5' },
+  { id:'b3',  icon:'⚔️',  name:'Ammazzagiganti', desc:'Vittoria contro giocatore 2+ livelli sup.',  earned:true,  date:'12 Mar' },
+  { id:'b4',  icon:'🛡️',  name:'Muro',           desc:'Sconfitta con max set per 5 volte',          earned:false, progress:'2/5' },
+  { id:'b5',  icon:'🗺️',  name:'Esploratore',    desc:'Giocato contro tutti i membri almeno 1 volta',earned:false, progress:'7/12' },
+  { id:'b6',  icon:'⚖️',  name:'Equilibrista',   desc:'Win rate 45-55% per tutta la stagione',      earned:false, progress:null },
+  { id:'b7',  icon:'🥇', name:'Prima Vittoria',  desc:'Prima partita vinta nella lega',             earned:true,  date:'15 Feb' },
+  { id:'b8',  icon:'👊', name:'Vendicatore',     desc:'3 rivincite nella stessa stagione',          earned:false, progress:'1/3' },
+  { id:'b9',  icon:'💪', name:'Iron Man',        desc:'Almeno 1 partita ogni settimana della stagione',earned:false, progress:'6/13 sett.' },
+  { id:'b10', icon:'🤝', name:'Sportivo',        desc:'Zero contestazioni in stagione',             earned:true,  date:'Stagione attiva' },
+  { id:'b11', icon:'📚', name:'Studioso',        desc:'10 allenamenti con Maestro in stagione',     earned:false, progress:'0/10' },
+  { id:'b12', icon:'🎾', name:'Compagno di Banco',desc:'10 sessioni Sparring completate',           earned:false, progress:'4/10' },
+];
+
+// ── Points Breakdown (per ultima partita) ─────────────────────────────────────
+const POINTS_BREAKDOWN = [
+  { match:'vs Paolo B. (Apr 12)', base:100, mLivello:50, mRisultato:20, bCostanza:10, bDiversificazione:15, bRivalsa:0, malus:0, total:195 },
+  { match:'vs Andrea C. (Apr 5)', base:100, mLivello:0,  mRisultato:0,  bCostanza:5,  bDiversificazione:8,  bRivalsa:25, malus:0, total:138 },
+  { match:'vs Marco V. (Mar 28)', base:30,  mLivello:33, mRisultato:0,  bCostanza:10, bDiversificazione:15, bRivalsa:0,  malus:0, total:88  },
+  { match:'vs Sofia M. (Mar 20)', base:100, mLivello:0,  mRisultato:20, bCostanza:10, bDiversificazione:8,  bRivalsa:0,  malus:-8, total:130 },
+  { match:'vs Matteo F. (Mar 15)',base:100, mLivello:0,  mRisultato:0,  bCostanza:5,  bDiversificazione:3,  bRivalsa:0,  malus:-18,total:90  },
+];
+
+// ── Bacheca / Feed Lega ────────────────────────────────────────────────────────
+const BACHECA = [
+  { id:'f1',  type:'match_result', time:'2h fa',  playerId:'marco',  text:'Marco Verdi ha battuto Alex Neri 6-3 6-4', likes:3, comments:1 },
+  { id:'f2',  type:'ranking',      time:'3h fa',  playerId:null,     text:'🏆 La classifica è stata aggiornata. Marco Verdi mantiene la testa.', likes:2, comments:0 },
+  { id:'f3',  type:'badge',        time:'5h fa',  playerId:'luca',   text:'Luca Bianchi ha conquistato il badge 🤝 Sportivo!', likes:5, comments:2 },
+  { id:'f4',  type:'match_result', time:'1g fa',  playerId:'sofia',  text:'Sofia Martini ha battuto Roberto Esposito 6-2 7-5', likes:2, comments:0 },
+  { id:'f5',  type:'sparring',     time:'1g fa',  playerId:'alex',   text:'Alessandro Neri e Chiara Romano hanno completato uno sparring', likes:1, comments:0 },
+  { id:'f6',  type:'admin',        time:'2g fa',  playerId:null,     text:'📢 Admin: Ricordate che la stagione termina il 30 giugno. Accelerate con le partite!', likes:4, comments:3 },
+  { id:'f7',  type:'match_result', time:'2g fa',  playerId:'paolo',  text:'Paolo Bianchi ha battuto Franco Ricci 6-4 6-2', likes:1, comments:0 },
+  { id:'f8',  type:'badge',        time:'3g fa',  playerId:'marco',  text:'Marco Verdi ha conquistato il badge 🔥 In Fiamme!', likes:7, comments:4 },
+  { id:'f9',  type:'challenge',    time:'3g fa',  playerId:'giovanni', text:'Giovanni Rossi ha lanciato una sfida a Elena Conti', likes:0, comments:0 },
+  { id:'f10', type:'match_result', time:'4g fa',  playerId:'andrea', text:'Andrea Colombo ha battuto Roberto Esposito 7-6 6-3', likes:2, comments:1 },
+];
+
+// ── Allenamento con Maestro ───────────────────────────────────────────────────
+const TRAINING_HISTORY = [
+  { id:'t1', maestroId:'coach_mario', date:'15 Mag', focus:'Servizio',    xp:20, status:'validated' },
+  { id:'t2', maestroId:'coach_mario', date:'8 Mag',  focus:'Rovescio',    xp:20, status:'validated' },
+  { id:'t3', maestroId:'coach_mario', date:'1 Mag',  focus:'Tattica',     xp:20, status:'validated' },
+  { id:'t4', maestroId:'coach_mario', date:'22 Apr', focus:'Volee',       xp:20, status:'validated' },
+];
+const COACH = { id:'coach_mario', name:'Mario Ferretti', initials:'MF', hue:'55', title:'Maestro FIT', xpGiven: 200 };
+
+// ── Campi di Lega ─────────────────────────────────────────────────────────────
+const CAMPI = [
+  { id:'c1', name:'Tennis Club Milano',   address:'Via Arona 22, Milano',    surface:'Terra rossa', cover:'Scoperto', price:'15-20€/h', link:'https://tennisclubmilano.it', phone:'02 123456', status:'active' },
+  { id:'c2', name:'TC Ambrosiano',        address:'Via Tortona 15, Milano',   surface:'Cemento',    cover:'Coperto',  price:'18-25€/h', link:'https://tcambrosiano.it',     phone:'02 654321', status:'active' },
+  { id:'c3', name:'Sport Village Assago', address:'Via Roma 1, Assago',       surface:'Sintetico',   cover:'Coperto',  price:'20-28€/h', link:'https://sportvillage.it',     phone:'02 987654', status:'active' },
+  { id:'c4', name:'Circolo Canottieri',   address:'Alzaia Naviglio 1, Milano',surface:'Terra rossa', cover:'Scoperto', price:'12-18€/h', link:'',                            phone:'02 111222', status:'active' },
+  { id:'c5', name:'Parco Lambro Tennis',  address:'Via Feltre 55, Milano',    surface:'Terra rossa', cover:'Scoperto', price:'10-15€/h', link:'',                            phone:'',          status:'pending' },
+];
+
+// ── Smart Match Suggestions ───────────────────────────────────────────────────
+const SMART_MATCHES = [
+  { playerId:'paolo',   score:94, reasons:['Livello simile', 'Non giocate di recente', '3 slot compatibili'] },
+  { playerId:'chiara',  score:88, reasons:['Livello simile', 'Frequenza disponibile', '2 slot compatibili'] },
+  { playerId:'andrea',  score:82, reasons:['Diversificazione alta', '1 slot compatibile'] },
+  { playerId:'giovanni',score:71, reasons:['Sfida difficile', 'Slot disponibili'] },
+];
+
+// ── Season Stats ──────────────────────────────────────────────────────────────
+const SEASON_STATS = {
+  totalPoints: 1430, pointsFromBase: 720, pointsFromBonuses: 710, pointsFromSparring: 48,
+  winStreak: 3, bestStreak: 5, diversificationIndex: 0.74,
+  uniqueOpponents: 9, setsWon: 31, setsLost: 18, gamesWon: 198, gamesLost: 142,
+  decayRisk: false, lastMatchDaysAgo: 4,
+  weeklyCompetitive: 2, weeklyMax: 3,
+  sparkPoints: [1200,1260,1310,1280,1350,1390,1430],
+  sparkWins:   [1,    2,    3,    3,    4,    5,    5 ],
+};
+
+// ── Disponibilità Settimanale (pattern) ──────────────────────────────────────
+// 3 fasce orarie × 7 giorni
+const MY_AVAILABILITY = [
+  [false, true,  true,  true,  false, true,  true ],  // Mattina 8-12
+  [false, true,  false, true,  true,  true,  true ],  // Pomeriggio 12-18
+  [false, false, true,  false, true,  false, false],  // Sera 18-22
+];
+
+Object.assign(window, {
+  PLAYER_STATUS, H2H,
+  SFIDE_RICEVUTE, SFIDE_INVIATE,
+  SPARRING_HISTORY, BADGES,
+  POINTS_BREAKDOWN, BACHECA,
+  TRAINING_HISTORY, COACH,
+  CAMPI, SMART_MATCHES,
+  SEASON_STATS, MY_AVAILABILITY,
+});
+
+// Tennisillo — Base UI Components + Domain Widgets
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function playerById(id) { return window.PLAYERS.find(p => p.id === id) || {}; }
+
+function Avatar({ player, size = 36 }) {
+  const hue = player?.hue ?? '85';
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: `linear-gradient(135deg, oklch(0.72 0.18 ${hue}), oklch(0.55 0.22 ${hue}))`,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize: size * 0.36, fontWeight: 700, color:'rgba(0,0,0,0.75)',
+      border:'1.5px solid rgba(255,255,255,0.25)',
+      boxShadow:`0 0 14px oklch(0.65 0.18 ${hue} / 0.35)`,
+      letterSpacing:'-0.02em',
+    }}>
+      {player?.initials ?? '?'}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    confirmed: { label:'Confermata', bg:'rgba(185,255,90,0.18)',  border:'rgba(185,255,90,0.4)',  color:'#c8ff78' },
+    pending:   { label:'In attesa',  bg:'rgba(242,211,94,0.18)',  border:'rgba(242,211,94,0.4)',  color:'#f5d96a' },
+    completed: { label:'Completata', bg:'rgba(121,167,216,0.18)', border:'rgba(121,167,216,0.4)', color:'#9abfdd' },
+    cancelled: { label:'Annullata',  bg:'rgba(255,255,255,0.08)', border:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.5)' },
+    disputed:  { label:'Contestata', bg:'rgba(233,109,109,0.18)', border:'rgba(233,109,109,0.4)', color:'#f09090' },
+    win:       { label:'Vittoria',   bg:'rgba(185,255,90,0.18)',  border:'rgba(185,255,90,0.4)',  color:'#c8ff78' },
+    loss:      { label:'Sconfitta',  bg:'rgba(233,109,109,0.18)', border:'rgba(233,109,109,0.4)', color:'#f09090' },
+    training:  { label:'Allenamento',bg:'rgba(121,167,216,0.18)',border:'rgba(121,167,216,0.4)', color:'#9abfdd' },
+  };
+  const s = map[status] ?? map.pending;
+  return (
+    <span style={{
+      padding:'3px 10px', borderRadius:999, fontSize:11, fontWeight:600,
+      background:s.bg, border:`1px solid ${s.border}`, color:s.color, whiteSpace:'nowrap',
+    }}>{s.label}</span>
+  );
+}
+
+function BtnPrimary({ children, onClick, small }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button onClick={onClick}
+      onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+      style={{
+        background: hover
+          ? 'linear-gradient(135deg,#d8ff88,#a0ef5a)'
+          : 'linear-gradient(135deg,#c8ff6a,#8ee044)',
+        color:'#0a1a0e', fontWeight:700, border:'none', cursor:'pointer',
+        padding: small ? '7px 16px' : '10px 22px',
+        borderRadius:14, fontSize: small ? 12 : 14,
+        boxShadow:`0 8px 24px rgba(185,255,90,${hover?0.4:0.25})`,
+        transform: hover ? 'translateY(-1px)' : 'none',
+        transition:'all 0.18s ease', display:'flex', alignItems:'center', gap:6,
+      }}>{children}</button>
+  );
+}
+
+function BtnSecondary({ children, onClick, small, danger }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button onClick={onClick}
+      onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+      style={{
+        background: hover
+          ? (danger ? 'rgba(233,109,109,0.22)' : 'rgba(255,255,255,0.15)')
+          : (danger ? 'rgba(233,109,109,0.12)' : 'rgba(255,255,255,0.09)'),
+        color: danger ? '#f09090' : 'rgba(255,255,255,0.88)',
+        border:`1px solid ${danger ? 'rgba(233,109,109,0.4)' : 'rgba(255,255,255,0.18)'}`,
+        cursor:'pointer', padding: small ? '7px 16px' : '10px 22px',
+        borderRadius:14, fontSize: small ? 12 : 14, fontWeight:600,
+        transition:'all 0.18s ease', backdropFilter:'blur(12px)',
+        display:'flex', alignItems:'center', gap:6,
+      }}>{children}</button>
+  );
+}
+
+function GlassCard({ children, style, onClick, hover: hoverClass }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        background: hov && hoverClass
+          ? 'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.07))'
+          : 'linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05))',
+        border:'1px solid rgba(255,255,255,0.14)',
+        borderRadius:20, backdropFilter:'blur(26px) saturate(140%)',
+        boxShadow: hov && hoverClass
+          ? '0 20px 50px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.2)'
+          : '0 14px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.18)',
+        transform: hov && hoverClass ? 'translateY(-2px)' : 'none',
+        transition:'all 0.22s ease', cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}>{children}</div>
+  );
+}
+
+function GlassInput({ label, value, onChange, type='text', placeholder }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500 }}>{label}</label>}
+      <input
+        type={type} value={value} onChange={e=>onChange(e.target.value)}
+        placeholder={placeholder}
+        onFocus={()=>setFocus(true)} onBlur={()=>setFocus(false)}
+        style={{
+          background: focus ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)',
+          border:`1px solid ${focus ? 'rgba(185,255,90,0.5)' : 'rgba(255,255,255,0.14)'}`,
+          borderRadius:12, padding:'10px 14px', color:'rgba(255,255,255,0.9)',
+          fontSize:14, outline:'none', width:'100%', boxSizing:'border-box',
+          backdropFilter:'blur(12px)',
+          boxShadow: focus ? '0 0 0 3px rgba(185,255,90,0.12)' : 'none',
+          transition:'all 0.18s ease',
+        }}
+      />
+    </div>
+  );
+}
+
+function GlassSelect({ label, value, onChange, options }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+      {label && <label style={{ fontSize:12, color:'rgba(255,255,255,0.55)', fontWeight:500 }}>{label}</label>}
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        style={{
+          background:'rgba(12,28,36,0.85)', border:'1px solid rgba(255,255,255,0.14)',
+          borderRadius:12, padding:'10px 14px', color:'rgba(255,255,255,0.9)',
+          fontSize:14, outline:'none', width:'100%', backdropFilter:'blur(12px)',
+          cursor:'pointer',
+        }}>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function SegmentedControl({ options, value, onChange }) {
+  return (
+    <div style={{
+      display:'inline-flex', background:'rgba(255,255,255,0.07)',
+      border:'1px solid rgba(255,255,255,0.12)', borderRadius:12,
+      padding:3, gap:2,
+    }}>
+      {options.map(opt => (
+        <button key={opt} onClick={()=>onChange(opt)} style={{
+          padding:'6px 14px', borderRadius:10, border:'none', cursor:'pointer',
+          fontSize:13, fontWeight:600, transition:'all 0.18s ease',
+          background: value===opt ? 'rgba(185,255,90,0.2)' : 'transparent',
+          color: value===opt ? '#c8ff78' : 'rgba(255,255,255,0.5)',
+          boxShadow: value===opt ? 'inset 0 1px 0 rgba(255,255,255,0.15)' : 'none',
+        }}>{opt}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── KPI Card ─────────────────────────────────────────────────────────────────
+function KpiCard({ icon, label, value, delta, positive=true }) {
+  return (
+    <GlassCard style={{ padding:'20px 22px' }} hover>
+      <div style={{ fontSize:20, marginBottom:6 }}>{icon}</div>
+      <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', fontWeight:500, marginBottom:4 }}>{label}</div>
+      <div style={{ fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.96)', lineHeight:1.1, letterSpacing:'-0.02em' }}>{value}</div>
+      {delta && (
+        <div style={{ fontSize:12, color: positive ? '#b0ef60' : '#f09090', marginTop:5, fontWeight:600 }}>
+          {positive ? '▲' : '▼'} {delta}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+// ── Match Row ─────────────────────────────────────────────────────────────────
+function MatchRow({ match, showVenue }) {
+  const opp = playerById(match.opponentId || match.opponentId);
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', gap:12, padding:'10px 4px',
+      borderBottom:'1px solid rgba(255,255,255,0.07)',
+    }}>
+      <div style={{ textAlign:'center', minWidth:38 }}>
+        <div style={{ fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.9)', lineHeight:1 }}>{match.date}</div>
+        <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', fontWeight:600 }}>{match.month}</div>
+      </div>
+      <Avatar player={window.CURRENT_PLAYER} size={32} />
+      <span style={{ fontSize:11, color:'rgba(255,255,255,0.4)', fontWeight:700 }}>vs</span>
+      <Avatar player={opp} size={32} />
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{opp.name}</div>
+        {showVenue && <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>{match.venue}</div>}
+      </div>
+      <StatusBadge status={match.status} />
+    </div>
+  );
+}
+
+// ── Mini Line Chart ───────────────────────────────────────────────────────────
+function MiniLineChart({ data, dates, width=300, height=80 }) {
+  if (!data || data.length < 2) return null;
+  const min = Math.min(...data) - 50;
+  const max = Math.max(...data) + 30;
+  const pts = data.map((v,i) => {
+    const x = (i / (data.length-1)) * width;
+    const y = height - ((v - min) / (max - min)) * height;
+    return `${x},${y}`;
+  });
+  const pathD = `M ${pts.join(' L ')}`;
+  const areaD = `M ${pts[0]} L ${pts.join(' L ')} L ${width},${height} L 0,${height} Z`;
+  return (
+    <svg width={width} height={height} style={{ overflow:'visible' }}>
+      <defs>
+        <linearGradient id="lgArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#B9FF5A" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#B9FF5A" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill="url(#lgArea)" />
+      <path d={pathD} fill="none" stroke="#B9FF5A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {data.map((v,i) => {
+        const [x,y] = pts[i].split(',').map(Number);
+        return <circle key={i} cx={x} cy={y} r={i===data.length-1?4:2.5}
+          fill={i===data.length-1?'#B9FF5A':'rgba(185,255,90,0.7)'}
+          stroke="rgba(185,255,90,0.5)" strokeWidth="1.5" />;
+      })}
+    </svg>
+  );
+}
+
+// ── Ranking Row ───────────────────────────────────────────────────────────────
+function RankingRow({ player, isCurrentPlayer, onClick }) {
+  const [hov, setHov] = useState(false);
+  const isTop3 = player.ranking <= 3;
+  const medal = ['🥇','🥈','🥉'];
+  return (
+    <div onClick={()=>onClick(player)}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        display:'grid', gridTemplateColumns:'44px 1fr 90px 80px 80px 70px',
+        alignItems:'center', padding:'10px 14px', borderRadius:14, cursor:'pointer',
+        background: isCurrentPlayer
+          ? 'rgba(185,255,90,0.10)'
+          : hov ? 'rgba(255,255,255,0.06)' : 'transparent',
+        border: isCurrentPlayer ? '1px solid rgba(185,255,90,0.3)' : '1px solid transparent',
+        boxShadow: isCurrentPlayer ? '0 0 20px rgba(185,255,90,0.1)' : 'none',
+        transition:'all 0.15s ease', marginBottom:2,
+      }}>
+      <div style={{ fontSize:14, fontWeight:700, color: isTop3 ? undefined : 'rgba(255,255,255,0.7)' }}>
+        {isTop3 ? medal[player.ranking-1] : player.ranking}
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <Avatar player={player} size={30} />
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color: isCurrentPlayer ? '#c8ff78' : 'rgba(255,255,255,0.9)' }}>{player.name}</div>
+          <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Livello {player.level}</div>
+        </div>
+      </div>
+      <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.9)', textAlign:'right' }}>{player.points.toLocaleString()}</div>
+      <div style={{ textAlign:'right' }}>
+        {player.variation === 0
+          ? <span style={{ color:'rgba(255,255,255,0.35)', fontSize:12 }}>—</span>
+          : <span style={{ color: player.variation > 0 ? '#b0ef60' : '#f09090', fontSize:12, fontWeight:700 }}>
+              {player.variation > 0 ? `▲ ${player.variation}` : `▼ ${Math.abs(player.variation)}`}
+            </span>
+        }
+      </div>
+      <div style={{ fontSize:13, color:'rgba(255,255,255,0.7)', textAlign:'right' }}>{player.winRate}%</div>
+      <div style={{ fontSize:13, color:'rgba(255,255,255,0.55)', textAlign:'right' }}>{player.matches}</div>
+    </div>
+  );
+}
+
+// ── Activity Item ─────────────────────────────────────────────────────────────
+function ActivityItem({ item }) {
+  const icons = { match:'🎾', availability:'📅', ranking:'🏆', message:'💬', system:'📋' };
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:12, padding:'9px 0',
+      borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{
+        width:32, height:32, borderRadius:10, background:'rgba(255,255,255,0.07)',
+        display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0,
+      }}>{icons[item.type] ?? '•'}</div>
+      <div style={{ flex:1, fontSize:13, color:'rgba(255,255,255,0.75)', lineHeight:1.4 }}>{item.text}</div>
+      <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', whiteSpace:'nowrap' }}>{item.time}</div>
+    </div>
+  );
+}
+
+// ── Challenge Card ────────────────────────────────────────────────────────────
+function ChallengeCard({ challenge, onAccept, onReject }) {
+  const from = playerById(challenge.fromId);
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', gap:12, padding:'12px',
+      background:'rgba(255,255,255,0.06)', borderRadius:14, marginBottom:8,
+      border:'1px solid rgba(255,255,255,0.1)',
+    }}>
+      <Avatar player={from} size={38} />
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>{from.name}</div>
+        <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)' }}>Sfida per il {challenge.proposedDate}</div>
+      </div>
+      <button onClick={onReject} style={{
+        width:30, height:30, borderRadius:10, border:'1px solid rgba(233,109,109,0.35)',
+        background:'rgba(233,109,109,0.12)', color:'#f09090', cursor:'pointer', fontSize:14,
+        display:'flex', alignItems:'center', justifyContent:'center',
+      }}>✕</button>
+      <button onClick={onAccept} style={{
+        width:30, height:30, borderRadius:10, border:'1px solid rgba(185,255,90,0.4)',
+        background:'rgba(185,255,90,0.15)', color:'#c8ff78', cursor:'pointer', fontSize:14,
+        display:'flex', alignItems:'center', justifyContent:'center',
+      }}>✓</button>
+    </div>
+  );
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ toasts, remove }) {
+  const colors = {
+    success: { bg:'rgba(185,255,90,0.15)', border:'rgba(185,255,90,0.4)', icon:'✓', c:'#c8ff78' },
+    info:    { bg:'rgba(121,167,216,0.15)',border:'rgba(121,167,216,0.4)',icon:'ℹ', c:'#9abfdd' },
+    warning: { bg:'rgba(242,211,94,0.15)', border:'rgba(242,211,94,0.4)', icon:'!', c:'#f5d96a' },
+    danger:  { bg:'rgba(233,109,109,0.15)',border:'rgba(233,109,109,0.4)',icon:'✕', c:'#f09090' },
+  };
+  return (
+    <div style={{ position:'fixed', top:20, right:20, zIndex:9999, display:'flex', flexDirection:'column', gap:8, pointerEvents:'none' }}>
+      {toasts.map(t => {
+        const s = colors[t.tone] ?? colors.info;
+        return (
+          <div key={t.id} style={{
+            background:s.bg, border:`1px solid ${s.border}`, borderRadius:14,
+            padding:'12px 16px', backdropFilter:'blur(24px)', pointerEvents:'all',
+            display:'flex', alignItems:'center', gap:10, minWidth:260,
+            boxShadow:'0 10px 30px rgba(0,0,0,0.3)', animation:'slideIn 0.25s ease',
+          }}>
+            <span style={{ color:s.c, fontWeight:700, fontSize:14 }}>{s.icon}</span>
+            <span style={{ fontSize:13, color:'rgba(255,255,255,0.9)', flex:1 }}>{t.message}</span>
+            <button onClick={()=>remove(t.id)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', cursor:'pointer', fontSize:14, padding:0 }}>✕</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function Modal({ title, children, onClose }) {
+  return (
+    <div style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(10px)',
+      zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:24,
+    }} onClick={e => { if(e.target===e.currentTarget) onClose(); }}>
+      <div style={{
+        background:'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
+        border:'1px solid rgba(255,255,255,0.2)', borderRadius:24,
+        backdropFilter:'blur(36px) saturate(150%)', boxShadow:'0 32px 80px rgba(0,0,0,0.5)',
+        padding:'28px 32px', width:'100%', maxWidth:480,
+        animation:'modalIn 0.22s ease',
+      }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+          <h3 style={{ margin:0, fontSize:18, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{title}</h3>
+          <button onClick={onClose} style={{
+            width:30, height:30, borderRadius:10, border:'1px solid rgba(255,255,255,0.15)',
+            background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.6)',
+            cursor:'pointer', fontSize:14,
+          }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, {
+  Avatar, StatusBadge, BtnPrimary, BtnSecondary,
+  GlassCard, GlassInput, GlassSelect, SegmentedControl,
+  KpiCard, MatchRow, MiniLineChart, RankingRow,
+  ActivityItem, ChallengeCard, Toast, Modal,
+  playerById,
+});
+
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;height:22px;
+    border-radius:6px;cursor:default;padding:0}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((key, val) => {
+    setValues((prev) => ({ ...prev, [key]: val }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel"
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+// Tennisillo — Dashboard Screen
+
+function Dashboard({ onNavigate, onPlayerClick, addToast }) {
+  const cp = window.CURRENT_PLAYER;
+  const [challenges, setChallenges] = useState(window.CHALLENGES);
+
+  const acceptChallenge = (id) => {
+    setChallenges(c => c.filter(x => x.id !== id));
+    addToast({ message:'Sfida accettata! Partita creata.', tone:'success' });
+  };
+  const rejectChallenge = (id) => {
+    setChallenges(c => c.filter(x => x.id !== id));
+    addToast({ message:'Sfida rifiutata.', tone:'info' });
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>
+            Ciao, {cp.name.split(' ')[0]}! 👋
+          </h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>
+            Ecco cosa succede nella tua lega
+          </p>
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button style={{
+            width:40, height:40, borderRadius:12, background:'rgba(255,255,255,0.09)',
+            border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+            cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center',
+          }}>🔍</button>
+          <button style={{
+            width:40, height:40, borderRadius:12, background:'rgba(255,255,255,0.09)',
+            border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+            cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center',
+            position:'relative',
+          }}>
+            🔔
+            <span style={{
+              position:'absolute', top:7, right:7, width:8, height:8, borderRadius:'50%',
+              background:'#B9FF5A', border:'2px solid rgba(0,0,0,0.3)',
+            }} />
+          </button>
+          <window.BtnPrimary onClick={() => onNavigate('nuova-partita')}>
+            <span style={{ fontSize:16 }}>＋</span> Nuova partita
+          </window.BtnPrimary>
+        </div>
+      </div>
+
+      {/* KPI Grid */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+        <window.KpiCard icon="🏆" label="Il tuo ranking" value={`${cp.ranking}°`} delta={cp.variation > 0 ? `+${cp.variation} posizioni` : null} positive />
+        <window.KpiCard icon="⭐" label="Punti totali" value={cp.points.toLocaleString()} delta="+120 questa settimana" positive />
+        <window.KpiCard icon="🎾" label="Partite giocate" value={cp.matches} delta="60% vinte" positive />
+        <window.KpiCard icon="📈" label="Win rate" value={`${cp.winRate}%`} delta="+8%" positive />
+      </div>
+
+      {/* Main 2-col grid */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16 }}>
+
+        {/* Prossime partite */}
+        <window.GlassCard style={{ padding:'20px 22px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Prossime partite</h2>
+            <button onClick={() => onNavigate('calendario')} style={{
+              background:'none', border:'none', color:'rgba(185,255,90,0.8)',
+              cursor:'pointer', fontSize:12, fontWeight:600,
+            }}>Vedi calendario →</button>
+          </div>
+          {window.UPCOMING_MATCHES.map(m => (
+            <window.MatchRow key={m.id} match={m} showVenue />
+          ))}
+        </window.GlassCard>
+
+        {/* Top 5 Ranking */}
+        <window.GlassCard style={{ padding:'20px 22px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Classifica — Top 5</h2>
+            <button onClick={() => onNavigate('classifica')} style={{
+              background:'none', border:'none', color:'rgba(185,255,90,0.8)',
+              cursor:'pointer', fontSize:12, fontWeight:600,
+            }}>Completa →</button>
+          </div>
+          {window.PLAYERS.filter(p => p.ranking <= 5).map(p => (
+            <div key={p.id} onClick={() => onPlayerClick(p)} style={{
+              display:'flex', alignItems:'center', gap:10, padding:'8px 0',
+              borderBottom:'1px solid rgba(255,255,255,0.06)', cursor:'pointer',
+            }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.45)', width:20 }}>{p.ranking}</div>
+              <window.Avatar player={p} size={28} />
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.88)' }}>{p.name}</div>
+              </div>
+              <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>{p.points.toLocaleString()}</div>
+              {p.variation !== 0 && (
+                <div style={{ fontSize:11, color: p.variation > 0 ? '#b0ef60' : '#f09090', fontWeight:700, width:28, textAlign:'right' }}>
+                  {p.variation > 0 ? `▲${p.variation}` : `▼${Math.abs(p.variation)}`}
+                </div>
+              )}
+            </div>
+          ))}
+          {/* Current player row */}
+          {(() => { const p = window.CURRENT_PLAYER; return (
+            <div onClick={() => onPlayerClick(p)} style={{
+              display:'flex', alignItems:'center', gap:10, padding:'8px 10px', marginTop:8,
+              background:'rgba(185,255,90,0.10)', border:'1px solid rgba(185,255,90,0.28)',
+              borderRadius:10, cursor:'pointer',
+            }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'#c8ff78', width:20 }}>{p.ranking}</div>
+              <window.Avatar player={p} size={28} />
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#c8ff78' }}>{p.name}</div>
+              </div>
+              <div style={{ fontSize:14, fontWeight:700, color:'#c8ff78' }}>{p.points.toLocaleString()}</div>
+              <div style={{ fontSize:11, color:'#b0ef60', fontWeight:700, width:28, textAlign:'right' }}>▲{p.variation}</div>
+            </div>
+          ); })()}
+        </window.GlassCard>
+      </div>
+
+      {/* Bottom 3-col grid */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }}>
+
+        {/* Stats */}
+        <window.GlassCard style={{ padding:'20px 22px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Le tue statistiche</h2>
+            <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)', fontWeight:500 }}>Ultimi 30 giorni</span>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:16 }}>
+            {[
+              { label:'Vittorie', value:cp.wins },
+              { label:'Sconfitte', value:cp.losses },
+              { label:'Win rate', value:`${cp.winRate}%` },
+              { label:'Streak', value:'+3', lime:true },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign:'center' }}>
+                <div style={{ fontSize:20, fontWeight:800, color: s.lime ? '#c8ff78' : 'rgba(255,255,255,0.9)' }}>{s.value}</div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <window.MiniLineChart data={window.POINTS_HISTORY} dates={window.POINTS_DATES} width={240} height={72} />
+          <div style={{ fontSize:12, color:'#b0ef60', marginTop:8, fontWeight:600 }}>▲ 8% vs mese scorso</div>
+        </window.GlassCard>
+
+        {/* Activity */}
+        <window.GlassCard style={{ padding:'20px 22px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+            <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Attività recente</h2>
+            <button style={{ background:'none', border:'none', color:'rgba(185,255,90,0.8)', cursor:'pointer', fontSize:12, fontWeight:600 }}>
+              Vedi tutto →
+            </button>
+          </div>
+          {window.ACTIVITY.slice(0,4).map(a => <window.ActivityItem key={a.id} item={a} />)}
+        </window.GlassCard>
+
+        {/* Challenges */}
+        <window.GlassCard style={{ padding:'20px 22px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Sfide ricevute</h2>
+            {challenges.length > 0 && (
+              <span style={{
+                background:'rgba(185,255,90,0.2)', border:'1px solid rgba(185,255,90,0.35)',
+                borderRadius:999, padding:'2px 8px', fontSize:11, color:'#c8ff78', fontWeight:700,
+              }}>{challenges.length}</span>
+            )}
+          </div>
+          {challenges.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'20px 0', color:'rgba(255,255,255,0.35)', fontSize:13 }}>
+              <div style={{ fontSize:28, marginBottom:8 }}>🎾</div>
+              Nessuna sfida ricevuta
+            </div>
+          ) : (
+            challenges.map(c => (
+              <window.ChallengeCard key={c.id} challenge={c}
+                onAccept={() => acceptChallenge(c.id)}
+                onReject={() => rejectChallenge(c.id)} />
+            ))
+          )}
+        </window.GlassCard>
+      </div>
+
+      {/* XP Bar */}
+      <window.GlassCard style={{ padding:'16px 22px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+          <div style={{
+            width:44, height:44, borderRadius:12, flexShrink:0,
+            background:'linear-gradient(135deg,rgba(185,255,90,0.3),rgba(185,255,90,0.1))',
+            border:'1px solid rgba(185,255,90,0.35)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:18, fontWeight:800, color:'#c8ff78',
+          }}>{cp.level}</div>
+          <div style={{ flex:1 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>Livello {cp.level}</span>
+              <span style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>2.340 / 3.000 XP · Prossimo livello: 660 XP</span>
+            </div>
+            <div style={{ height:6, borderRadius:999, background:'rgba(255,255,255,0.1)', overflow:'hidden' }}>
+              <div style={{
+                height:'100%', width:`${(2340/3000)*100}%`, borderRadius:999,
+                background:'linear-gradient(90deg,#8ee044,#c8ff78)',
+                boxShadow:'0 0 10px rgba(185,255,90,0.5)',
+              }} />
+            </div>
+          </div>
+        </div>
+      </window.GlassCard>
+
+    </div>
+  );
+}
+
+Object.assign(window, { Dashboard });
+
+// Tennisillo — Ranking, Matches, Calendar, Profile, New Match screens
+
+// ── Classifica ────────────────────────────────────────────────────────────────
+function ScreenClassifica({ onPlayerClick }) {
+  const [tab, setTab] = useState('Generale');
+  const [search, setSearch] = useState('');
+  const filtered = window.PLAYERS.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Classifica</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Stagione Primavera 2026</p>
+        </div>
+        <window.SegmentedControl options={['Generale','Mensile','Settimanale']} value={tab} onChange={setTab} />
+      </div>
+      <window.GlassCard style={{ padding:'20px 24px' }}>
+        <div style={{ marginBottom:14 }}>
+          <window.GlassInput placeholder="Cerca giocatore…" value={search} onChange={setSearch} />
+        </div>
+        {/* Table header */}
+        <div style={{
+          display:'grid', gridTemplateColumns:'44px 1fr 90px 80px 80px 70px',
+          padding:'8px 14px', fontSize:11, fontWeight:700,
+          color:'rgba(255,255,255,0.35)', letterSpacing:'0.05em', textTransform:'uppercase',
+          marginBottom:4,
+        }}>
+          <div>#</div><div>Giocatore</div>
+          <div style={{ textAlign:'right' }}>Punti</div>
+          <div style={{ textAlign:'right' }}>Var.</div>
+          <div style={{ textAlign:'right' }}>Win %</div>
+          <div style={{ textAlign:'right' }}>Partite</div>
+        </div>
+        {filtered.map(p => (
+          <window.RankingRow key={p.id} player={p}
+            isCurrentPlayer={p.id === 'luca'}
+            onClick={onPlayerClick} />
+        ))}
+        <div style={{ marginTop:16, fontSize:12, color:'rgba(255,255,255,0.3)', textAlign:'center' }}>
+          La classifica si aggiorna dopo ogni partita completata
+        </div>
+      </window.GlassCard>
+    </div>
+  );
+}
+
+// ── Partite ───────────────────────────────────────────────────────────────────
+function ScreenPartite({ onNavigate, addToast }) {
+  const [tab, setTab] = useState('Prossime');
+  const matches = tab === 'Prossime' ? window.UPCOMING_MATCHES : window.RECENT_MATCHES;
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Partite</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Le tue partite e la tua storia</p>
+        </div>
+        <window.BtnPrimary onClick={() => onNavigate('nuova-partita')}>
+          <span style={{ fontSize:16 }}>＋</span> Nuova partita
+        </window.BtnPrimary>
+      </div>
+      <window.SegmentedControl options={['Prossime','Recenti']} value={tab} onChange={setTab} />
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {matches.map(m => (
+          <window.GlassCard key={m.id} style={{ padding:'16px 20px' }} hover>
+            {tab === 'Prossime' ? (
+              <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <div style={{
+                  textAlign:'center', minWidth:48, padding:'8px', borderRadius:12,
+                  background:'rgba(185,255,90,0.12)', border:'1px solid rgba(185,255,90,0.25)',
+                }}>
+                  <div style={{ fontSize:22, fontWeight:800, color:'#c8ff78', lineHeight:1 }}>{m.date}</div>
+                  <div style={{ fontSize:10, color:'rgba(185,255,90,0.7)', fontWeight:700 }}>{m.month}</div>
+                </div>
+                <window.Avatar player={window.CURRENT_PLAYER} size={40} />
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', fontWeight:700 }}>VS</div>
+                </div>
+                <window.Avatar player={window.playerById(m.opponentId)} size={40} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>
+                    {window.playerById(m.opponentId).name}
+                  </div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginTop:2 }}>
+                    📍 {m.venue} · {m.time}
+                  </div>
+                </div>
+                <window.StatusBadge status={m.status} />
+              </div>
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <div style={{
+                  textAlign:'center', minWidth:52, padding:'6px 10px', borderRadius:12,
+                  background:'rgba(255,255,255,0.06)',
+                }}>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)', fontWeight:600 }}>{m.date}</div>
+                </div>
+                <window.Avatar player={window.playerById(m.opponentId)} size={38} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>
+                    vs {window.playerById(m.opponentId).name}
+                  </div>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.55)', fontFamily:'monospace', marginTop:2 }}>
+                    {m.score}
+                  </div>
+                </div>
+                <window.StatusBadge status={m.result} />
+              </div>
+            )}
+          </window.GlassCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Calendario ────────────────────────────────────────────────────────────────
+function ScreenCalendario() {
+  const [view, setView] = useState('Mese');
+  const days = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  // May 2026 starts on Friday (index 4)
+  const totalDays = 31; const startOffset = 4;
+  const cells = Array.from({ length: startOffset + totalDays }, (_, i) =>
+    i < startOffset ? null : i - startOffset + 1
+  );
+  while (cells.length % 7 !== 0) cells.push(null);
+  const eventColors = { confirmed:'#B9FF5A', pending:'#F2D35E', training:'#79A7D8', sparring:'#79A7D8' };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Calendario</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Maggio 2026</p>
+        </div>
+        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+          <window.SegmentedControl options={['Mese','Settimana','Oggi']} value={view} onChange={setView} />
+          <button style={{
+            width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.09)',
+            border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+            cursor:'pointer', fontSize:14,
+          }}>‹</button>
+          <button style={{
+            width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.09)',
+            border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+            cursor:'pointer', fontSize:14,
+          }}>›</button>
+        </div>
+      </div>
+      <window.GlassCard style={{ padding:'20px 22px' }}>
+        {/* Day headers */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:8, marginBottom:8 }}>
+          {days.map(d => (
+            <div key={d} style={{ textAlign:'center', fontSize:11, fontWeight:700,
+              color:'rgba(255,255,255,0.35)', letterSpacing:'0.06em', padding:'4px 0' }}>{d}</div>
+          ))}
+        </div>
+        {/* Calendar grid */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:8 }}>
+          {cells.map((day, i) => {
+            const evs = day ? window.CALENDAR_EVENTS.filter(e => e.date === day) : [];
+            const isToday = day === 24;
+            return (
+              <div key={i} style={{
+                minHeight:80, borderRadius:12, padding:'8px',
+                background: isToday ? 'rgba(185,255,90,0.12)' : 'rgba(255,255,255,0.04)',
+                border: isToday ? '1px solid rgba(185,255,90,0.35)' : '1px solid rgba(255,255,255,0.07)',
+                cursor: day ? 'pointer' : 'default',
+              }}>
+                {day && (
+                  <>
+                    <div style={{
+                      fontSize:13, fontWeight: isToday ? 800 : 600,
+                      color: isToday ? '#c8ff78' : 'rgba(255,255,255,0.7)',
+                      marginBottom:4,
+                    }}>{day}</div>
+                    {evs.map((ev, j) => (
+                      <div key={j} style={{
+                        fontSize:10, fontWeight:600, padding:'2px 6px', borderRadius:6,
+                        background: `${eventColors[ev.status] ?? '#B9FF5A'}22`,
+                        border: `1px solid ${eventColors[ev.status] ?? '#B9FF5A'}55`,
+                        color: eventColors[ev.status] ?? '#c8ff78',
+                        marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                      }}>{ev.title}</div>
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {/* Legend */}
+        <div style={{ display:'flex', gap:16, marginTop:16 }}>
+          {[
+            { color:'#B9FF5A', label:'Partita' },
+            { color:'#F2D35E', label:'In attesa' },
+            { color:'#79A7D8', label:'Allenamento' },
+          ].map(l => (
+            <div key={l.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
+              <div style={{ width:8, height:8, borderRadius:2, background:l.color }} />
+              <span style={{ fontSize:11, color:'rgba(255,255,255,0.45)' }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </window.GlassCard>
+    </div>
+  );
+}
+
+// ── Nuova Partita ─────────────────────────────────────────────────────────────
+function ScreenNuovaPartita({ onNavigate, addToast }) {
+  const [opponent, setOpponent] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [venue, setVenue] = useState(window.VENUES[0]);
+  const [notes, setNotes] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const days = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const times = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+  const avail = window.AVAILABILITY;
+
+  const submit = () => {
+    if (!opponent) { addToast({ message:'Seleziona un avversario.', tone:'warning' }); return; }
+    addToast({ message:'Partita creata con successo! 🎾', tone:'success' });
+    onNavigate('partite');
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+        <button onClick={() => onNavigate('partite')} style={{
+          width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.09)',
+          border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.7)',
+          cursor:'pointer', fontSize:16,
+        }}>←</button>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Nuova partita</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Crea e pianifica una partita</p>
+        </div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        {/* Form */}
+        <window.GlassCard style={{ padding:'24px' }}>
+          <h3 style={{ margin:'0 0 18px', fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Dettagli partita</h3>
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <window.GlassSelect label="Avversario" value={opponent} onChange={setOpponent}
+              options={['Seleziona giocatore...', ...window.PLAYERS.filter(p=>p.id!=='luca').map(p=>p.name)]} />
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <window.GlassInput label="Data" type="date" value={date} onChange={setDate} />
+              <window.GlassInput label="Ora" type="time" value={time} onChange={setTime} />
+            </div>
+            <window.GlassSelect label="Campo" value={venue} onChange={setVenue} options={window.VENUES} />
+            <window.GlassInput label="Note (opzionale)" placeholder="Aggiungi una nota…" value={notes} onChange={setNotes} />
+          </div>
+        </window.GlassCard>
+        {/* Availability Grid */}
+        <window.GlassCard style={{ padding:'24px' }}>
+          <h3 style={{ margin:'0 0 4px', fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Disponibilità</h3>
+          <p style={{ margin:'0 0 16px', fontSize:12, color:'rgba(255,255,255,0.4)' }}>Seleziona i giorni e gli orari in cui sei disponibile</p>
+          <div style={{ overflowX:'auto' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'80px repeat(7,1fr)', gap:6, minWidth:400 }}>
+              <div />
+              {days.map(d => (
+                <div key={d} style={{ textAlign:'center', fontSize:10, fontWeight:700,
+                  color:'rgba(255,255,255,0.4)', letterSpacing:'0.06em', padding:'2px 0' }}>{d}</div>
+              ))}
+              {['Mattina\n09–12','Pomeriggio\n12–18','Sera\n18–22'].map((row, ri) => (
+                <React.Fragment key={ri}>
+                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', lineHeight:1.4,
+                    display:'flex', alignItems:'center', whiteSpace:'pre-line' }}>{row}</div>
+                  {avail[ri].map((available, ci) => {
+                    const slotId = `${ri}-${ci}`;
+                    const isSelected = selectedSlot === slotId;
+                    return (
+                      <div key={ci} onClick={() => available && setSelectedSlot(isSelected ? null : slotId)} style={{
+                        height:36, borderRadius:8, cursor: available ? 'pointer' : 'not-allowed',
+                        opacity: available ? 1 : 0.3,
+                        background: isSelected
+                          ? 'rgba(185,255,90,0.3)'
+                          : available ? 'rgba(185,255,90,0.12)' : 'rgba(255,255,255,0.05)',
+                        border: isSelected
+                          ? '1px solid rgba(185,255,90,0.6)'
+                          : available ? '1px solid rgba(185,255,90,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: isSelected ? '0 0 14px rgba(185,255,90,0.25)' : 'none',
+                        transition:'all 0.15s ease', display:'flex', alignItems:'center', justifyContent:'center',
+                        fontSize:14,
+                      }}>
+                        {available ? (isSelected ? '✓' : '') : '—'}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </window.GlassCard>
+      </div>
+      {/* Actions */}
+      <div style={{ display:'flex', justifyContent:'flex-end', gap:12 }}>
+        <window.BtnSecondary onClick={() => onNavigate('partite')}>Annulla</window.BtnSecondary>
+        <window.BtnPrimary onClick={submit}>Crea partita</window.BtnPrimary>
+      </div>
+    </div>
+  );
+}
+
+// ── Player Profile ────────────────────────────────────────────────────────────
+function ScreenProfilo({ player, addToast }) {
+  const [tab, setTab] = useState('Panoramica');
+  if (!player) return null;
+  const recentMatches = window.RECENT_MATCHES.filter(m => m.opponentId !== player.id).slice(0,3);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      {/* Profile header */}
+      <window.GlassCard style={{ padding:'28px 28px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+          <window.Avatar player={player} size={72} />
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:4 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+              <h1 style={{ margin:0, fontSize:24, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em', lineHeight:1.2 }}>
+                {player.name}
+              </h1>
+              {player.id === 'luca' && (
+                <span style={{
+                  background:'rgba(185,255,90,0.18)', border:'1px solid rgba(185,255,90,0.4)',
+                  borderRadius:999, padding:'2px 10px', fontSize:11, color:'#c8ff78', fontWeight:700,
+                }}>Tu</span>
+              )}
+            </div>
+            <div style={{ fontSize:14, color:'rgba(255,255,255,0.5)' }}>
+              Livello {player.level} · {player.points.toLocaleString()} Punti
+            </div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>
+              Ranking #{player.ranking} · Win rate {player.winRate}%
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:10 }}>
+            {player.id !== 'luca' && (
+              <window.BtnSecondary small onClick={() => addToast({ message:`Messaggio inviato a ${player.name}!`, tone:'info' })}>
+                💬 Messaggio
+              </window.BtnSecondary>
+            )}
+            {player.id !== 'luca' && (
+              <window.BtnPrimary small onClick={() => addToast({ message:`Sfida inviata a ${player.name}! 🎾`, tone:'success' })}>
+                🎾 Sfida
+              </window.BtnPrimary>
+            )}
+          </div>
+        </div>
+        {/* KPI strip */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginTop:20, paddingTop:20,
+          borderTop:'1px solid rgba(255,255,255,0.1)' }}>
+          {[
+            { label:'Ranking', value:`#${player.ranking}` },
+            { label:'Punti', value:player.points.toLocaleString() },
+            { label:'Win rate', value:`${player.winRate}%` },
+            { label:'Partite', value:player.matches },
+          ].map(k => (
+            <div key={k.label} style={{ textAlign:'center' }}>
+              <div style={{ fontSize:22, fontWeight:800, color:'rgba(255,255,255,0.95)' }}>{k.value}</div>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2 }}>{k.label}</div>
+            </div>
+          ))}
+        </div>
+      </window.GlassCard>
+
+      <window.SegmentedControl
+        options={['Panoramica','Statistiche','Cronologia partite']}
+        value={tab} onChange={setTab} />
+
+      {tab === 'Panoramica' && (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          <window.GlassCard style={{ padding:'20px 22px' }}>
+            <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Statistiche</h3>
+            {[
+              { label:'Vittorie', value:player.wins },
+              { label:'Sconfitte', value:player.losses },
+              { label:'Win rate', value:`${player.winRate}%` },
+              { label:'Streak attuale', value:'+3 🔥' },
+              { label:'Punti per partita', value:Math.round(player.points/player.matches) },
+              { label:'Break point vinti', value:'60%' },
+            ].map(s => (
+              <div key={s.label} style={{ display:'flex', justifyContent:'space-between',
+                padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize:13, color:'rgba(255,255,255,0.55)' }}>{s.label}</span>
+                <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>{s.value}</span>
+              </div>
+            ))}
+          </window.GlassCard>
+          <window.GlassCard style={{ padding:'20px 22px' }}>
+            <h3 style={{ margin:'0 0 14px', fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Andamento punti</h3>
+            <window.MiniLineChart data={window.POINTS_HISTORY} width={260} height={100} />
+            <div style={{ marginTop:12, fontSize:12, color:'#b0ef60', fontWeight:600 }}>▲ 8% vs mese scorso</div>
+          </window.GlassCard>
+        </div>
+      )}
+
+      {tab === 'Cronologia partite' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {window.RECENT_MATCHES.map(m => (
+            <window.GlassCard key={m.id} style={{ padding:'14px 18px' }} hover>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', minWidth:80 }}>{m.date}</div>
+                <window.Avatar player={window.playerById(m.opponentId)} size={32} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>
+                    vs {window.playerById(m.opponentId).name}
+                  </div>
+                </div>
+                <div style={{ fontSize:15, fontFamily:'monospace', color:'rgba(255,255,255,0.8)', fontWeight:700 }}>
+                  {m.score}
+                </div>
+                <window.StatusBadge status={m.result} />
+              </div>
+            </window.GlassCard>
+          ))}
+        </div>
+      )}
+
+      {tab === 'Statistiche' && (
+        <window.GlassCard style={{ padding:'24px' }}>
+          <h3 style={{ margin:'0 0 16px', fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Andamento stagionale</h3>
+          <window.MiniLineChart data={window.POINTS_HISTORY} width={500} height={120} />
+        </window.GlassCard>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, {
+  ScreenClassifica, ScreenPartite, ScreenCalendario,
+  ScreenNuovaPartita, ScreenProfilo,
+});
+
+// Tennisillo — Giocatori, Sfide, Statistiche, Messaggi, Impostazioni
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function FreqDot({ status, size = 8 }) {
+  const colors = { green:'#B9FF5A', yellow:'#F2D35E', red:'#E96D6D' };
+  return (
+    <span style={{
+      display:'inline-block', width:size, height:size, borderRadius:'50%',
+      background: colors[status] ?? '#888',
+      boxShadow:`0 0 6px ${colors[status] ?? '#888'}88`, flexShrink:0,
+    }} />
+  );
+}
+
+function HotBadge({ hot }) {
+  if (!hot) return (
+    <span style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontWeight:600 }}>❄️ Inattivo</span>
+  );
+  return (
+    <span style={{ fontSize:10, color:'#F2A35A', fontWeight:600 }}>🔥 Attivo</span>
+  );
+}
+
+function SectionTitle({ children, action, onAction }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+      <h2 style={{ margin:0, fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.95)', letterSpacing:'-0.02em' }}>{children}</h2>
+      {action && (
+        <button onClick={onAction} style={{ background:'none', border:'none',
+          color:'rgba(185,255,90,0.8)', cursor:'pointer', fontSize:12, fontWeight:600 }}>
+          {action} →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── GIOCATORI ─────────────────────────────────────────────────────────────────
+function ScreenGiocatori({ onPlayerClick, onNavigate, addToast }) {
+  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState('Tutti');
+  const [smartOnly, setSmartOnly] = useState(false);
+
+  const freqLabel = { green:'Disponibile', yellow:'Forse disponibile', red:'Occupato' };
+
+  const filtered = PLAYERS.filter(p => {
+    if (p.id === 'luca') return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (tab === 'Smart Match') return SMART_MATCHES.some(s => s.playerId === p.id);
+    return true;
+  });
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Giocatori</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>{PLAYERS.length - 1} membri nella lega</p>
+        </div>
+        <SegmentedControl options={['Tutti','Smart Match']} value={tab} onChange={setTab} />
+      </div>
+
+      {/* Search */}
+      <GlassInput placeholder="Cerca giocatore…" value={search} onChange={setSearch} />
+
+      {/* Smart Match cards (when tab = Smart Match) */}
+      {tab === 'Smart Match' && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14 }}>
+          {SMART_MATCHES.map(sm => {
+            const p = playerById(sm.playerId);
+            const st = PLAYER_STATUS[p.id] ?? {};
+            return (
+              <GlassCard key={p.id} style={{ padding:'18px 20px' }} hover onClick={() => onPlayerClick(p)}>
+                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
+                  <Avatar player={p} size={44} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{p.name}</div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginTop:2 }}>Livello {p.level} · #{p.ranking}</div>
+                  </div>
+                  <div style={{
+                    background:'rgba(185,255,90,0.18)', border:'1px solid rgba(185,255,90,0.35)',
+                    borderRadius:12, padding:'4px 10px', textAlign:'center',
+                  }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:'#c8ff78' }}>{sm.score}%</div>
+                    <div style={{ fontSize:9, color:'rgba(185,255,90,0.6)', fontWeight:600 }}>MATCH</div>
+                  </div>
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginBottom:12 }}>
+                  {sm.reasons.map(r => (
+                    <span key={r} style={{
+                      background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)',
+                      borderRadius:6, padding:'2px 8px', fontSize:11, color:'rgba(255,255,255,0.6)',
+                    }}>{r}</span>
+                  ))}
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <BtnSecondary small onClick={e => { e.stopPropagation(); addToast({ message:`Sparring richiesto a ${p.name}!`, tone:'info' }); }}>⚡ Sparring</BtnSecondary>
+                  <BtnPrimary small onClick={e => { e.stopPropagation(); addToast({ message:`Sfida inviata a ${p.name}! 🎾`, tone:'success' }); }}>🎾 Sfida</BtnPrimary>
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Full player grid */}
+      {tab === 'Tutti' && (
+        <GlassCard style={{ padding:'20px 24px' }}>
+          {/* Table header */}
+          <div style={{
+            display:'grid', gridTemplateColumns:'44px 1fr 90px 100px 80px 80px 120px',
+            padding:'6px 14px', fontSize:11, fontWeight:700,
+            color:'rgba(255,255,255,0.3)', letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4,
+          }}>
+            <div>#</div><div>Giocatore</div>
+            <div style={{ textAlign:'right' }}>Punti</div>
+            <div style={{ textAlign:'center' }}>Freq.</div>
+            <div style={{ textAlign:'right' }}>Win%</div>
+            <div style={{ textAlign:'center' }}>Attività</div>
+            <div style={{ textAlign:'right' }}>Azioni</div>
+          </div>
+          {filtered.map(p => {
+            const st = PLAYER_STATUS[p.id] ?? { freq:'green', hot:false };
+            const h2h = H2H[p.id];
+            return (
+              <div key={p.id}
+                onClick={() => onPlayerClick(p)}
+                style={{
+                  display:'grid', gridTemplateColumns:'44px 1fr 90px 100px 80px 80px 120px',
+                  alignItems:'center', padding:'10px 14px', borderRadius:14, cursor:'pointer',
+                  transition:'background 0.15s', marginBottom:2,
+                }}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.4)' }}>{p.ranking}</div>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <Avatar player={p} size={32} />
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.92)' }}>{p.name}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.38)' }}>Livello {p.level}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)', textAlign:'right' }}>{p.points.toLocaleString()}</div>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:5 }}>
+                  <FreqDot status={st.freq} />
+                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.45)' }}>
+                    {st.weeklyPlayed}/{st.weeklyMax}
+                  </span>
+                </div>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.7)', textAlign:'right' }}>{p.winRate}%</div>
+                <div style={{ textAlign:'center' }}><HotBadge hot={st.hot} /></div>
+                <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }} onClick={e=>e.stopPropagation()}>
+                  <button onClick={() => addToast({ message:`Sparring richiesto a ${p.name}!`, tone:'info' })} style={{
+                    padding:'5px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.15)',
+                    background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.7)',
+                    cursor:'pointer', fontSize:11, fontWeight:600,
+                  }}>⚡</button>
+                  <button onClick={() => addToast({ message:`Sfida inviata a ${p.name}! 🎾`, tone:'success' })} style={{
+                    padding:'5px 10px', borderRadius:8, border:'1px solid rgba(185,255,90,0.3)',
+                    background:'rgba(185,255,90,0.12)', color:'#c8ff78',
+                    cursor:'pointer', fontSize:11, fontWeight:600,
+                  }}>🎾</button>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ marginTop:12, padding:'10px 14px', borderRadius:12,
+            background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', lineHeight:1.7 }}>
+              <FreqDot status="green" size={7} /> <span style={{ marginLeft:4 }}>Disponibile · </span>
+              <FreqDot status="yellow" size={7} /> <span style={{ marginLeft:4 }}>Forse disponibile · </span>
+              <FreqDot status="red" size={7} /> <span style={{ marginLeft:4 }}>Occupato per questa settimana</span>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  );
+}
+
+// ── SFIDE ─────────────────────────────────────────────────────────────────────
+function ScreenSfide({ addToast }) {
+  const [tab, setTab] = useState('Ricevute');
+  const [sfideRic, setSfideRic] = useState(SFIDE_RICEVUTE);
+  const [sfideInv, setSfideInv] = useState(SFIDE_INVIATE);
+  const [sparring, setSparring] = useState(SPARRING_HISTORY);
+
+  const accept = (id) => { setSfideRic(s => s.filter(x => x.id !== id)); addToast({ message:'Sfida accettata! Partita programmata.', tone:'success' }); };
+  const reject = (id) => { setSfideRic(s => s.filter(x => x.id !== id)); addToast({ message:'Sfida rifiutata.', tone:'info' }); };
+  const cancel = (id) => { setSfideInv(s => s.filter(x => x.id !== id)); addToast({ message:'Sfida annullata.', tone:'info' }); };
+
+  const typeLabel = { match:'Partita', sparring:'Sparring' };
+  const typeIcon  = { match:'🎾', sparring:'⚡' };
+  const stsColor  = { confirmed:'rgba(185,255,90,0.18)', pending:'rgba(242,211,94,0.12)', rejected:'rgba(233,109,109,0.12)' };
+  const stsBorder = { confirmed:'rgba(185,255,90,0.35)', pending:'rgba(242,211,94,0.3)',  rejected:'rgba(233,109,109,0.3)' };
+  const stsText   = { confirmed:'Confermata', pending:'In attesa', rejected:'Rifiutata' };
+  const stsColor2 = { confirmed:'#c8ff78', pending:'#f5d96a', rejected:'#f09090' };
+
+  const pendingCount = sfideRic.filter(s => s.status === 'pending').length;
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Sfide</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Partite e sessioni di sparring</p>
+        </div>
+        {pendingCount > 0 && (
+          <div style={{
+            background:'rgba(185,255,90,0.18)', border:'1px solid rgba(185,255,90,0.35)',
+            borderRadius:14, padding:'8px 16px', display:'flex', alignItems:'center', gap:8,
+          }}>
+            <span style={{ fontSize:18 }}>⚡</span>
+            <div>
+              <div style={{ fontSize:14, fontWeight:800, color:'#c8ff78' }}>{pendingCount} sfide</div>
+              <div style={{ fontSize:11, color:'rgba(185,255,90,0.6)' }}>in attesa di risposta</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <SegmentedControl options={['Ricevute','Inviate','Sparring']} value={tab} onChange={setTab} />
+
+      {/* Ricevute */}
+      {tab === 'Ricevute' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {sfideRic.length === 0 ? (
+            <GlassCard style={{ padding:'40px', textAlign:'center' }}>
+              <div style={{ fontSize:40, marginBottom:10 }}>🎾</div>
+              <div style={{ fontSize:16, fontWeight:700, color:'rgba(255,255,255,0.6)' }}>Nessuna sfida ricevuta</div>
+            </GlassCard>
+          ) : sfideRic.map(s => {
+            const from = playerById(s.fromId);
+            return (
+              <GlassCard key={s.id} style={{ padding:'18px 22px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                  <div style={{
+                    width:40, height:40, borderRadius:12, flexShrink:0,
+                    background: s.type === 'sparring' ? 'rgba(242,211,94,0.18)' : 'rgba(185,255,90,0.18)',
+                    border: `1px solid ${s.type === 'sparring' ? 'rgba(242,211,94,0.4)' : 'rgba(185,255,90,0.4)'}`,
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:20,
+                  }}>{typeIcon[s.type]}</div>
+                  <Avatar player={from} size={40} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{from.name}</span>
+                      <span style={{
+                        background: s.type==='sparring' ? 'rgba(242,211,94,0.15)' : 'rgba(185,255,90,0.15)',
+                        border:`1px solid ${s.type==='sparring' ? 'rgba(242,211,94,0.35)' : 'rgba(185,255,90,0.35)'}`,
+                        borderRadius:999, padding:'1px 8px', fontSize:10, fontWeight:700,
+                        color: s.type==='sparring' ? '#f5d96a' : '#c8ff78',
+                      }}>{typeLabel[s.type]}</span>
+                    </div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:3 }}>
+                      📅 {s.proposedDate} alle {s.time} · 📍 {s.venue}
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:1 }}>Ricevuta {s.createdAt}</div>
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <BtnSecondary small danger onClick={() => reject(s.id)}>Rifiuta</BtnSecondary>
+                    <BtnPrimary small onClick={() => accept(s.id)}>Accetta</BtnPrimary>
+                  </div>
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Inviate */}
+      {tab === 'Inviate' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {sfideInv.map(s => {
+            const to = playerById(s.toId);
+            return (
+              <GlassCard key={s.id} style={{ padding:'18px 22px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                  <Avatar player={to} size={42} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.95)' }}>{to.name}</span>
+                      <span style={{
+                        background: s.type==='sparring' ? 'rgba(242,211,94,0.15)' : 'rgba(185,255,90,0.15)',
+                        border:`1px solid ${s.type==='sparring' ? 'rgba(242,211,94,0.35)' : 'rgba(185,255,90,0.35)'}`,
+                        borderRadius:999, padding:'1px 8px', fontSize:10, fontWeight:700,
+                        color: s.type==='sparring' ? '#f5d96a' : '#c8ff78',
+                      }}>{typeLabel[s.type]}</span>
+                    </div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:3 }}>
+                      📅 {s.proposedDate} · {s.time} · 📍 {s.venue}
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:1 }}>Inviata {s.createdAt}</div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{
+                      background: stsColor[s.status], border:`1px solid ${stsBorder[s.status]}`,
+                      borderRadius:999, padding:'4px 12px', fontSize:12, fontWeight:700,
+                      color: stsColor2[s.status],
+                    }}>{stsText[s.status]}</div>
+                    {s.status === 'pending' && (
+                      <button onClick={() => cancel(s.id)} style={{
+                        width:28, height:28, borderRadius:8, border:'1px solid rgba(255,255,255,0.15)',
+                        background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)',
+                        cursor:'pointer', fontSize:12,
+                      }}>✕</button>
+                    )}
+                  </div>
+                </div>
+              </GlassCard>
+            );
+          })}
+          {/* Pending slots indicator */}
+          <GlassCard style={{ padding:'14px 18px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.55)' }}>Sfide aperte</div>
+              <div style={{ display:'flex', gap:6 }}>
+                {[1,2,3].map(i => (
+                  <div key={i} style={{
+                    width:28, height:28, borderRadius:8,
+                    background: i <= sfideInv.filter(s=>s.status==='pending').length
+                      ? 'rgba(185,255,90,0.2)' : 'rgba(255,255,255,0.06)',
+                    border: i <= sfideInv.filter(s=>s.status==='pending').length
+                      ? '1px solid rgba(185,255,90,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:13, color: i <= sfideInv.filter(s=>s.status==='pending').length ? '#c8ff78' : 'rgba(255,255,255,0.2)',
+                  }}>{i}</div>
+                ))}
+              </div>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>max 3 aperte</div>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Sparring */}
+      {tab === 'Sparring' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          {/* Weekly cap */}
+          <GlassCard style={{ padding:'16px 20px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+              <div style={{ fontSize:28 }}>⚡</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.85)', marginBottom:4 }}>
+                  Sparring questa settimana
+                </div>
+                <div style={{ height:5, borderRadius:999, background:'rgba(255,255,255,0.1)' }}>
+                  <div style={{
+                    height:'100%', width:'50%', borderRadius:999,
+                    background:'linear-gradient(90deg,#f5d96a,#f2a35a)',
+                  }} />
+                </div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:4 }}>1 / 2 sessioni utilizzate</div>
+              </div>
+              <BtnPrimary small onClick={() => addToast({ message:'Richiesta sparring inviata!', tone:'success' })}>
+                + Nuovo sparring
+              </BtnPrimary>
+            </div>
+          </GlassCard>
+          {/* History */}
+          <GlassCard style={{ padding:'20px 22px' }}>
+            <SectionTitle>Storico Sparring</SectionTitle>
+            {SPARRING_HISTORY.map(s => {
+              const opp = playerById(s.opponentId);
+              return (
+                <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0',
+                  borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                  <Avatar player={opp} size={34} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>{opp.name}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>{s.date}</div>
+                  </div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#f5d96a' }}>+{s.points} pt</div>
+                  <span style={{
+                    background:'rgba(121,167,216,0.15)', border:'1px solid rgba(121,167,216,0.35)',
+                    borderRadius:999, padding:'2px 10px', fontSize:11, color:'#9abfdd', fontWeight:600,
+                  }}>Sparring</span>
+                </div>
+              );
+            })}
+          </GlassCard>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── STATISTICHE ───────────────────────────────────────────────────────────────
+function ScreenStatistiche({ onPlayerClick }) {
+  const [tab, setTab] = useState('Stagione');
+  const ss = SEASON_STATS;
+  const cp = CURRENT_PLAYER;
+
+  // Mini bar chart for points breakdown
+  function PointsBar({ label, value, max, color }) {
+    return (
+      <div style={{ marginBottom:10 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.6)' }}>{label}</span>
+          <span style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>+{value}</span>
+        </div>
+        <div style={{ height:6, borderRadius:999, background:'rgba(255,255,255,0.08)' }}>
+          <div style={{ height:'100%', width:`${(value/max)*100}%`, borderRadius:999, background:color, transition:'width 0.5s ease' }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Statistiche</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Stagione Primavera 2026</p>
+        </div>
+        <SegmentedControl options={['Stagione','Partite','Badge']} value={tab} onChange={setTab} />
+      </div>
+
+      {/* STAGIONE TAB */}
+      {tab === 'Stagione' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          {/* KPI row */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+            <KpiCard icon="⭐" label="Punti totali" value={ss.totalPoints.toLocaleString()} delta="+230 questa settimana" positive />
+            <KpiCard icon="📈" label="Diversificazione" value={`${Math.round(ss.diversificationIndex*100)}%`} delta="7 avversari unici" positive />
+            <KpiCard icon="🔥" label="Striscia attuale" value={`${ss.winStreak} 🏅`} delta={`Record: ${ss.bestStreak}`} positive />
+            <KpiCard icon="🕐" label="Ultima partita" value={`${ss.lastMatchDaysAgo}g fa`} delta={ss.decayRisk ? 'Rischio decay!' : 'Nessun decay'} positive={!ss.decayRisk} />
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+            {/* Breakdown punti */}
+            <GlassCard style={{ padding:'22px 24px' }}>
+              <SectionTitle>Composizione Punti</SectionTitle>
+              <PointsBar label="Punti base partite" value={ss.pointsFromBase} max={ss.totalPoints} color="rgba(185,255,90,0.7)" />
+              <PointsBar label="Bonus (costanza, diversificazione…)" value={ss.pointsFromBonuses} max={ss.totalPoints} color="rgba(121,167,216,0.7)" />
+              <PointsBar label="Sparring" value={ss.pointsFromSparring} max={ss.totalPoints} color="rgba(242,211,94,0.7)" />
+              <div style={{ marginTop:14, padding:'10px 14px', background:'rgba(255,255,255,0.05)',
+                borderRadius:10, border:'1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <span style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>Totale stagione</span>
+                  <span style={{ fontSize:16, fontWeight:800, color:'rgba(255,255,255,0.97)' }}>{ss.totalPoints.toLocaleString()} pt</span>
+                </div>
+              </div>
+            </GlassCard>
+
+            {/* Trend punti */}
+            <GlassCard style={{ padding:'22px 24px' }}>
+              <SectionTitle>Andamento Punti</SectionTitle>
+              <MiniLineChart data={POINTS_HISTORY} dates={POINTS_DATES} width={280} height={110} />
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:16 }}>
+                {[
+                  { label:'Set vinti',   value:ss.setsWon },
+                  { label:'Set persi',   value:ss.setsLost },
+                  { label:'Game vinti',  value:ss.gamesWon },
+                  { label:'Game persi',  value:ss.gamesLost },
+                ].map(s => (
+                  <div key={s.label} style={{ textAlign:'center', background:'rgba(255,255,255,0.04)',
+                    borderRadius:10, padding:'8px' }}>
+                    <div style={{ fontSize:18, fontWeight:800, color:'rgba(255,255,255,0.9)' }}>{s.value}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          </div>
+
+          {/* Decay / activity status */}
+          <GlassCard style={{ padding:'16px 22px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+              <div style={{ fontSize:28 }}>{ss.decayRisk ? '⚠️' : '✅'}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.9)' }}>
+                  {ss.decayRisk ? 'Attenzione: rischio decay!' : 'Nessun rischio decay'}
+                </div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginTop:2 }}>
+                  {ss.decayRisk
+                    ? 'Gioca almeno 1 partita competitiva per evitare la penalità'
+                    : `Ultima partita ${ss.lastMatchDaysAgo} giorni fa · Prossimo check tra ${14 - ss.lastMatchDaysAgo} giorni`
+                  }
+                </div>
+              </div>
+              <div style={{ textAlign:'right' }}>
+                <div style={{ fontSize:22, fontWeight:800, color: ss.decayRisk ? '#f09090' : '#c8ff78' }}>
+                  {ss.decayRisk ? '-15 pt' : '0 pt'}
+                </div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)' }}>penalità decay</div>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* PARTITE TAB */}
+      {tab === 'Partite' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <GlassCard style={{ padding:'22px 24px' }}>
+            <SectionTitle>Dettaglio Punti per Partita</SectionTitle>
+            {/* Column headers */}
+            <div style={{
+              display:'grid', gridTemplateColumns:'1fr 60px 70px 70px 60px 65px 60px 70px',
+              padding:'6px 8px', fontSize:10, fontWeight:700,
+              color:'rgba(255,255,255,0.3)', letterSpacing:'0.05em', textTransform:'uppercase',
+              marginBottom:4, gap:4,
+            }}>
+              <div>Partita</div>
+              <div style={{ textAlign:'right' }}>Base</div>
+              <div style={{ textAlign:'right' }}>×Liv.</div>
+              <div style={{ textAlign:'right' }}>×Ris.</div>
+              <div style={{ textAlign:'right' }}>Cost.</div>
+              <div style={{ textAlign:'right' }}>Divers.</div>
+              <div style={{ textAlign:'right' }}>Malus</div>
+              <div style={{ textAlign:'right' }}>Totale</div>
+            </div>
+            {POINTS_BREAKDOWN.map((pb, i) => (
+              <div key={i} style={{
+                display:'grid', gridTemplateColumns:'1fr 60px 70px 70px 60px 65px 60px 70px',
+                padding:'10px 8px', borderRadius:10, marginBottom:2, gap:4,
+                background: i%2===0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+              }}>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)' }}>{pb.match}</div>
+                <div style={{ fontSize:12, textAlign:'right', color:'rgba(255,255,255,0.6)' }}>{pb.base}</div>
+                <div style={{ fontSize:12, textAlign:'right', color: pb.mLivello > 0 ? '#c8ff78' : 'rgba(255,255,255,0.5)' }}>
+                  {pb.mLivello > 0 ? `+${pb.mLivello}` : '—'}
+                </div>
+                <div style={{ fontSize:12, textAlign:'right', color: pb.mRisultato > 0 ? '#c8ff78' : 'rgba(255,255,255,0.5)' }}>
+                  {pb.mRisultato > 0 ? `+${pb.mRisultato}` : '—'}
+                </div>
+                <div style={{ fontSize:12, textAlign:'right', color: pb.bCostanza > 0 ? '#9abfdd' : 'rgba(255,255,255,0.5)' }}>
+                  {pb.bCostanza > 0 ? `+${pb.bCostanza}` : '—'}
+                </div>
+                <div style={{ fontSize:12, textAlign:'right', color: pb.bDiversificazione > 0 ? '#9abfdd' : 'rgba(255,255,255,0.5)' }}>
+                  {pb.bDiversificazione > 0 ? `+${pb.bDiversificazione}` : '—'}
+                </div>
+                <div style={{ fontSize:12, textAlign:'right', color: pb.malus < 0 ? '#f09090' : 'rgba(255,255,255,0.5)' }}>
+                  {pb.malus < 0 ? pb.malus : '—'}
+                </div>
+                <div style={{ fontSize:13, fontWeight:800, textAlign:'right', color:'rgba(255,255,255,0.97)' }}>+{pb.total}</div>
+              </div>
+            ))}
+          </GlassCard>
+
+          {/* H2H */}
+          <GlassCard style={{ padding:'22px 24px' }}>
+            <SectionTitle>Testa a Testa</SectionTitle>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10 }}>
+              {Object.entries(H2H).map(([pid, h]) => {
+                const p = playerById(pid);
+                const total = h.wins + h.losses;
+                const winPct = total > 0 ? Math.round((h.wins/total)*100) : 0;
+                return (
+                  <div key={pid} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
+                    background:'rgba(255,255,255,0.05)', borderRadius:12, border:'1px solid rgba(255,255,255,0.08)' }}>
+                    <Avatar player={p} size={30} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.85)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</div>
+                      <div style={{ height:3, borderRadius:999, background:'rgba(255,255,255,0.1)', marginTop:4 }}>
+                        <div style={{ height:'100%', width:`${winPct}%`, borderRadius:999,
+                          background: winPct >= 50 ? 'rgba(185,255,90,0.7)' : 'rgba(233,109,109,0.7)' }} />
+                      </div>
+                    </div>
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontSize:13, fontWeight:800, color: h.wins > h.losses ? '#c8ff78' : '#f09090' }}>
+                        {h.wins}-{h.losses}
+                      </div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>
+                        {h.lastResult === 'win' ? '↑ ultima' : '↓ ultima'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* BADGE TAB */}
+      {tab === 'Badge' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
+            {BADGES.map(b => (
+              <GlassCard key={b.id} style={{
+                padding:'16px 18px',
+                opacity: b.earned ? 1 : 0.6,
+                border: b.earned ? '1px solid rgba(185,255,90,0.25)' : '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{
+                    width:44, height:44, borderRadius:14, flexShrink:0,
+                    background: b.earned ? 'rgba(185,255,90,0.15)' : 'rgba(255,255,255,0.06)',
+                    border: b.earned ? '1px solid rgba(185,255,90,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:22,
+                    filter: b.earned ? 'none' : 'grayscale(0.8)',
+                  }}>{b.icon}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color: b.earned ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.55)' }}>
+                      {b.name}
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.38)', marginTop:1, lineHeight:1.4 }}>{b.desc}</div>
+                    {b.earned && <div style={{ fontSize:10, color:'#c8ff78', marginTop:3, fontWeight:600 }}>✓ Conquistato {b.date}</div>}
+                    {!b.earned && b.progress && (
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:3, fontWeight:600 }}>
+                        Progresso: {b.progress}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── MESSAGGI / BACHECA ────────────────────────────────────────────────────────
+function ScreenMessaggi({ addToast }) {
+  const [liked, setLiked] = useState({});
+  const [newMsg, setNewMsg] = useState('');
+
+  const typeIcon = {
+    match_result:'🎾', ranking:'🏆', badge:'🏅', sparring:'⚡',
+    admin:'📢', challenge:'⚔️',
+  };
+  const typeBg = {
+    match_result:'rgba(185,255,90,0.08)', ranking:'rgba(242,211,94,0.08)',
+    badge:'rgba(185,255,90,0.12)', sparring:'rgba(121,167,216,0.08)',
+    admin:'rgba(255,255,255,0.10)', challenge:'rgba(233,109,109,0.08)',
+  };
+
+  const toggleLike = (id) => setLiked(l => ({ ...l, [id]: !l[id] }));
+
+  const post = () => {
+    if (!newMsg.trim()) return;
+    addToast({ message:'Messaggio pubblicato in bacheca!', tone:'success' });
+    setNewMsg('');
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div>
+        <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Bacheca Lega</h1>
+        <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Attività e comunicazioni della lega</p>
+      </div>
+
+      {/* Compose */}
+      <GlassCard style={{ padding:'16px 20px' }}>
+        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+          <Avatar player={CURRENT_PLAYER} size={36} />
+          <div style={{ flex:1 }}>
+            <input
+              value={newMsg}
+              onChange={e => setNewMsg(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && post()}
+              placeholder="Scrivi un messaggio alla lega…"
+              style={{
+                width:'100%', background:'rgba(255,255,255,0.07)',
+                border:'1px solid rgba(255,255,255,0.12)', borderRadius:12,
+                padding:'10px 14px', color:'rgba(255,255,255,0.88)', fontSize:13,
+                outline:'none',
+              }}
+            />
+          </div>
+          <BtnPrimary small onClick={post}>Pubblica</BtnPrimary>
+        </div>
+      </GlassCard>
+
+      {/* Feed */}
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {BACHECA.map(item => {
+          const p = item.playerId ? playerById(item.playerId) : null;
+          const isLiked = liked[item.id];
+          return (
+            <GlassCard key={item.id} style={{ padding:'16px 20px', background: typeBg[item.type] ?? 'rgba(255,255,255,0.07)' }}>
+              <div style={{ display:'flex', gap:12 }}>
+                {/* Icon or avatar */}
+                {p ? (
+                  <Avatar player={p} size={38} />
+                ) : (
+                  <div style={{
+                    width:38, height:38, borderRadius:12, flexShrink:0,
+                    background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)',
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
+                  }}>{typeIcon[item.type]}</div>
+                )}
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, color:'rgba(255,255,255,0.88)', lineHeight:1.5, marginBottom:6 }}>
+                    {p && <strong style={{ color:'rgba(255,255,255,0.97)' }}>{p.name} · </strong>}
+                    {item.text}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>{item.time}</span>
+                    <button onClick={() => toggleLike(item.id)} style={{
+                      background:'none', border:'none', cursor:'pointer', padding:0,
+                      fontSize:12, color: isLiked ? '#c8ff78' : 'rgba(255,255,255,0.4)',
+                      fontWeight:600, display:'flex', alignItems:'center', gap:4,
+                    }}>
+                      {isLiked ? '♥' : '♡'} {item.likes + (isLiked ? 1 : 0)}
+                    </button>
+                    {item.comments > 0 && (
+                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>
+                        💬 {item.comments}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── IMPOSTAZIONI ──────────────────────────────────────────────────────────────
+function ScreenImpostazioni({ addToast }) {
+  const [tab, setTab] = useState('Disponibilità');
+  const [avail, setAvail] = useState(MY_AVAILABILITY.map(r => [...r]));
+  const [freqIdeal, setFreqIdeal] = useState(2);
+  const [freqMax, setFreqMax]     = useState(3);
+  const [username, setUsername]   = useState('Luca Bianchi');
+  const [city, setCity]           = useState('Milano');
+  const [notifMatch, setNotifMatch] = useState(true);
+  const [notifRank, setNotifRank]   = useState(true);
+  const [notifSparring, setNotifSparring] = useState(false);
+
+  const days = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const slots = ['Mattina\n08–12','Pomeriggio\n12–18','Sera\n18–22'];
+
+  const toggleAvail = (ri, ci) => {
+    setAvail(a => {
+      const copy = a.map(r => [...r]);
+      copy[ri][ci] = !copy[ri][ci];
+      return copy;
+    });
+  };
+
+  const save = () => addToast({ message:'Impostazioni salvate!', tone:'success' });
+
+  const Toggle = ({ value, onChange }) => (
+    <button onClick={() => onChange(!value)} style={{
+      width:44, height:24, borderRadius:999, border:'none', cursor:'pointer', position:'relative',
+      background: value ? 'rgba(185,255,90,0.85)' : 'rgba(255,255,255,0.15)',
+      transition:'background 0.2s ease', flexShrink:0,
+    }}>
+      <div style={{
+        position:'absolute', top:3, left: value ? 23 : 3, width:18, height:18, borderRadius:'50%',
+        background:'white', boxShadow:'0 1px 4px rgba(0,0,0,0.3)',
+        transition:'left 0.2s ease',
+      }} />
+    </button>
+  );
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div>
+        <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Impostazioni</h1>
+        <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Profilo, disponibilità e preferenze</p>
+      </div>
+
+      <SegmentedControl
+        options={['Disponibilità','Frequenza','Profilo','Notifiche']}
+        value={tab} onChange={setTab} />
+
+      {/* Disponibilità */}
+      {tab === 'Disponibilità' && (
+        <GlassCard style={{ padding:'24px 26px' }}>
+          <SectionTitle>Calendario Disponibilità</SectionTitle>
+          <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginBottom:20, marginTop:-8 }}>
+            Definisci il tuo schema settimanale ricorrente. Verrà usato dal sistema per suggerirti avversari compatibili.
+          </p>
+          <div style={{ overflowX:'auto' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'100px repeat(7,1fr)', gap:8, minWidth:500 }}>
+              <div />
+              {days.map(d => (
+                <div key={d} style={{ textAlign:'center', fontSize:11, fontWeight:700,
+                  color:'rgba(255,255,255,0.5)', letterSpacing:'0.06em', paddingBottom:6 }}>{d}</div>
+              ))}
+              {slots.map((slot, ri) => (
+                <React.Fragment key={ri}>
+                  <div style={{
+                    fontSize:11, color:'rgba(255,255,255,0.45)', lineHeight:1.4,
+                    display:'flex', alignItems:'center', whiteSpace:'pre-line', paddingRight:8,
+                  }}>{slot}</div>
+                  {avail[ri].map((on, ci) => (
+                    <div key={ci} onClick={() => toggleAvail(ri, ci)} style={{
+                      height:44, borderRadius:10, cursor:'pointer',
+                      background: on ? 'rgba(185,255,90,0.22)' : 'rgba(255,255,255,0.05)',
+                      border: on ? '1px solid rgba(185,255,90,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                      boxShadow: on ? '0 0 12px rgba(185,255,90,0.2)' : 'none',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      fontSize:14, color: on ? '#c8ff78' : 'rgba(255,255,255,0.2)',
+                      transition:'all 0.15s ease',
+                    }}>
+                      {on ? '✓' : ''}
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginTop:20, display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <BtnSecondary small onClick={() => setAvail(MY_AVAILABILITY.map(r => [...r]))}>Reset</BtnSecondary>
+            <BtnPrimary small onClick={save}>Salva disponibilità</BtnPrimary>
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Frequenza */}
+      {tab === 'Frequenza' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <GlassCard style={{ padding:'24px 26px' }}>
+            <SectionTitle>Frequenza Desiderata</SectionTitle>
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginBottom:20, marginTop:-8 }}>
+              Imposta quante partite vuoi giocare a settimana. Gli altri giocatori vedranno un semaforo di disponibilità basato su questi valori.
+            </p>
+
+            {/* Ideal freq */}
+            <div style={{ marginBottom:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Frequenza ideale (partite/settimana)</span>
+                <span style={{ fontSize:18, fontWeight:800, color:'#c8ff78' }}>{freqIdeal}</span>
+              </div>
+              <input type="range" min={1} max={7} value={freqIdeal}
+                onChange={e => setFreqIdeal(Number(e.target.value))}
+                style={{ width:'100%', accentColor:'#B9FF5A' }} />
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:4 }}>
+                <span>1</span><span>7</span>
+              </div>
+            </div>
+
+            {/* Max freq */}
+            <div style={{ marginBottom:24 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>Frequenza massima (non voglio superare)</span>
+                <span style={{ fontSize:18, fontWeight:800, color:'#f5d96a' }}>{freqMax}</span>
+              </div>
+              <input type="range" min={freqIdeal} max={7} value={freqMax}
+                onChange={e => setFreqMax(Number(e.target.value))}
+                style={{ width:'100%', accentColor:'#F2D35E' }} />
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:4 }}>
+                <span>{freqIdeal}</span><span>7</span>
+              </div>
+            </div>
+
+            {/* Semaforo preview */}
+            <div style={{ background:'rgba(255,255,255,0.05)', borderRadius:14, padding:'14px 18px',
+              border:'1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginBottom:10, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+                Come ti vedono gli altri questa settimana:
+              </div>
+              {[
+                { label:`0–${freqIdeal-1} partite giocate`, status:'green',  desc:'🟢 Disponibile — alta probabilità che tu accetti sfide' },
+                { label:`${freqIdeal}–${freqMax-1} partite`, status:'yellow', desc:'🟡 Forse disponibile — probabilità media' },
+                { label:`${freqMax}+ partite`,               status:'red',   desc:'🔴 Occupato — bassa probabilità' },
+              ].map(row => (
+                <div key={row.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0',
+                  borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                  <FreqDot status={row.status} size={10} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)' }}>{row.desc}</div>
+                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)' }}>{row.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop:16, display:'flex', justifyContent:'flex-end' }}>
+              <BtnPrimary small onClick={save}>Salva frequenza</BtnPrimary>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Profilo */}
+      {tab === 'Profilo' && (
+        <GlassCard style={{ padding:'24px 26px' }}>
+          <SectionTitle>Dati Personali</SectionTitle>
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:8 }}>
+              <Avatar player={CURRENT_PLAYER} size={64} />
+              <div>
+                <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.85)' }}>Luca Bianchi</div>
+                <button style={{ background:'none', border:'1px solid rgba(255,255,255,0.2)',
+                  borderRadius:8, padding:'4px 12px', color:'rgba(255,255,255,0.6)',
+                  cursor:'pointer', fontSize:12, marginTop:6 }}>
+                  Cambia avatar
+                </button>
+              </div>
+            </div>
+            <GlassInput label="Nome e cognome" value={username} onChange={setUsername} />
+            <GlassInput label="Città" value={city} onChange={setCity} />
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <GlassSelect label="Livello dichiarato" value="Intermedio" onChange={()=>{}}
+                options={['Principiante','Intermedio','Avanzato','Agonista']} />
+              <GlassSelect label="Frequenza (giocatore)" value="3x settimana" onChange={()=>{}}
+                options={['1x settimana','2x settimana','3x settimana','Quotidiano']} />
+            </div>
+            <div style={{ marginTop:6, display:'flex', justifyContent:'flex-end' }}>
+              <BtnPrimary small onClick={save}>Salva profilo</BtnPrimary>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Notifiche */}
+      {tab === 'Notifiche' && (
+        <GlassCard style={{ padding:'24px 26px' }}>
+          <SectionTitle>Preferenze Notifiche</SectionTitle>
+          <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+            {[
+              { label:'Sfide ricevute e accettate',    desc:'Notifica quando ricevi o qualcuno risponde a una sfida', val:notifMatch,   set:setNotifMatch   },
+              { label:'Aggiornamenti classifica',      desc:'Quando la classifica viene aggiornata dopo una partita', val:notifRank,    set:setNotifRank    },
+              { label:'Conferme Sparring',             desc:'Quando uno sparring richiede la tua conferma',           val:notifSparring, set:setNotifSparring },
+              { label:'Reminder partite',              desc:'24h e 2h prima di una partita programmata',             val:true,         set:()=>{}          },
+              { label:'Badge conquistati',             desc:'Quando sblocchi un nuovo achievement',                  val:true,         set:()=>{}          },
+              { label:'Nuovi giocatori in lega',       desc:'Quando un nuovo membro si unisce alla tua lega',        val:false,        set:()=>{}          },
+            ].map((n, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 0',
+                borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.88)' }}>{n.label}</div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:2 }}>{n.desc}</div>
+                </div>
+                <Toggle value={n.val} onChange={n.set} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop:16, display:'flex', justifyContent:'flex-end' }}>
+            <BtnPrimary small onClick={save}>Salva preferenze</BtnPrimary>
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  );
+}
+
+// ── CLASSIFICA V2 (con semaforo + hot/cold) ───────────────────────────────────
+function ScreenClassificaV2({ onPlayerClick }) {
+  const [tab, setTab] = useState('Generale');
+  const [search, setSearch] = useState('');
+  const filtered = PLAYERS.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <h1 style={{ margin:0, fontSize:28, fontWeight:800, color:'rgba(255,255,255,0.97)', letterSpacing:'-0.02em' }}>Classifica</h1>
+          <p style={{ margin:'4px 0 0', fontSize:14, color:'rgba(255,255,255,0.45)' }}>Stagione Primavera 2026</p>
+        </div>
+        <SegmentedControl options={['Generale','Mensile','Settimanale']} value={tab} onChange={setTab} />
+      </div>
+      <GlassCard style={{ padding:'20px 24px' }}>
+        <div style={{ marginBottom:14 }}>
+          <GlassInput placeholder="Cerca giocatore…" value={search} onChange={setSearch} />
+        </div>
+        <div style={{
+          display:'grid', gridTemplateColumns:'44px 1fr 90px 70px 60px 80px 80px',
+          padding:'8px 14px', fontSize:10, fontWeight:700,
+          color:'rgba(255,255,255,0.3)', letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4,
+        }}>
+          <div>#</div><div>Giocatore</div>
+          <div style={{ textAlign:'right' }}>Punti</div>
+          <div style={{ textAlign:'right' }}>Var.</div>
+          <div style={{ textAlign:'center' }}>Freq.</div>
+          <div style={{ textAlign:'center' }}>Attività</div>
+          <div style={{ textAlign:'right' }}>Win%</div>
+        </div>
+        {filtered.map(p => {
+          const st = PLAYER_STATUS[p.id] ?? { freq:'green', hot:false };
+          const isCurrent = p.id === 'luca';
+          const medal = ['🥇','🥈','🥉'];
+          return (
+            <div key={p.id} onClick={() => onPlayerClick(p)}
+              style={{
+                display:'grid', gridTemplateColumns:'44px 1fr 90px 70px 60px 80px 80px',
+                alignItems:'center', padding:'10px 14px', borderRadius:14, cursor:'pointer',
+                background: isCurrent ? 'rgba(185,255,90,0.10)' : 'transparent',
+                border: isCurrent ? '1px solid rgba(185,255,90,0.3)' : '1px solid transparent',
+                transition:'all 0.15s', marginBottom:2,
+              }}
+              onMouseEnter={e => { if(!isCurrent) e.currentTarget.style.background='rgba(255,255,255,0.06)'; }}
+              onMouseLeave={e => { if(!isCurrent) e.currentTarget.style.background='transparent'; }}>
+              <div style={{ fontSize:14, fontWeight:700 }}>
+                {p.ranking <= 3 ? medal[p.ranking-1] : <span style={{ color:'rgba(255,255,255,0.5)' }}>{p.ranking}</span>}
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <Avatar player={p} size={30} />
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color: isCurrent ? '#c8ff78' : 'rgba(255,255,255,0.9)' }}>{p.name}</div>
+                  <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Livello {p.level}</div>
+                </div>
+              </div>
+              <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,0.95)', textAlign:'right' }}>{p.points.toLocaleString()}</div>
+              <div style={{ textAlign:'right' }}>
+                {p.variation === 0
+                  ? <span style={{ color:'rgba(255,255,255,0.3)', fontSize:12 }}>—</span>
+                  : <span style={{ color: p.variation > 0 ? '#b0ef60' : '#f09090', fontSize:12, fontWeight:700 }}>
+                      {p.variation > 0 ? `▲${p.variation}` : `▼${Math.abs(p.variation)}`}
+                    </span>
+                }
+              </div>
+              <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:4 }}>
+                <FreqDot status={st.freq} size={9} />
+                <span style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>{st.weeklyPlayed}/{st.weeklyMax}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'center' }}>
+                <HotBadge hot={st.hot} />
+              </div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.7)', textAlign:'right' }}>{p.winRate}%</div>
+            </div>
+          );
+        })}
+        <div style={{ marginTop:14, fontSize:11, color:'rgba(255,255,255,0.28)', textAlign:'center' }}>
+          La classifica si aggiorna dopo ogni partita competitiva validata
+        </div>
+      </GlassCard>
+    </div>
+  );
+}
+
+Object.assign(window, {
+  FreqDot, HotBadge,
+  ScreenGiocatori, ScreenSfide,
+  ScreenStatistiche, ScreenMessaggi,
+  ScreenImpostazioni, ScreenClassificaV2,
+});
+
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+const NAV_ITEMS = [
+  { id:'dashboard',    label:'Dashboard',    icon:'⊞' },
+  { id:'classifica',   label:'Classifica',   icon:'🏆' },
+  { id:'partite',      label:'Partite',      icon:'🎾' },
+  { id:'calendario',   label:'Calendario',   icon:'📅' },
+  { id:'giocatori',    label:'Giocatori',    icon:'👥' },
+  { id:'sfide',        label:'Sfide',        icon:'⚡', badge:2 },
+  { id:'statistiche',  label:'Statistiche',  icon:'📊' },
+  { id:'messaggi',     label:'Messaggi',     icon:'💬', badge:3 },
+  { id:'impostazioni', label:'Impostazioni', icon:'⚙' },
+];
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentHue": 85,
+  "glassOpacity": 11,
+  "bgVariant": "blue-green",
+  "sidebarWidth": 240
+}/*EDITMODE-END*/;
+
+function Sidebar({ active, onNavigate, tw }) {
+  const cp = CURRENT_PLAYER;
+  const hue = tw.accentHue;
+  const accentC   = `oklch(0.82 0.22 ${hue})`;
+  const accentBg  = `oklch(0.82 0.22 ${hue} / 0.18)`;
+  const accentBdr = `oklch(0.82 0.22 ${hue} / 0.35)`;
+  return (
+    <div style={{
+      width:tw.sidebarWidth, flexShrink:0, display:'flex', flexDirection:'column',
+      background:'linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.06))',
+      border:'1px solid rgba(255,255,255,0.13)', borderRadius:24,
+      backdropFilter:'blur(28px) saturate(140%)',
+      boxShadow:'0 24px 70px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.18)',
+      padding:'20px 14px', height:'100%', overflow:'hidden',
+    }}>
+      {/* Logo */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'0 6px 20px', borderBottom:'1px solid rgba(255,255,255,0.09)' }}>
+        <div style={{
+          width:36, height:36, borderRadius:12, flexShrink:0,
+          background:`linear-gradient(135deg, oklch(0.85 0.22 ${hue}), oklch(0.62 0.24 ${hue}))`,
+          boxShadow:`0 0 20px oklch(0.75 0.22 ${hue} / 0.45)`,
+          position:'relative', overflow:'hidden',
+        }}>
+          <div style={{ position:'absolute', top:5, left:6, width:24, height:24, borderRadius:'50%', border:'1.5px solid rgba(0,0,0,0.2)' }} />
+          <div style={{ position:'absolute', top:5, left:6, width:24, height:24, borderRadius:'50%', borderLeft:'1.5px solid rgba(255,255,255,0.65)', transform:'rotate(-30deg)' }} />
+        </div>
+        <div>
+          <div style={{ fontSize:13, fontWeight:800, color:'rgba(255,255,255,0.95)', letterSpacing:'-0.01em' }}>Tennisillo</div>
+          <div style={{ fontSize:10, color:'rgba(255,255,255,0.38)', fontWeight:500 }}>friendly neighborhood racket</div>
+        </div>
+      </div>
+      {/* Nav */}
+      <nav style={{ flex:1, display:'flex', flexDirection:'column', gap:3, padding:'14px 0', overflowY:'auto' }}>
+        {NAV_ITEMS.map(item => {
+          const on = active === item.id;
+          return (
+            <button key={item.id} onClick={() => onNavigate(item.id)} style={{
+              display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:12,
+              border: on ? `1px solid ${accentBdr}` : '1px solid transparent',
+              background: on ? accentBg : 'transparent', cursor:'pointer',
+              color: on ? accentC : 'rgba(255,255,255,0.6)',
+              fontSize:13, fontWeight: on ? 700 : 500, transition:'all 0.18s ease',
+              boxShadow: on ? `0 0 20px oklch(0.75 0.22 ${hue} / 0.14)` : 'none', textAlign:'left',
+            }}
+            onMouseEnter={e=>{ if(!on){ e.currentTarget.style.background='rgba(255,255,255,0.07)'; e.currentTarget.style.color='rgba(255,255,255,0.9)'; }}}
+            onMouseLeave={e=>{ if(!on){ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(255,255,255,0.6)'; }}}>
+              <span style={{ fontSize:15, width:20, textAlign:'center', flexShrink:0 }}>{item.icon}</span>
+              <span style={{ flex:1 }}>{item.label}</span>
+              {item.badge && (
+                <span style={{ background:'rgba(185,255,90,0.2)', border:`1px solid ${accentBdr}`,
+                  color:accentC, borderRadius:999, padding:'1px 7px', fontSize:10, fontWeight:800 }}>
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+      {/* User */}
+      <div style={{ padding:'14px 10px 4px', borderTop:'1px solid rgba(255,255,255,0.09)',
+        display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}
+        onClick={() => onNavigate('profilo-self')}>
+        <Avatar player={cp} size={36} />
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.9)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{cp.name}</div>
+          <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>Livello {cp.level}</div>
+        </div>
+        <div style={{ fontSize:14, color:'rgba(255,255,255,0.35)' }}>›</div>
+      </div>
+      <div style={{ padding:'8px 10px 0' }}>
+        <div style={{ height:3, borderRadius:999, background:'rgba(255,255,255,0.1)', overflow:'hidden' }}>
+          <div style={{
+            height:'100%', width:'78%', borderRadius:999,
+            background:`linear-gradient(90deg, oklch(0.62 0.24 ${hue}), oklch(0.82 0.22 ${hue}))`,
+            boxShadow:`0 0 8px oklch(0.75 0.22 ${hue} / 0.5)`,
+          }} />
+        </div>
+        <div style={{ fontSize:10, color:'rgba(255,255,255,0.28)', marginTop:4 }}>2.340 / 3.000 XP</div>
+      </div>
+    </div>
+  );
+}
+
+const BG = {
+  'blue-green': 'radial-gradient(ellipse at 10% 0%, rgba(185,255,90,0.14) 0%, transparent 30%), radial-gradient(ellipse at 82% 18%, rgba(121,167,216,0.22) 0%, transparent 30%), linear-gradient(145deg,#071517 0%,#17304A 55%,#0B1A1C 100%)',
+  'deep-navy':  'radial-gradient(ellipse at 10% 0%, rgba(185,255,90,0.10) 0%, transparent 25%), linear-gradient(145deg,#060d1a 0%,#0d1e3a 60%,#060d1a 100%)',
+  'forest':     'radial-gradient(ellipse at 10% 0%, rgba(185,255,90,0.18) 0%, transparent 30%), linear-gradient(145deg,#071510 0%,#0d2a18 55%,#071510 100%)',
+};
+
+function App() {
+  const [page, setPage] = useState('dashboard');
+  const [profilePlayer, setProfilePlayer] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [tw, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  const addToast = useCallback((t) => {
+    const id = Date.now();
+    setToasts(ts => [...ts, { ...t, id }]);
+    setTimeout(() => setToasts(ts => ts.filter(x => x.id !== id)), 3500);
+  }, []);
+
+  const navigate = (p) => setPage(p);
+  const openPlayer = (player) => { setProfilePlayer(player); setPage('profilo'); };
+  const glassOp = tw.glassOpacity / 100;
+
+  const renderPage = () => {
+    const props = { onNavigate: navigate, addToast };
+    if (page === 'dashboard')     return <Dashboard {...props} onPlayerClick={openPlayer} />;
+    if (page === 'classifica')    return <ScreenClassificaV2 onPlayerClick={openPlayer} />;
+    if (page === 'partite')       return <ScreenPartite {...props} />;
+    if (page === 'calendario')    return <ScreenCalendario />;
+    if (page === 'nuova-partita') return <ScreenNuovaPartita {...props} />;
+    if (page === 'giocatori')     return <ScreenGiocatori {...props} onPlayerClick={openPlayer} />;
+    if (page === 'sfide')         return <ScreenSfide addToast={addToast} />;
+    if (page === 'statistiche')   return <ScreenStatistiche onPlayerClick={openPlayer} />;
+    if (page === 'messaggi')      return <ScreenMessaggi addToast={addToast} />;
+    if (page === 'impostazioni')  return <ScreenImpostazioni addToast={addToast} />;
+    if (page === 'profilo')       return <ScreenProfilo player={profilePlayer} addToast={addToast} />;
+    if (page === 'profilo-self')  return <ScreenProfilo player={CURRENT_PLAYER} addToast={addToast} />;
+    return (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12 }}>
+        <div style={{ fontSize:48 }}>🚧</div>
+        <div style={{ fontSize:20, fontWeight:700, color:'rgba(255,255,255,0.7)' }}>
+          {NAV_ITEMS.find(n=>n.id===page)?.label ?? page}
+        </div>
+        <div style={{ fontSize:14, color:'rgba(255,255,255,0.35)' }}>Schermata in arrivo</div>
+      </div>
+    );
+  };
+
+  const sidebarActive = page === 'nuova-partita' ? 'partite'
+    : (page === 'profilo' || page === 'profilo-self') ? 'classifica'
+    : page;
+
+  return (
+    <div style={{ width:'100vw', height:'100vh', overflow:'hidden',
+      background: BG[tw.bgVariant] ?? BG['blue-green'],
+      display:'flex', fontFamily:"'Inter', system-ui, sans-serif" }}>
+      <div style={{ display:'flex', gap:16, padding:16, width:'100%', height:'100%' }}>
+        <Sidebar active={sidebarActive} onNavigate={navigate} tw={tw} />
+        <main style={{
+          flex:1, overflowY:'auto', borderRadius:24,
+          background:`linear-gradient(135deg,rgba(255,255,255,${glassOp}),rgba(255,255,255,${glassOp*0.5}))`,
+          border:'1px solid rgba(255,255,255,0.12)', backdropFilter:'blur(18px) saturate(130%)',
+          boxShadow:'0 14px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.16)',
+          padding:'28px 32px',
+        }}>
+          <div style={{ maxWidth:1100 }}>{renderPage()}</div>
+        </main>
+      </div>
+      <Toast toasts={toasts} remove={id => setToasts(ts => ts.filter(t => t.id !== id))} />
+      <TweaksPanel>
+        <TweakSection label="Accento">
+          <TweakSlider label="Hue accento" value={tw.accentHue} min={0} max={360} step={5} onChange={v => setTweak('accentHue', v)} />
+        </TweakSection>
+        <TweakSection label="Materiale">
+          <TweakSlider label="Opacità glass" value={tw.glassOpacity} min={4} max={22} step={1} onChange={v => setTweak('glassOpacity', v)} />
+          <TweakSelect label="Sfondo" value={tw.bgVariant}
+            options={['blue-green','deep-navy','forest']}
+            onChange={v => setTweak('bgVariant', v)} />
+        </TweakSection>
+        <TweakSection label="Layout">
+          <TweakSlider label="Larghezza sidebar" value={tw.sidebarWidth} min={200} max={300} step={10} onChange={v => setTweak('sidebarWidth', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>
