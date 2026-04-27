@@ -9,7 +9,11 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   app.enableCors({
-    origin: process.env['FRONTEND_URL'] ?? 'http://localhost:3000',
+    origin: [
+      'https://tennisillo.vercel.app',
+      'http://localhost:3000',
+      /\.vercel\.app$/,
+    ],
     credentials: true,
   });
 
