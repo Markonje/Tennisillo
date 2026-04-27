@@ -20,6 +20,7 @@ export default function LeaguesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [joinCodeError, setJoinCodeError] = useState(false);
   const [newLeague, setNewLeague] = useState({ name: '', sport: 'TENNIS_SINGLES', type: 'PUBLIC' });
 
   useEffect(() => {
@@ -47,6 +48,13 @@ export default function LeaguesPage() {
   }
 
   async function joinWithCode() {
+    if (!joinCode.trim()) {
+      setJoinCodeError(true);
+      setError('Inserisci un codice invito valido.');
+      return;
+    }
+    setJoinCodeError(false);
+    setError(null);
     try {
       await apiClient.post(`/leagues/join/${joinCode}`, {});
       setJoinCode('');
@@ -58,6 +66,7 @@ export default function LeaguesPage() {
 
   return (
     <div>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
           {t('title')}
@@ -67,17 +76,18 @@ export default function LeaguesPage() {
         </button>
       </div>
 
-      {error && (
-        <p style={{ color: '#f09090', fontSize: 13, marginBottom: 16 }}>{error}</p>
-      )}
-
       {/* Join with code */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <input
           placeholder={t('joinWithCode')}
           value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
-          style={inputStyle}
+          onChange={(e) => { setJoinCode(e.target.value); setJoinCodeError(false); }}
+          style={{
+            ...inputStyle,
+            border: joinCodeError
+              ? '1px solid #f09090'
+              : '1px solid rgba(255,255,255,0.12)',
+          }}
         />
         <button onClick={() => { void joinWithCode(); }} style={btnStyle}>{t('join')}</button>
       </div>
@@ -114,9 +124,11 @@ export default function LeaguesPage() {
         </GlassCard>
       )}
 
-      {/* League list */}
+      {/* League list area — error lives here */}
       {loading ? (
         <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>
+      ) : error ? (
+        <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>
       ) : leagues.length === 0 ? (
         <p style={{ color: 'rgba(255,255,255,0.4)' }}>Nessuna lega trovata.</p>
       ) : (

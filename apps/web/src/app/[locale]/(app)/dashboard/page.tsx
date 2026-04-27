@@ -68,5 +68,5 @@ export default async function DashboardPage({
 
   const profile = session?.access_token ? await fetchUserProfile(session.access_token) : null;
 
-  return <DashboardClient userEmail={user.email} profile={profile} />;
+  return <DashboardClient profile={profile} />;
 }

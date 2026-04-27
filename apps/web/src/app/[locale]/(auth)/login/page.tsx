@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -23,6 +24,13 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMessage(null);
+
+    if (isRegister && password !== confirmPassword) {
+      setError('Le password non coincidono.');
+      return;
+    }
+
     setLoading(true);
 
     const { data, error: authError } = isRegister
@@ -50,6 +58,13 @@ export default function LoginPage() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/${locale}/dashboard` },
     });
+  }
+
+  function switchMode() {
+    setIsRegister(!isRegister);
+    setError(null);
+    setMessage(null);
+    setConfirmPassword('');
   }
 
   return (
@@ -83,6 +98,16 @@ export default function LoginPage() {
           required
           style={inputStyle}
         />
+        {isRegister && (
+          <input
+            type="password"
+            placeholder="Conferma password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            style={inputStyle}
+          />
+        )}
 
         {error && (
           <p style={{ color: '#f09090', fontSize: 13, textAlign: 'center' }}>{error}</p>
@@ -97,13 +122,15 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <button onClick={() => { void handleGoogle(); }} style={{ ...primaryBtnStyle, marginTop: 10, background: 'rgba(255,255,255,0.08)' }}>
-        {t('loginWithGoogle')}
-      </button>
+      {!isRegister && (
+        <button onClick={() => { void handleGoogle(); }} style={{ ...primaryBtnStyle, marginTop: 10, background: 'rgba(255,255,255,0.08)' }}>
+          {t('loginWithGoogle')}
+        </button>
+      )}
 
       <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
         <button
-          onClick={() => setIsRegister(!isRegister)}
+          onClick={switchMode}
           style={{ background: 'none', border: 'none', color: '#b0ef60', cursor: 'pointer', fontSize: 13 }}
         >
           {isRegister ? t('alreadyHaveAccount') : t('noAccount')}

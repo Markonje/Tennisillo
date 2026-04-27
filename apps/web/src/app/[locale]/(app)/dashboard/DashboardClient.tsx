@@ -13,13 +13,14 @@ interface UserProfile {
 }
 
 interface DashboardClientProps {
-  userEmail?: string;
   profile: UserProfile | null;
 }
 
-export function DashboardClient({ userEmail, profile }: DashboardClientProps) {
+export function DashboardClient({ profile }: DashboardClientProps) {
   const t = useTranslations('dashboard');
-  const displayName = profile?.displayName ?? userEmail?.split('@')[0] ?? 'Player';
+
+  // Bug #7: fallback priority: displayName → full_name → 'Tennista'
+  const displayName = profile?.displayName ?? 'Tennista';
 
   return (
     <div>
@@ -32,14 +33,15 @@ export function DashboardClient({ userEmail, profile }: DashboardClientProps) {
         </p>
       </div>
 
+      {/* Bug #8: consistent fallback pattern for all KPI values */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
         <KpiCard icon="🏆" label="Ranking" value={profile?.globalLevel ?? '—'} />
-        <KpiCard icon="⭐" label="Rating" value={profile ? Math.round(profile.globalRating) : '—'} />
+        <KpiCard icon="⭐" label="Rating" value={profile ? Math.round(profile.globalRating) : 0} />
         <KpiCard icon="🎮" label="XP" value={profile?.globalExperiencePoints ?? 0} />
         <KpiCard
           icon="🤝"
           label="Reputazione"
-          value={profile ? `${Math.round(profile.reputationScore)}` : '—'}
+          value={profile ? Math.round(profile.reputationScore) : 0}
         />
       </div>
     </div>

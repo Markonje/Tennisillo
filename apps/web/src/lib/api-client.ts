@@ -1,11 +1,14 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabase = createBrowserClient(
-  process.env['NEXT_PUBLIC_SUPABASE_URL']!,
-  process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!,
-);
+function createSupabaseClient() {
+  return createBrowserClient(
+    process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+    process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!,
+  );
+}
 
 async function getAuthHeader(): Promise<Record<string, string>> {
+  const supabase = createSupabaseClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
