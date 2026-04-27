@@ -13,7 +13,6 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   const navItems = [
     { href: `/${locale}/dashboard`, label: '🏠 Dashboard' },
     { href: `/${locale}/leagues`, label: `🏆 ${t('leagues')}` },
-    { href: `/${locale}/ranking`, label: `📊 ${t('ranking')}` },
     { href: `/${locale}/profile`, label: `👤 ${t('profile')}` },
   ];
 

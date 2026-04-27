@@ -9,17 +9,19 @@ interface UserProfile {
   globalRating: number;
   globalExperiencePoints: number;
   reputationScore: number;
+  onboardingCompleted: boolean;
 }
 
 async function fetchUserProfile(accessToken: string): Promise<UserProfile | null> {
-  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+  const apiUrl = process.env['NEXT_PUBLIC_API_URL'];
+  if (!apiUrl) return null;
   try {
     const res = await fetch(`${apiUrl}/users/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
     });
     if (!res.ok) return null;
-    return res.json() as Promise<UserProfile>;
+    return (await res.json()) as UserProfile;
   } catch {
     return null;
   }
@@ -46,27 +48,16 @@ export default async function DashboardPage({
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Check onboarding status — redirect if not completed
-  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
-  try {
-    const onboardingRes = await fetch(`${apiUrl}/onboarding/status`, {
-      headers: {
-        Authorization: `Bearer ${session?.access_token ?? ''}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
-    if (onboardingRes.ok) {
-      const { completed } = (await onboardingRes.json()) as { completed: boolean };
-      if (!completed) {
-        redirect(`/${locale}/onboarding`);
-      }
-    }
-  } catch {
-    // API not reachable — allow access to dashboard
-  }
-
   const profile = session?.access_token ? await fetchUserProfile(session.access_token) : null;
+
+  // Onboarding gate.
+  // We trust /users/me as the single source of truth: the guard upserts the
+  // local user lazily, and the User row carries onboardingCompleted. If the
+  // API is unreachable we surface an empty dashboard rather than silently
+  // skipping the gate.
+  if (profile && !profile.onboardingCompleted) {
+    redirect(`/${locale}/onboarding`);
+  }
 
   return <DashboardClient profile={profile} />;
 }

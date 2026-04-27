@@ -5,17 +5,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import type { User } from '@tennisillo/db';
 import * as crypto from 'node:crypto';
+import { AuthService, type SupabaseClaims } from './auth.service';
 
-// Minimal JWT verification using only SUPABASE_JWT_SECRET (HMAC-SHA256 / HS256).
-// We do NOT install @supabase/supabase-js on the backend — auth is pure JWT validation.
-
-interface JwtPayload {
-  sub: string;
-  email?: string;
-  role?: string;
+interface JwtPayload extends SupabaseClaims {
   exp?: number;
   aud?: string;
+  role?: string;
 }
 
 function base64UrlDecode(str: string): string {
@@ -47,12 +44,17 @@ function verifyHs256(token: string, secret: string): JwtPayload {
 }
 
 export interface AuthenticatedRequest extends Request {
+  /** Raw JWT claims as decoded from the Supabase access token. */
   user: JwtPayload;
+  /** Local DB user row, lazily upserted on first authenticated request. */
+  dbUser: User;
 }
 
 @Injectable()
 export class SupabaseJwtGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly authService: AuthService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const authHeader = request.headers['authorization'];
 
@@ -67,7 +69,9 @@ export class SupabaseJwtGuard implements CanActivate {
       throw new UnauthorizedException('JWT secret not configured');
     }
 
-    request.user = verifyHs256(token, secret);
+    const claims = verifyHs256(token, secret);
+    request.user = claims;
+    request.dbUser = await this.authService.syncFromClaims(claims);
     return true;
   }
 }
