@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@tennisillo/ui';
-import { createClient } from '../../../../lib/supabase/client';
+import { apiClient } from '../../../../lib/api-client';
 
 const LEVELS = ['ROOKIE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'ELITE'];
 
@@ -20,22 +20,12 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [form, setForm] = useState({ displayName: '', city: '', birthYear: 0, globalLevel: 'ROOKIE' });
   const [saved, setSaved] = useState(false);
-  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
-
-  async function getToken() {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? '';
-  }
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const token = await getToken();
-      const res = await fetch(`${apiUrl}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json() as UserProfile;
+      try {
+        const data = await apiClient.get<UserProfile>('/users/me');
         setProfile(data);
         setForm({
           displayName: data.displayName,
@@ -43,29 +33,36 @@ export default function ProfilePage() {
           birthYear: data.birthYear ?? 0,
           globalLevel: data.globalLevel,
         });
+      } catch {
+        setError('Impossibile caricare il profilo.');
       }
     })();
   }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    const token = await getToken();
-    const payload = {
-      ...(form.displayName && { displayName: form.displayName }),
-      ...(form.city && { city: form.city }),
-      ...(form.birthYear > 0 && { birthYear: form.birthYear }),
-      globalLevel: form.globalLevel,
-    };
-    const res = await fetch(`${apiUrl}/users/me`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) setSaved(true);
+    setError(null);
+    try {
+      const payload = {
+        ...(form.displayName && { displayName: form.displayName }),
+        ...(form.city && { city: form.city }),
+        ...(form.birthYear > 0 && { birthYear: form.birthYear }),
+        globalLevel: form.globalLevel,
+      };
+      await apiClient.put('/users/me', payload);
+      setSaved(true);
+    } catch {
+      setError('Impossibile salvare il profilo.');
+    }
   }
 
   if (!profile) {
-    return <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>;
+    return (
+      <>
+        {error && <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>}
+        {!error && <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>}
+      </>
+    );
   }
 
   return (
@@ -118,9 +115,8 @@ export default function ProfilePage() {
             </select>
           </label>
 
-          {saved && (
-            <p style={{ color: '#b0ef60', fontSize: 13 }}>Salvato!</p>
-          )}
+          {error && <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>}
+          {saved && <p style={{ color: '#b0ef60', fontSize: 13 }}>Salvato!</p>}
 
           <button type="submit" style={btnStyle}>{t('save')}</button>
         </form>

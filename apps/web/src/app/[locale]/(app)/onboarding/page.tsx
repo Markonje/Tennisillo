@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@tennisillo/ui';
-import { createClient } from '../../../../lib/supabase/client';
+import { apiClient } from '../../../../lib/api-client';
 
 const LEVELS = ['ROOKIE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'ELITE'];
 
@@ -16,42 +16,33 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ skillLevel: 'ROOKIE', birthYear: '', city: '' });
   const [loading, setLoading] = useState(false);
-  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
-
-  async function getToken() {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? '';
-  }
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const token = await getToken();
-      const res = await fetch(`${apiUrl}/onboarding/status`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const { completed } = await res.json() as { completed: boolean };
+      try {
+        const { completed } = await apiClient.get<{ completed: boolean }>('/onboarding/status');
         if (completed) router.replace(`/${locale}/dashboard`);
+      } catch {
+        // API not reachable — allow onboarding to proceed
       }
     })();
   }, []);
 
   async function handleComplete() {
     setLoading(true);
-    const token = await getToken();
-    const res = await fetch(`${apiUrl}/onboarding/complete`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    setError(null);
+    try {
+      await apiClient.post('/onboarding/complete', {
         skillLevel: form.skillLevel,
         birthYear: parseInt(form.birthYear),
         city: form.city || undefined,
-      }),
-    });
-    setLoading(false);
-    if (res.ok) {
+      });
       router.push(`/${locale}/dashboard`);
+    } catch {
+      setError('Impossibile completare l\'onboarding. Riprova.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -73,6 +64,10 @@ export default function OnboardingPage() {
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textAlign: 'center', marginBottom: 28 }}>
           {step}/3
         </p>
+
+        {error && (
+          <p style={{ color: '#f09090', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>{error}</p>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {step === 1 && (

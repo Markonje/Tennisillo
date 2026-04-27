@@ -50,6 +50,12 @@ Thumbs.db
 .trae/
 skills-lock.json
 
+# Next.js generated
+**/next-env.d.ts
+
+# TypeScript build info
+**/tsconfig.tsbuildinfo
+
 # Misc
 *.tgz
 .cache/
