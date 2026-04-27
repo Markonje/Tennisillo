@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
@@ -24,7 +25,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error: authError } = isRegister
+    const { data, error: authError } = isRegister
       ? await supabase.auth.signUp({ email, password })
       : await supabase.auth.signInWithPassword({ email, password });
 
@@ -32,6 +33,11 @@ export default function LoginPage() {
 
     if (authError) {
       setError(authError.message);
+      return;
+    }
+
+    if (isRegister && data.user && !data.session) {
+      setMessage('Controlla la tua email per confermare la registrazione.');
       return;
     }
 
@@ -80,6 +86,10 @@ export default function LoginPage() {
 
         {error && (
           <p style={{ color: '#f09090', fontSize: 13, textAlign: 'center' }}>{error}</p>
+        )}
+
+        {message && (
+          <p style={{ color: '#b0ef60', fontSize: 13, textAlign: 'center' }}>{message}</p>
         )}
 
         <button type="submit" disabled={loading} style={primaryBtnStyle}>
