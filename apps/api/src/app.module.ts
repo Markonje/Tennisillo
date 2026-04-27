@@ -5,10 +5,9 @@ import { UserModule } from './users/user.module';
 import { LeagueModule } from './leagues/league.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { HealthController } from './health/health.controller';
-import { MeController } from './me/me.controller';
 
 @Module({
   imports: [PrismaModule, AuthModule, UserModule, LeagueModule, OnboardingModule],
-  controllers: [HealthController, MeController],
+  controllers: [HealthController],
 })
 export class AppModule {}

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { LeagueController } from './league.controller';
 import { LeagueService } from './league.service';
-import { UserModule } from '../users/user.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [UserModule],
+  imports: [AuthModule],
   controllers: [LeagueController],
   providers: [LeagueService],
   exports: [LeagueService],
