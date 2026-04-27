@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { getTranslations, getLocale } from 'next-intl/server';
+import { LogoutButton } from './LogoutButton';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -56,6 +57,9 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             </a>
           ))}
         </nav>
+        <div style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <LogoutButton />
+        </div>
       </aside>
 
       {/* Main content */}
