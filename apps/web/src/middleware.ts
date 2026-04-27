@@ -1,13 +1,9 @@
 import createIntlMiddleware from 'next-intl/middleware';
 import { type NextRequest } from 'next/server';
 import { updateSession } from './lib/supabase/middleware';
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@tennisillo/shared-types';
+import { routing } from './routing';
 
-const intlMiddleware = createIntlMiddleware({
-  locales: SUPPORTED_LOCALES,
-  defaultLocale: DEFAULT_LOCALE,
-  localePrefix: 'always',
-});
+const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
   // Auth session refresh first (sets cookies)

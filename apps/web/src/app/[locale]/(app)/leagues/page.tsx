@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@tennisillo/ui';
-import { createClient } from '../../../../lib/supabase/client';
+import { apiClient } from '../../../../lib/api-client';
 
 interface League {
   id: string;
@@ -17,55 +17,42 @@ export default function LeaguesPage() {
   const t = useTranslations('leagues');
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [newLeague, setNewLeague] = useState({ name: '', sport: 'TENNIS_SINGLES', type: 'PUBLIC' });
-  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
-
-  async function getToken() {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? '';
-  }
 
   useEffect(() => {
     void (async () => {
-      const token = await getToken();
-      const res = await fetch(`${apiUrl}/leagues/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json() as League[];
+      try {
+        const data = await apiClient.get<League[]>('/leagues/me');
         setLeagues(data);
+      } catch {
+        setError('Impossibile caricare le leghe.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
   async function createLeague() {
-    const token = await getToken();
-    const res = await fetch(`${apiUrl}/leagues`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(newLeague),
-    });
-    if (res.ok) {
-      const league = await res.json() as League;
+    try {
+      const league = await apiClient.post<League>('/leagues', newLeague);
       setLeagues((prev) => [league, ...prev]);
       setShowCreate(false);
       setNewLeague({ name: '', sport: 'TENNIS_SINGLES', type: 'PUBLIC' });
+    } catch {
+      setError('Impossibile creare la lega.');
     }
   }
 
   async function joinWithCode() {
-    const token = await getToken();
-    const res = await fetch(`${apiUrl}/leagues/join/${joinCode}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
+    try {
+      await apiClient.post(`/leagues/join/${joinCode}`, {});
       setJoinCode('');
       window.location.reload();
+    } catch {
+      setError('Codice non valido o lega non trovata.');
     }
   }
 
@@ -79,6 +66,10 @@ export default function LeaguesPage() {
           {t('create')}
         </button>
       </div>
+
+      {error && (
+        <p style={{ color: '#f09090', fontSize: 13, marginBottom: 16 }}>{error}</p>
+      )}
 
       {/* Join with code */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>

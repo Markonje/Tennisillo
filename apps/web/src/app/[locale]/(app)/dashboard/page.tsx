@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { getLocale } from 'next-intl/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { DashboardClient } from './DashboardClient';
 
@@ -26,8 +25,12 @@ async function fetchUserProfile(accessToken: string): Promise<UserProfile | null
   }
 }
 
-export default async function DashboardPage() {
-  const locale = await getLocale();
+export default async function DashboardPage({
+  params,
+}: {
+  params: { locale: string };
+}) {
+  const { locale } = params;
   const supabase = createClient();
 
   const {
@@ -42,6 +45,26 @@ export default async function DashboardPage() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
+  // Check onboarding status — redirect if not completed
+  const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+  try {
+    const onboardingRes = await fetch(`${apiUrl}/onboarding/status`, {
+      headers: {
+        Authorization: `Bearer ${session?.access_token ?? ''}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+    if (onboardingRes.ok) {
+      const { completed } = (await onboardingRes.json()) as { completed: boolean };
+      if (!completed) {
+        redirect(`/${locale}/onboarding`);
+      }
+    }
+  } catch {
+    // API not reachable — allow access to dashboard
+  }
 
   const profile = session?.access_token ? await fetchUserProfile(session.access_token) : null;
 

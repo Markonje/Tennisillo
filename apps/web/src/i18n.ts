@@ -1,18 +1,17 @@
 import { getRequestConfig } from 'next-intl/server';
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@tennisillo/shared-types';
-import type { LocaleCode } from '@tennisillo/shared-types';
 import type { AbstractIntlMessages } from 'next-intl';
+import { routing } from './routing';
 
-export { SUPPORTED_LOCALES, DEFAULT_LOCALE };
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale;
 
-export default getRequestConfig(async ({ locale }) => {
-  const resolvedLocale = (
-    SUPPORTED_LOCALES.includes(locale as LocaleCode) ? locale : DEFAULT_LOCALE
-  ) as LocaleCode;
+  if (!locale || !(routing.locales as readonly string[]).includes(locale)) {
+    locale = routing.defaultLocale;
+  }
 
   const messages = (
-    (await import(`../messages/${resolvedLocale}.json`)) as { default: AbstractIntlMessages }
+    (await import(`../messages/${locale}.json`)) as { default: AbstractIntlMessages }
   ).default;
 
-  return { messages };
+  return { locale, messages };
 });
