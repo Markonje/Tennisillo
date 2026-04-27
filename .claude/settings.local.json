@@ -12,7 +12,10 @@
       "Bash(git push *)",
       "Bash(gh pr create --base main --head chore/domain-types-and-docs --title 'chore: domain types + component refactor + docs sync' --body ' *)",
       "Bash(gh pr *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(pnpm --filter @tennisillo/web build)"
     ]
   }
 }
