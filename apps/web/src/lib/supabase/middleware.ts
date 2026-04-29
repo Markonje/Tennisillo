@@ -30,16 +30,44 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const localeMatch = pathname.match(/^\/([a-z]{2})\//);
+  const locale = localeMatch?.[1] ?? 'it';
 
-  // Protected routes: redirect to login if unauthenticated
-  const isAppRoute = pathname.match(/\/[a-z]{2}\/(?:dashboard|leagues|profile|onboarding)/);
+  const isAppRoute = /\/[a-z]{2}\/(leagues|profile|onboarding)/.test(pathname);
+
   if (isAppRoute && !user) {
     const url = request.nextUrl.clone();
-    // Extract locale prefix
-    const localeMatch = pathname.match(/^\/([a-z]{2})\//);
-    const locale = localeMatch?.[1] ?? 'it';
     url.pathname = `/${locale}/login`;
     return NextResponse.redirect(url);
+  }
+
+  // Onboarding gate: redirect to /onboarding if not yet completed
+  if (user && isAppRoute && !pathname.includes('/onboarding')) {
+    const apiUrl = process.env['NEXT_PUBLIC_API_URL'];
+    if (apiUrl) {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          const res = await fetch(`${apiUrl}/onboarding/status`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            cache: 'no-store',
+          });
+          if (res.ok) {
+            const { completed } = (await res.json()) as { completed: boolean };
+            if (!completed) {
+              const url = request.nextUrl.clone();
+              url.pathname = `/${locale}/onboarding`;
+              return NextResponse.redirect(url);
+            }
+          }
+        }
+      } catch {
+        // Network failure — do not block the user
+      }
+    }
   }
 
   return supabaseResponse;

@@ -12,7 +12,7 @@ export default async function HomePage({ params: { locale } }: Props) {
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect(`/${locale}/dashboard`);
+    redirect(`/${locale}/leagues`);
   } else {
     redirect(`/${locale}/login`);
   }

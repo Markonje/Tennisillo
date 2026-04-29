@@ -4,8 +4,12 @@
     "subtitle": "La tua lega tennis amatoriale, organizzata."
   },
   "nav": {
-    "leagues": "Leghe",
-    "profile": "Profilo"
+    "leagues": "Le mie leghe",
+    "profile": "Profilo",
+    "members": "Membri",
+    "settings": "Impostazioni",
+    "back": "← Tutte le leghe",
+    "dashboard": "Dashboard"
   },
   "auth": {
     "login": "Accedi",
@@ -24,7 +28,32 @@
     "title": "Le mie leghe",
     "create": "Crea lega",
     "join": "Unisciti",
-    "joinWithCode": "Entra con codice invito"
+    "joinWithCode": "Entra con codice invito",
+    "empty": "Non sei in nessuna lega. Creane una o entra con un codice invito.",
+    "members": "Membri"
+  },
+  "league": {
+    "dashboard": "Dashboard",
+    "season": "Stagione",
+    "noSeason": "Nessuna stagione attiva",
+    "createSeason": "Crea stagione",
+    "comingInSprint3": "Disponibile in Sprint 3",
+    "inviteCode": "Codice invito",
+    "copyCode": "Copia codice",
+    "members": "Membri",
+    "membersTitle": "Membri della lega",
+    "settings": "Impostazioni"
+  },
+  "createLeague": {
+    "title": "Crea una nuova lega",
+    "name": "Nome lega",
+    "sport": "Sport",
+    "type": "Tipo",
+    "public": "Pubblica",
+    "private": "Privata",
+    "description": "Descrizione",
+    "maxMembers": "Massimo membri",
+    "create": "Crea lega"
   },
   "profile": {
     "title": "Il tuo profilo",

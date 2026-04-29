@@ -3,14 +3,14 @@
 > **Aggiornare questo file alla fine di ogni sessione di lavoro.**
 > Claude Code lo legge all'inizio di ogni chat per sapere da dove ripartire.
 > Formato: conciso, basato sui fatti.
-> **Last updated**: 2026-04-27
+> **Last updated**: 2026-04-29
 
 ---
 
 ## Sprint corrente
 
-**Sprint**: Sprint 2 — Utenti e Leghe (completato, PR in review)
-**Stato**: ✅ Sprint 2 completato. PR #7 aperta, CI verde. Non mergiare finché l'utente non aggiunge ANON_KEY in `.env.local`.
+**Sprint**: Sprint 2.5 — Ricostruzione architetturale (completato, PR #13 aperta, CI verde)
+**Stato**: ✅ Sprint 2.5 completato. PR #13 aperta, CI verde + Vercel preview ok. Non mergiare finché l'utente non approva.
 
 ---
 
@@ -28,63 +28,53 @@
 - Smoke test visivo dei componenti in `_smoke.tsx`
 
 ### apps/api
-- NestJS scaffold + SupabaseJwtGuard + endpoints `/health` e `/me`
-- Bloccato in attesa di DATABASE_URL e SUPABASE_JWT_SECRET reali
+- NestJS + SupabaseJwtGuard
+- UsersModule, LeaguesModule, OnboardingModule completi
+- ValidationPipe globale
 
 ### packages
-- `db`: schema Prisma v2.0 completo (21 modelli, validato), RLS bozza, postinstall ok
-- `scoring-engine`, `training-engine`, `matchmaking-engine`: scaffold con tipi (implementazione rinviata a Sprint 4/5/6)
-- `shared-types`: feature flags + locale + tipi di dominio (Player, Match, Challenge, ActivityFeedItem)
-- `ui`: 15 componenti pixel-perfect dal prototipo, tipati su tipi di dominio
-
-### Documentazione
-- Specs v2.0 in `docs/specs/` (Markdown)
-- 3 ADR in `docs/decisions/`
-- Glossario, domain rules, FAQ in `docs/context/`
-- File del prototipo design in `docs/design/` (riferimento visivo)
+- `db`: schema Prisma v2.0 completo (21 modelli, validato), migration applicata su Supabase
+- `scoring-engine`, `training-engine`, `matchmaking-engine`: scaffold con tipi
+- `shared-types`, `ui`: 15 componenti pixel-perfect
 
 ---
 
-## Cosa c'è su `feat/sprint-2-users-leagues` (PR #7, CI verde)
+## Cosa c'è su `feat/sprint2.5-architecture-rework` (PR #13, CI verde)
 
-### DB
-- Prima migration applicata su Supabase (`20260426221425_init` — 21 modelli)
-- Campo `inviteCode String? @unique` aggiunto a `League` (via `db push`)
-- `packages/db/.env` creato localmente per prisma CLI (non committato)
+### Architettura nuova
+- Landing autenticata = `/leagues` (lista leghe utente)
+- Tutto scoped a una lega: `/leagues/[id]/{page,members,settings}`
+- Sidebar dinamica (client): voci globali vs lega in base a `usePathname()`
+- `/dashboard` globale rimossa (non nelle specs)
+- `/ranking` globale già rimossa in PR #12
 
-### apps/api
-- **UsersModule**: `GET /users/me`, `PUT /users/me`, `GET /users/:id`, `POST /users/sync`
-  - `UserService.upsertFromSupabase()`: lazy sync da JWT Supabase
-  - `UpdateProfileDto` con class-validator
-- **LeaguesModule**: `POST /leagues`, `GET /leagues/me`, `GET /leagues/:id`, join, invite code, approvazione, settings
-  - `CreateLeagueDto`, `UpdateLeagueSettingsDto` con class-validator
-- **OnboardingModule**: `GET /onboarding/status`, `POST /onboarding/complete`
-  - `CompleteOnboardingDto` con class-validator
-- ValidationPipe globale in `main.ts`
-- `MeController` aggiornato: chiama `UserService.upsertFromSupabase` per lazy sync
+### Bug critici risolti
+- 401 server-side: `api-server.ts` propaga JWT dai cookie Supabase
+- Onboarding gate spostato nel middleware (non più solo nella dashboard)
+- Login/OAuth Google redirige a `/leagues`
+- Profilo: gestione graceful errore 401/403 (sessione scaduta)
+- Onboarding: redirect a `/leagues` dopo completamento
 
-### apps/web
-- Supabase client helpers: `src/lib/supabase/client.ts`, `server.ts`, `middleware.ts`
-- Middleware: sessione Supabase + intl routing + protezione route `/(app)/**`
-- `(auth)/layout.tsx` + `(auth)/login/page.tsx`: form email/password + Google OAuth
-- `(app)/layout.tsx`: sidebar con voci Dashboard, Leghe, Classifica, Profilo
-- `(app)/dashboard/page.tsx`: KPI card con dati reali da `GET /users/me`
-- `(app)/leagues/page.tsx`: lista leghe, crea lega, join con codice invito
-- `(app)/profile/page.tsx`: form aggiornamento profilo
-- `(app)/onboarding/page.tsx`: wizard 3 step (livello → anno nascita → città)
-- `apps/web/.env.example` creato
-- `apps/web/.env.local` creato con placeholder — **ANON_KEY da aggiungere manualmente**
-
-### i18n
-- `it.json` e `en.json` aggiornati: auth, dashboard, leagues, profile, onboarding
+### File creati (Sprint 2.5)
+- `src/lib/api-server.ts`
+- `src/lib/league-context.tsx`
+- `src/components/Sidebar.tsx`
+- `(app)/leagues/page.tsx` (convertita a Server Component)
+- `(app)/leagues/JoinByCodeForm.tsx`
+- `(app)/leagues/new/page.tsx`
+- `(app)/leagues/[leagueId]/layout.tsx`
+- `(app)/leagues/[leagueId]/page.tsx`
+- `(app)/leagues/[leagueId]/LeagueDashboardClient.tsx`
+- `(app)/leagues/[leagueId]/members/page.tsx`
+- `(app)/leagues/[leagueId]/settings/page.tsx`
+- `(app)/leagues/[leagueId]/settings/LeagueSettingsClient.tsx`
 
 ---
 
 ## Blocker per produzione
 
-1. **ANON_KEY mancante**: aggiungere `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `apps/web/.env.local`
-   → Supabase Dashboard → Settings → API → anon key pubblica
-2. **SUPABASE_SERVICE_ROLE_KEY** (opzionale per ora): serve per l'hook `POST /users/sync`
+1. **ANON_KEY**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `apps/web/.env.local`
+2. **SUPABASE_SERVICE_ROLE_KEY** (opzionale per ora)
 
 ---
 
@@ -92,13 +82,13 @@
 
 In ordine:
 
-1. **Utente**: aggiungere ANON_KEY in `apps/web/.env.local`, poi mergiare PR #7
+1. **Utente**: mergiare PR #13 dopo review
 2. **Sprint 3 — Stagioni e Partite**:
    - CRUD Stagioni (DRAFT → REGISTRATION → ACTIVE)
    - Challenge flow: PENDING_ACCEPTANCE → SCHEDULED → PENDING_RESULT → VALIDATED
    - Risultati partita + validazione (auto-conferma dopo 24h)
    - SeasonPlayer + SeasonRanking (snapshot)
-   - UI: pagina partite, pagina classifica stagione
+   - UI: `/leagues/[id]/seasons/[id]` — pagina classifica stagione
 
 ---
 
@@ -108,11 +98,9 @@ In ordine:
 | --- | --- | --- |
 | Pre-Sprint 1 | Setup documentazione | ✅ Completo |
 | Sprint 1 | Fondamenta (monorepo, DB schema, auth scaffold) | ✅ Completo |
-| Sprint UI 1 | Componenti base | ✅ Completo |
-| Sprint UI 2 | Componenti di dominio | ✅ Completo |
-| Sprint UI 3 | Visual fidelity | ✅ Completo |
-| Sprint UI 4 | Tipi di dominio + refactor | ✅ Completo |
-| Sprint 2 | Utenti e Leghe | ✅ Completo (PR #7, CI verde — in attesa ANON_KEY) |
+| Sprint UI 1–4 | Componenti UI | ✅ Completo |
+| Sprint 2 | Utenti e Leghe (API + pagine base) | ✅ Completo (su main) |
+| Sprint 2.5 | Ricostruzione architetturale + fix bug critici | ✅ Completo (PR #13) |
 | Sprint 3 | Stagioni e Partite | ⏳ Non iniziato |
 | Sprint 4 | Scoring Engine | ⏳ Non iniziato |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |

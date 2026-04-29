@@ -4,8 +4,12 @@
     "subtitle": "Your amateur tennis league, organised."
   },
   "nav": {
-    "leagues": "Leagues",
-    "profile": "Profile"
+    "leagues": "My Leagues",
+    "profile": "Profile",
+    "members": "Members",
+    "settings": "Settings",
+    "back": "← All Leagues",
+    "dashboard": "Dashboard"
   },
   "auth": {
     "login": "Sign In",
@@ -24,7 +28,32 @@
     "title": "My Leagues",
     "create": "Create League",
     "join": "Join",
-    "joinWithCode": "Enter invite code"
+    "joinWithCode": "Enter invite code",
+    "empty": "You are not in any league. Create one or join with an invite code.",
+    "members": "Members"
+  },
+  "league": {
+    "dashboard": "Dashboard",
+    "season": "Season",
+    "noSeason": "No active season",
+    "createSeason": "Create Season",
+    "comingInSprint3": "Available in Sprint 3",
+    "inviteCode": "Invite code",
+    "copyCode": "Copy code",
+    "members": "Members",
+    "membersTitle": "League Members",
+    "settings": "Settings"
+  },
+  "createLeague": {
+    "title": "Create a new league",
+    "name": "League name",
+    "sport": "Sport",
+    "type": "Type",
+    "public": "Public",
+    "private": "Private",
+    "description": "Description",
+    "maxMembers": "Max members",
+    "create": "Create League"
   },
   "profile": {
     "title": "Your Profile",

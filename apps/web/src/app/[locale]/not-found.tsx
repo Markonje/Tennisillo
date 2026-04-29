@@ -21,8 +21,8 @@ export default function NotFound() {
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 24 }}>
           La pagina che cerchi non esiste o è stata spostata.
         </p>
-        <Link href="/dashboard">
-          <Button variant="primary">Torna alla Dashboard</Button>
+        <Link href="/leagues">
+          <Button variant="primary">Torna alle leghe</Button>
         </Link>
       </GlassCard>
     </div>
