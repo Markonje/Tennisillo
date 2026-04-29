@@ -49,14 +49,14 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(`/${locale}/dashboard`);
+    router.push(`/${locale}/leagues`);
     router.refresh();
   }
 
   async function handleGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/${locale}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/${locale}/leagues` },
     });
   }
 

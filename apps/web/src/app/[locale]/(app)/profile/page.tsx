@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@tennisillo/ui';
-import { apiClient } from '../../../../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
 const LEVELS = ['ROOKIE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'ELITE'];
 
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ displayName: '', city: '', birthYear: 0, globalLevel: 'ROOKIE' });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -33,8 +34,13 @@ export default function ProfilePage() {
           birthYear: data.birthYear ?? 0,
           globalLevel: data.globalLevel,
         });
-      } catch {
-        setError('Impossibile caricare il profilo.');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.includes('401') || msg.includes('403')) {
+          setSessionExpired(true);
+        } else {
+          setError('Impossibile caricare il profilo.');
+        }
       }
     })();
   }, []);
@@ -42,6 +48,7 @@ export default function ProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSaved(false);
     try {
       const payload = {
         ...(form.displayName && { displayName: form.displayName }),
@@ -56,12 +63,33 @@ export default function ProfilePage() {
     }
   }
 
+  if (sessionExpired) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
+          {t('title')}
+        </h1>
+        <GlassCard style={{ padding: 24, maxWidth: 480 }}>
+          <p style={{ color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+            Sessione scaduta. Ricarica la pagina per continuare.
+          </p>
+        </GlassCard>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
-      <>
-        {error && <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>}
-        {!error && <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>}
-      </>
+      <div>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
+          {t('title')}
+        </h1>
+        {error ? (
+          <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>
+        ) : (
+          <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>
+        )}
+      </div>
     );
   }
 

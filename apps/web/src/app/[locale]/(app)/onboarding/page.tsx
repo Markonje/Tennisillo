@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@tennisillo/ui';
-import { apiClient } from '../../../../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
 const LEVELS = ['ROOKIE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'ELITE'];
 
@@ -18,17 +18,6 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const { completed } = await apiClient.get<{ completed: boolean }>('/onboarding/status');
-        if (completed) router.replace(`/${locale}/dashboard`);
-      } catch {
-        // API not reachable — allow onboarding to proceed
-      }
-    })();
-  }, []);
-
   async function handleComplete() {
     setLoading(true);
     setError(null);
@@ -38,9 +27,9 @@ export default function OnboardingPage() {
         birthYear: parseInt(form.birthYear),
         city: form.city || undefined,
       });
-      router.push(`/${locale}/dashboard`);
+      router.push(`/${locale}/leagues`);
     } catch {
-      setError('Impossibile completare l\'onboarding. Riprova.');
+      setError("Impossibile completare l'onboarding. Riprova.");
     } finally {
       setLoading(false);
     }

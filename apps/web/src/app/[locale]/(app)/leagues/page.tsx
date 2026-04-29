@@ -1,9 +1,8 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { GlassCard } from '@tennisillo/ui';
-import { apiClient } from '../../../../lib/api-client';
+import Link from 'next/link';
+import { apiServer } from '@/lib/api-server';
+import { JoinByCodeForm } from './JoinByCodeForm';
 
 interface League {
   id: string;
@@ -13,165 +12,90 @@ interface League {
   _count?: { members: number };
 }
 
-export default function LeaguesPage() {
-  const t = useTranslations('leagues');
-  const [leagues, setLeagues] = useState<League[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
-  const [joinCodeError, setJoinCodeError] = useState(false);
-  const [newLeague, setNewLeague] = useState({ name: '', sport: 'TENNIS_SINGLES', type: 'PUBLIC' });
+export default async function LeaguesPage() {
+  const t = await getTranslations('leagues');
+  const locale = await getLocale();
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const data = await apiClient.get<League[]>('/leagues/me');
-        setLeagues(data);
-      } catch {
-        setError('Impossibile caricare le leghe.');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  async function createLeague() {
-    try {
-      const league = await apiClient.post<League>('/leagues', newLeague);
-      setLeagues((prev) => [league, ...prev]);
-      setShowCreate(false);
-      setNewLeague({ name: '', sport: 'TENNIS_SINGLES', type: 'PUBLIC' });
-    } catch {
-      setError('Impossibile creare la lega.');
-    }
-  }
-
-  async function joinWithCode() {
-    if (!joinCode.trim()) {
-      setJoinCodeError(true);
-      setError('Inserisci un codice invito valido.');
-      return;
-    }
-    setJoinCodeError(false);
-    setError(null);
-    try {
-      await apiClient.post(`/leagues/join/${joinCode}`, {});
-      setJoinCode('');
-      window.location.reload();
-    } catch {
-      setError('Codice non valido o lega non trovata.');
-    }
-  }
+  const leagues = await apiServer.get<League[]>('/leagues/me');
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
           {t('title')}
         </h1>
-        <button onClick={() => setShowCreate(!showCreate)} style={btnStyle}>
-          {t('create')}
-        </button>
-      </div>
-
-      {/* Join with code */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <input
-          placeholder={t('joinWithCode')}
-          value={joinCode}
-          onChange={(e) => { setJoinCode(e.target.value); setJoinCodeError(false); }}
+        <Link
+          href={`/${locale}/leagues/new`}
           style={{
-            ...inputStyle,
-            border: joinCodeError
-              ? '1px solid #f09090'
-              : '1px solid rgba(255,255,255,0.12)',
+            background: '#b0ef60',
+            color: '#0a0e1a',
+            border: 'none',
+            borderRadius: 10,
+            padding: '10px 18px',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
           }}
-        />
-        <button onClick={() => { void joinWithCode(); }} style={btnStyle}>{t('join')}</button>
+        >
+          {t('create')}
+        </Link>
       </div>
 
-      {/* Create league form */}
-      {showCreate && (
-        <GlassCard style={{ padding: 20, marginBottom: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input
-              placeholder="Nome lega"
-              value={newLeague.name}
-              onChange={(e) => setNewLeague({ ...newLeague, name: e.target.value })}
-              style={inputStyle}
-            />
-            <select
-              value={newLeague.sport}
-              onChange={(e) => setNewLeague({ ...newLeague, sport: e.target.value })}
-              style={inputStyle}
-            >
-              <option value="TENNIS_SINGLES">Tennis Singles</option>
-              <option value="TENNIS_DOUBLES">Tennis Doubles</option>
-              <option value="PADEL">Padel</option>
-            </select>
-            <select
-              value={newLeague.type}
-              onChange={(e) => setNewLeague({ ...newLeague, type: e.target.value })}
-              style={inputStyle}
-            >
-              <option value="PUBLIC">Pubblica</option>
-              <option value="PRIVATE">Privata</option>
-            </select>
-            <button onClick={() => { void createLeague(); }} style={btnStyle}>Crea</button>
-          </div>
-        </GlassCard>
-      )}
+      <JoinByCodeForm locale={locale} joinLabel={t('join')} placeholder={t('joinWithCode')} />
 
-      {/* League list area — error lives here */}
-      {loading ? (
-        <p style={{ color: 'rgba(255,255,255,0.4)' }}>Caricamento…</p>
-      ) : error ? (
-        <p style={{ color: '#f09090', fontSize: 13 }}>{error}</p>
-      ) : leagues.length === 0 ? (
-        <p style={{ color: 'rgba(255,255,255,0.4)' }}>Nessuna lega trovata.</p>
+      {!leagues || leagues.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, marginBottom: 20 }}>
+            {t('empty')}
+          </p>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {leagues.map((league) => (
-            <GlassCard key={league.id} style={{ padding: 16 }} hover>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0 }}>{league.name}</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
-                    {league.sport} · {league.type} · {league._count?.members ?? 0} membri
-                  </p>
+            <Link
+              key={league.id}
+              href={`/${locale}/leagues/${league.id}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <GlassCard style={{ padding: 16 }} hover>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        background: 'rgba(176,239,96,0.15)',
+                        border: '1px solid rgba(176,239,96,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        fontWeight: 900,
+                        color: '#b0ef60',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {league.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0, fontSize: 15 }}>
+                        {league.name}
+                      </p>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
+                        {league.sport} · {league.type} · {league._count?.members ?? 0} {t('members')}
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{ color: '#b0ef60', fontSize: 20 }}>→</span>
                 </div>
-                <span style={{ color: '#b0ef60', fontSize: 20 }}>→</span>
-              </div>
-            </GlassCard>
+              </GlassCard>
+            </Link>
           ))}
         </div>
       )}
     </div>
   );
 }
-
-const btnStyle: React.CSSProperties = {
-  background: '#b0ef60',
-  color: '#0a0e1a',
-  border: 'none',
-  borderRadius: 10,
-  padding: '10px 18px',
-  fontWeight: 700,
-  fontSize: 13,
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-};
-
-const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
-  padding: '10px 14px',
-  color: 'rgba(255,255,255,0.9)',
-  fontSize: 14,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
