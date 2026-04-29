@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import type { Player } from '@tennisillo/shared-types';
 import { Avatar } from './Avatar';

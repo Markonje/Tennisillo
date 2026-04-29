@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 export type ToastTone = 'success' | 'info' | 'warning' | 'danger';
