@@ -9,8 +9,8 @@
 
 ## Sprint corrente
 
-**Sprint**: Sprint 2.5 — Ricostruzione architetturale (completato, PR #13 aperta, CI verde)
-**Stato**: ✅ Sprint 2.5 completato. PR #13 aperta, CI verde + Vercel preview ok. Non mergiare finché l'utente non approva.
+**Sprint**: Sprint 2.5 — Ricostruzione architetturale (completato, su main)
+**Stato**: ✅ Sprint 2.5 completato + hotfix `use client` applicato. Main aggiornato (commit 85631a1).
 
 ---
 
