@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import type { User } from '@tennisillo/db';
-import * as crypto from 'node:crypto';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AuthService, type SupabaseClaims } from './auth.service';
 
 interface JwtPayload extends SupabaseClaims {
@@ -15,33 +15,13 @@ interface JwtPayload extends SupabaseClaims {
   role?: string;
 }
 
-function base64UrlDecode(str: string): string {
-  const padded = str.replace(/-/g, '+').replace(/_/g, '/');
-  const padding = (4 - (padded.length % 4)) % 4;
-  return Buffer.from(padded + '='.repeat(padding), 'base64').toString('utf8');
-}
-
-function verifyHs256(token: string, secret: string): JwtPayload {
-  const parts = token.split('.');
-  if (parts.length !== 3) throw new UnauthorizedException('Invalid token format');
-
-  const [headerB64, payloadB64, signatureB64] = parts as [string, string, string];
-
-  const expectedSig = crypto
-    .createHmac('sha256', secret)
-    .update(`${headerB64}.${payloadB64}`)
-    .digest('base64url');
-
-  if (expectedSig !== signatureB64) throw new UnauthorizedException('Invalid token signature');
-
-  const payload = JSON.parse(base64UrlDecode(payloadB64)) as JwtPayload;
-
-  if (payload.exp !== undefined && payload.exp < Math.floor(Date.now() / 1000)) {
-    throw new UnauthorizedException('Token expired');
-  }
-
-  return payload;
-}
+// Module-level singleton: jose caches the key set after the first fetch and
+// re-fetches only when it encounters an unknown key ID (i.e. after rotation).
+const supabaseJwks = createRemoteJWKSet(
+  new URL(
+    `${process.env['SUPABASE_URL'] ?? 'https://xmtrfkphtvqgxmscfcgw.supabase.co'}/auth/v1/.well-known/jwks.json`,
+  ),
+);
 
 export interface AuthenticatedRequest extends Request {
   /** Raw JWT claims as decoded from the Supabase access token. */
@@ -63,13 +43,17 @@ export class SupabaseJwtGuard implements CanActivate {
     }
 
     const token = authHeader.slice(7);
-    const secret = process.env['SUPABASE_JWT_SECRET'];
 
-    if (!secret) {
-      throw new UnauthorizedException('JWT secret not configured');
+    let claims: JwtPayload;
+    try {
+      const { payload } = await jwtVerify(token, supabaseJwks, {
+        algorithms: ['ES256'],
+      });
+      claims = payload as unknown as JwtPayload;
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
     }
 
-    const claims = verifyHs256(token, secret);
     request.user = claims;
     request.dbUser = await this.authService.syncFromClaims(claims);
     return true;
