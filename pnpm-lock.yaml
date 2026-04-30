@@ -154,6 +154,9 @@ importers:
       prisma:
         specifier: ^5.14.0
         version: 5.22.0
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
     devDependencies:
       '@types/node':
         specifier: ^20.14.0
@@ -161,9 +164,6 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.39)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
 
   packages/matchmaking-engine:
     devDependencies:
