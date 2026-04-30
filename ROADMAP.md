@@ -100,21 +100,95 @@ tipato con tipi di dominio, pronto per essere consumato da Sprint 2 in poi.
 
 ---
 
-## Sprint 3 — Stagioni e Partite (3 settimane)
+## Sprint 2.5 — Architecture rework + auth fixes (1 settimana, eseguito)
+
+> Sprint trasversale **non pianificato in roadmap originaria**, eseguito tra Sprint 2
+> e Sprint 3 per correggere bug critici di auth emersi nel testing post Sprint 2 e
+> per riallineare l'architettura frontend alle specs §8.1 (tutto deve essere
+> scoped per lega, niente dashboard globale).
+
+**Leggi prima**: specs/02 §8.1 (struttura pagine).
+
+**Deliverable**:
+- [x] `apiServer` (`src/lib/api-server.ts`) — propagazione JWT dai cookie Supabase nei Server Components.
+- [x] `apiClient` — client Supabase creato dentro `getAuthHeader()` (non a livello di modulo).
+- [x] Rimozione `/dashboard` globale e `/ranking` globale (out of specs).
+- [x] Architettura league-scoped: `/leagues`, `/leagues/new`, `/leagues/[id]`, `/leagues/[id]/members`, `/leagues/[id]/settings`.
+- [x] `LeagueProvider` + hook `useLeague()` (`src/lib/league-context.tsx`).
+- [x] Sidebar dinamica (`src/components/Sidebar.tsx`): voci diverse fuori/dentro lega via `usePathname`.
+- [x] Middleware: check onboarding redirige a `/onboarding` se non completato.
+- [x] Fix Railway: `prisma` CLI spostato in `dependencies` di `packages/db` per supportare `NODE_ENV=production`.
+- [x] i18n: nuove chiavi `nav`, `leagues`, `league`, `createLeague`.
+
+**Criterio di done**: smoke test E2E manuale verde sui 7 punti baseline:
+1. Onboarding parte dopo conferma email.
+2. `/leagues` mostra empty state.
+3. Crea lega → redirect a `/leagues/[id]`.
+4. Dashboard lega mostra KPI + codice invito.
+5. Sidebar dinamica corretta dentro/fuori lega.
+6. `/profile` carica.
+7. Logout torna a login.
+
+**Stato**: ✅ Completato. PR #13 mergiata. Baseline E2E verificata in produzione il 2026-04-30.
+
+---
+
+## Sprint 3 — Stagioni e Partite (3 settimane, in 2 PR)
 
 **Leggi prima**: specs/01 §5, §6, §7 · specs/02 §7 (moduli seasons, matches).
 
-**Deliverable**:
-- [ ] CRUD Stagioni con calcolo automatico durata ottimale (formula su N giocatori).
-- [ ] Pre-stagione → Stagione Attiva → Post-stagione (senza playoff per ora).
-- [ ] Flusso sfida completo (invio, accettazione, scheduling data/ora/venue testuale).
-- [ ] Registrazione risultato con doppia validazione (24h auto-confirm).
-- [ ] Gestione disputa base (contestazione → admin decide).
-- [ ] Plausibility check base (punteggi impossibili).
-- [ ] UI: dashboard stagione, lista partite, form inserimento risultato, pagina disputa.
-- [ ] Audit log per tutte le mutazioni di Match.
+> Sprint grosso, suddiviso in **due PR consecutive** per limitare il blast radius
+> di ciascuna review e mantenere la CI sempre verde. La separazione è
+> Seasons-first, Matches-after, perché il modello `Match` è figlio di `Season`.
 
-**Criterio di done**: una stagione è creabile, due giocatori si sfidano, inseriscono risultato, avviene validazione.
+### Sprint 3a — Seasons (PR #14, ~1.5 settimane)
+
+**Deliverable**:
+- [ ] Verifica modello Prisma `Season` vs specs/01 §5 (campi, enum stato).
+- [ ] `SeasonsModule` (NestJS): CRUD scoped per lega, guard admin per mutazioni.
+- [ ] Stati stagione: `DRAFT → REGISTRATION → ACTIVE → ENDED`. Transizioni esplicite via endpoint dedicati (no setter generico sullo stato).
+- [ ] Calcolo durata ottimale in funzione di N giocatori (formula specs/01 §5) — funzione pura testata.
+- [ ] `SeasonPlayer` (iscrizione giocatore-stagione).
+- [ ] `SeasonRanking` (snapshot iniziale: tutti i giocatori a 0 punti). **Nessun calcolo punti** — quello arriva in Sprint 4.
+- [ ] UI:
+  - `(app)/leagues/[leagueId]/seasons` — lista stagioni.
+  - `(app)/leagues/[leagueId]/seasons/new` — crea stagione (admin-only, server-side guard).
+  - `(app)/leagues/[leagueId]/seasons/[seasonId]` — dashboard stagione (placeholder per matches/ranking).
+- [ ] Sidebar lega: aggiungere voce "Stagioni".
+- [ ] i18n: chiavi `seasons.*`.
+- [ ] Audit log per le transizioni di stato.
+
+**Criterio di done 3a**: admin di una lega crea una stagione, i membri si iscrivono nella fase `REGISTRATION`, la stagione passa a `ACTIVE`. Smoke test E2E verde su tutti i 7 punti baseline + nuovi flussi stagione.
+
+### Sprint 3b — Matches & Challenges (PR #15, ~1.5 settimane)
+
+**Deliverable**:
+- [ ] Verifica modelli Prisma `Match` + `Challenge` vs specs/01 §6, §7.
+- [ ] `ChallengesModule` (NestJS): invio sfida, accettazione, scheduling (data/ora/venue testuale — il `venueId` strutturato arriva in Sprint 5).
+- [ ] `MatchesModule` (NestJS): registrazione risultato, doppia validazione, stato `DISPUTED`.
+- [ ] Flusso sfida completo: `PENDING_ACCEPTANCE → SCHEDULED → PENDING_RESULT → VALIDATED | DISPUTED`. Transizioni esplicite.
+- [ ] Auto-confirm dopo 24h: BullMQ delayed job `match.auto-confirm`.
+- [ ] Plausibility check base (set/game impossibili, vincitore non coerente con score) — validazione lato server, rifiuta DTO con errore 400.
+- [ ] Sistema disputa base: utente apre disputa → admin decide (`upheld` / `rejected`). **Nessun scoring impact** — il match resta in stato `DISPUTED` finché non viene risolto.
+- [ ] Audit log per ogni mutazione `Match` (prepara base per scoring engine in Sprint 4).
+- [ ] UI:
+  - `(app)/leagues/[leagueId]/seasons/[seasonId]/matches` — lista partite + filtri (stato, data, giocatore).
+  - `(app)/leagues/[leagueId]/seasons/[seasonId]/matches/new` — crea sfida.
+  - `(app)/leagues/[leagueId]/seasons/[seasonId]/matches/[matchId]` — dettaglio + form risultato + form disputa.
+- [ ] i18n: chiavi `matches.*`, `challenges.*`, `dispute.*`.
+
+**Criterio di done 3b**: due giocatori si sfidano, accettano, inseriscono il risultato, la doppia validazione si chiude in <24h o auto-conferma a 24h. Una disputa è apribile e risolvibile dall'admin. Nessuna regressione sui flussi precedenti.
+
+### Vincoli architetturali Sprint 3
+
+> 🚫 **Non toccare lo scoring**. `SeasonRanking.points` resta a 0 fino a Sprint 4.
+> Il calcolo punti è responsabilità esclusiva dello `scoring-engine` package, che
+> sarà chiamato dal worker BullMQ. Coerente con `docs/decisions/0003-engine-separati.md`.
+
+> 🚫 **Niente venue strutturato**. Lo scheduling sfida usa una stringa libera
+> (`venueTextFallback`). L'introduzione di `Venue` come FK è Sprint 5.
+
+> 🚫 **Niente sparring né lessons**. Solo partite competitive. Training è Sprint 6.
 
 ---
 
