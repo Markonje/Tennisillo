@@ -1,5 +1,8 @@
+[variables]
+NIXPACKS_NODE_VERSION = "24"
+
 [phases.install]
-cmds = ["pnpm install --frozen-lockfile"]
+cmds = ["npm_config_production=false pnpm install --frozen-lockfile"]
 
 [phases.build]
 cmds = ["pnpm --filter @tennisillo/db build", "pnpm --filter @tennisillo/api build"]
