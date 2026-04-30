@@ -321,16 +321,17 @@ model LeagueSettings {
 // ─────────────────────────────────────────
 
 model Season {
-  id         String       @id @default(cuid())
-  leagueId   String
-  league     League       @relation(fields: [leagueId], references: [id])
-  name       String
-  status     SeasonStatus @default(DRAFT)
-  startsAt   DateTime?
-  endsAt     DateTime?
-  maxPlayers Int?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id                   String       @id @default(cuid())
+  leagueId             String
+  league               League       @relation(fields: [leagueId], references: [id])
+  name                 String
+  status               SeasonStatus @default(DRAFT)
+  startsAt             DateTime?
+  endsAt               DateTime?
+  maxPlayers           Int?
+  plannedDurationWeeks Int?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   players          SeasonPlayer[]
   settings         SeasonSettings?
@@ -412,8 +413,8 @@ model SeasonRanking {
   season     Season       @relation(fields: [seasonId], references: [id])
   playerId   String
   player     SeasonPlayer @relation(fields: [playerId], references: [id])
-  points     Int
-  rank       Int
+  points     Int          @default(0)
+  rank       Int?
   computedAt DateTime     @default(now())
 
   @@index([seasonId, computedAt])
