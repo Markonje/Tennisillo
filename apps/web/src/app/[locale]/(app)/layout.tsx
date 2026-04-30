@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     leagues: t('leagues'),
     profile: t('profile'),
     members: t('members'),
+    seasons: t('seasons'),
     settings: t('settings'),
     back: t('back'),
     dashboard: t('dashboard'),

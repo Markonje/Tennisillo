@@ -7,6 +7,7 @@
     "leagues": "Le mie leghe",
     "profile": "Profilo",
     "members": "Membri",
+    "seasons": "Stagioni",
     "settings": "Impostazioni",
     "back": "← Tutte le leghe",
     "dashboard": "Dashboard"
@@ -64,5 +65,49 @@
     "level": "Qual è il tuo livello?",
     "city": "In quale città giochi?",
     "birthYear": "Anno di nascita"
+  },
+  "seasons": {
+    "title": "Stagioni",
+    "create": "Nuova stagione",
+    "empty": "Non ci sono stagioni in questa lega.",
+    "noDates": "Date non definite"
+  },
+  "season": {
+    "status": {
+      "DRAFT": "Bozza",
+      "REGISTRATION": "Iscrizioni aperte",
+      "ACTIVE": "In corso",
+      "COMPLETED": "Conclusa"
+    },
+    "register": "Iscriviti",
+    "unregister": "Annulla iscrizione",
+    "openRegistration": "Apri iscrizioni",
+    "startSeason": "Avvia stagione",
+    "closeSeason": "Chiudi stagione",
+    "minPlayersRequired": "Servono almeno 2 iscritti per avviare la stagione",
+    "playersCount": "Iscritti",
+    "ranking": "Classifica",
+    "rankingPlaceholderRegistration": "La classifica sarà disponibile all'avvio della stagione.",
+    "rankingPlaceholderScoring": "Il calcolo punti sarà disponibile in Sprint 4.",
+    "matchesPlaceholder": "Disponibile in Sprint 3b",
+    "alreadyExistsActive": "La lega ha già una stagione attiva. Chiudila prima di crearne una nuova.",
+    "name": "Nome stagione",
+    "startDate": "Data inizio",
+    "endDate": "Data fine",
+    "maxPlayers": "Massimo iscritti",
+    "plannedDuration": "Durata pianificata (settimane)",
+    "suggestedDuration": "Durata suggerita",
+    "weeks": "settimane",
+    "notFound": "Stagione non trovata.",
+    "players": "Giocatori",
+    "seeAll": "Vedi tutti",
+    "joinedAt": "Iscritto il",
+    "points": "Punti",
+    "rank": "Posizione",
+    "confirmClose": "Sei sicuro di voler chiudere la stagione? Questa azione è irreversibile.",
+    "confirm": "Conferma",
+    "cancel": "Annulla",
+    "week": "Settimana",
+    "matches": "Partite"
   }
 }

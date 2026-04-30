@@ -25,4 +25,20 @@ export const apiServer = {
       return null;
     }
   },
+
+  async post<T>(path: string, body: unknown): Promise<T | null> {
+    try {
+      const headers = await getServerAuthHeader();
+      const res = await fetch(`${API_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      });
+      if (!res.ok) return null;
+      return res.json() as Promise<T>;
+    } catch {
+      return null;
+    }
+  },
 };
