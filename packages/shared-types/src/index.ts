@@ -9,3 +9,11 @@ export type { Match, UpcomingMatch, RecentMatch, MatchStatus, MatchResult, Match
 export { isUpcomingMatch } from './match';
 export type { Challenge, ChallengeStatus, ChallengeType } from './challenge';
 export type { ActivityFeedItem, ActivityType } from './activity';
+export type {
+  SeasonStatus,
+  SeasonSummary,
+  SeasonPlayerEntry,
+  SeasonRankingEntry,
+} from './seasons';
+export type { SeasonDurationInput, SeasonDurationResult } from './season-duration';
+export { computeOptimalDuration } from './season-duration';

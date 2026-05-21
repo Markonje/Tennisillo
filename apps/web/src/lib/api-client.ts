@@ -49,4 +49,28 @@ export const apiClient = {
     if (!res.ok) throw new Error(`PUT ${path} failed: ${res.status}`);
     return res.json() as Promise<T>;
   },
+
+  async patch<T>(path: string, body: unknown): Promise<T> {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${API_URL}${path}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`);
+    return res.json() as Promise<T>;
+  },
+
+  async delete<T = void>(path: string): Promise<T> {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${API_URL}${path}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...headers },
+    });
+    if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
+    if (res.status === 204 || res.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+    return res.json() as Promise<T>;
+  },
 };

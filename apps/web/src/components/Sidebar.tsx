@@ -17,6 +17,7 @@ interface SidebarProps {
     leagues: string;
     profile: string;
     members: string;
+    seasons: string;
     settings: string;
     back: string;
     dashboard: string;
@@ -127,6 +128,12 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               style={navLinkStyle(`/${locale}/leagues/${leagueId}`, true)}
             >
               🏠 {labels.dashboard}
+            </Link>
+            <Link
+              href={`/${locale}/leagues/${leagueId}/seasons`}
+              style={navLinkStyle(`/${locale}/leagues/${leagueId}/seasons`)}
+            >
+              🏆 {labels.seasons}
             </Link>
             <Link
               href={`/${locale}/leagues/${leagueId}/members`}

@@ -7,6 +7,7 @@
     "leagues": "My Leagues",
     "profile": "Profile",
     "members": "Members",
+    "seasons": "Seasons",
     "settings": "Settings",
     "back": "← All Leagues",
     "dashboard": "Dashboard"
@@ -64,5 +65,49 @@
     "level": "What is your level?",
     "city": "In which city do you play?",
     "birthYear": "Year of birth"
+  },
+  "seasons": {
+    "title": "Seasons",
+    "create": "New Season",
+    "empty": "No seasons in this league yet.",
+    "noDates": "Dates not set"
+  },
+  "season": {
+    "status": {
+      "DRAFT": "Draft",
+      "REGISTRATION": "Registration open",
+      "ACTIVE": "Active",
+      "COMPLETED": "Completed"
+    },
+    "register": "Register",
+    "unregister": "Unregister",
+    "openRegistration": "Open registration",
+    "startSeason": "Start season",
+    "closeSeason": "Close season",
+    "minPlayersRequired": "At least 2 registered players are required to start the season",
+    "playersCount": "Players",
+    "ranking": "Ranking",
+    "rankingPlaceholderRegistration": "Ranking will be available once the season starts.",
+    "rankingPlaceholderScoring": "Points calculation will be available in Sprint 4.",
+    "matchesPlaceholder": "Available in Sprint 3b",
+    "alreadyExistsActive": "This league already has an active season. Close it before creating a new one.",
+    "name": "Season name",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "maxPlayers": "Max players",
+    "plannedDuration": "Planned duration (weeks)",
+    "suggestedDuration": "Suggested duration",
+    "weeks": "weeks",
+    "notFound": "Season not found.",
+    "players": "Players",
+    "seeAll": "See all",
+    "joinedAt": "Joined",
+    "points": "Points",
+    "rank": "Rank",
+    "confirmClose": "Are you sure you want to close the season? This action cannot be undone.",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "week": "Week",
+    "matches": "Matches"
   }
 }
