@@ -25,49 +25,23 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // CAMBIO CHIAVE: getSession() legge solo i cookie — zero chiamate di rete.
+  // getUser() faceva una chiamata HTTP verso Supabase Auth ad ogni request
+  // → timeout su Vercel Edge Runtime.
+  // La verifica server-side dell'identità avviene nelle singole Server Pages
+  // via createClient() + getUser(), non nel middleware.
+  const { data: { session } } = await supabase.auth.getSession();
 
   const pathname = request.nextUrl.pathname;
   const localeMatch = pathname.match(/^\/([a-z]{2})\//);
   const locale = localeMatch?.[1] ?? 'it';
 
-  const isAppRoute = /\/[a-z]{2}\/(leagues|profile|onboarding)/.test(pathname);
-
-  if (isAppRoute && !user) {
+  // Proteggi le route app: se non c'è sessione → login
+  const isAppRoute = /\/[a-z]{2}\/(leagues|profile|onboarding|seasons)/.test(pathname);
+  if (isAppRoute && !session) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     return NextResponse.redirect(url);
-  }
-
-  // Onboarding gate: redirect to /onboarding if not yet completed
-  if (user && isAppRoute && !pathname.includes('/onboarding')) {
-    const apiUrl = process.env['NEXT_PUBLIC_API_URL'];
-    if (apiUrl) {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.access_token) {
-          const res = await fetch(`${apiUrl}/onboarding/status`, {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-            cache: 'no-store',
-          });
-          if (res.ok) {
-            const { completed } = (await res.json()) as { completed: boolean };
-            if (!completed) {
-              const url = request.nextUrl.clone();
-              url.pathname = `/${locale}/onboarding`;
-              return NextResponse.redirect(url);
-            }
-          }
-        }
-      } catch {
-        // Network failure — do not block the user
-      }
-    }
   }
 
   return supabaseResponse;
