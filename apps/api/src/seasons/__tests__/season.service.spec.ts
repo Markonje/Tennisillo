@@ -1,5 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { SeasonService } from '../season.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
@@ -96,7 +97,11 @@ describe('SeasonService', () => {
 
       await service.createSeason('league1', 'user1', { name: 'S1' });
 
-      const createCall = mockPrisma.season.create.mock.calls[0][0];
+      interface CreateCallShape {
+        data: { settings: { create: { pointsWin: number; pointsLoss: number; decayEnabled: boolean } } };
+      }
+      const typedCalls = mockPrisma.season.create.mock.calls as Array<[CreateCallShape]>;
+      const createCall = typedCalls[0]![0];
       expect(createCall.data.settings.create.pointsWin).toBe(100);
       expect(createCall.data.settings.create.pointsLoss).toBe(30);
       expect(createCall.data.settings.create.decayEnabled).toBe(true);
@@ -137,7 +142,9 @@ describe('SeasonService', () => {
 
       await service.transitionSeason('season1', 'user1', { to: 'ACTIVE' });
 
-      const txCallback = txFn.mock.calls[0][0] as (tx: unknown) => Promise<unknown>;
+      type TxFnType = (tx: unknown) => Promise<unknown>;
+      const txCalls = txFn.mock.calls as Array<[TxFnType]>;
+      const txCallback = txCalls[0]![0];
       const txMock = {
         season: { update: jest.fn().mockResolvedValue({ id: 'season1', status: SeasonStatus.ACTIVE }) },
         seasonPlayer: { findMany: jest.fn().mockResolvedValue([{ id: 'p1' }, { id: 'p2' }]) },
@@ -146,6 +153,7 @@ describe('SeasonService', () => {
       await txCallback(txMock);
       expect(txMock.seasonRanking.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data: expect.arrayContaining([
             expect.objectContaining({ points: 0, rank: null }),
           ]),

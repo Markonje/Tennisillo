@@ -15,7 +15,7 @@ export class LeagueAdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const leagueId = req.params['leagueId'] as string | undefined;
+    const leagueId = req.params['leagueId'];
 
     if (!leagueId) {
       throw new ForbiddenException('leagueId required');

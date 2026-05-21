@@ -19,7 +19,7 @@ export class SeasonAdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const seasonId = req.params['id'] as string | undefined;
+    const seasonId = req.params['id'];
 
     if (!seasonId) {
       throw new ForbiddenException('season id required');
