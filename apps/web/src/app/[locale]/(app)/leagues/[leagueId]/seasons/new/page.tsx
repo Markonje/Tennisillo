@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, GlassInput, Button, Banner } from '@tennisillo/ui';
 import { apiClient } from '@/lib/api-client';
 import { computeOptimalDuration } from '@tennisillo/shared-types';
 
@@ -23,8 +23,7 @@ export default function NewSeasonPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const playerCountForPreview = 0;
-  const suggestion = computeOptimalDuration({ playerCount: playerCountForPreview });
+  const suggestion = computeOptimalDuration({ playerCount: 0 });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,133 +54,67 @@ export default function NewSeasonPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 10,
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 14,
-    padding: '10px 14px',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 12,
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    marginBottom: 6,
-  };
-
   return (
-    <div style={{ maxWidth: 520 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
-        Nuova stagione
-      </h1>
+    <div className="max-w-lg">
+      <h1 className="text-2xl font-extrabold text-primary-glass mb-6">Nuova stagione</h1>
 
-      <GlassCard style={{ padding: '28px 24px' }}>
-        <form onSubmit={(e) => { void handleSubmit(e); }}>
-          <div style={{ marginBottom: 18 }}>
-            <label style={labelStyle}>Nome stagione *</label>
-            <input
-              style={inputStyle}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              maxLength={80}
-              placeholder="Es. Stagione Primavera 2026"
+      <GlassCard className="p-7">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="flex flex-col gap-4">
+          <GlassInput
+            label="Nome stagione *"
+            value={name}
+            onChange={setName}
+            required
+            maxLength={80}
+            placeholder="Es. Stagione Primavera 2026"
+          />
+
+          <div className="grid grid-cols-2 gap-3.5">
+            <GlassInput
+              label="Data inizio"
+              type="date"
+              value={startsAt}
+              onChange={setStartsAt}
+            />
+            <GlassInput
+              label="Data fine"
+              type="date"
+              value={endsAt}
+              onChange={setEndsAt}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+          <div className="grid grid-cols-2 gap-3.5">
+            <GlassInput
+              label="Massimo iscritti"
+              type="number"
+              value={maxPlayers}
+              onChange={setMaxPlayers}
+              min={2}
+              max={200}
+              placeholder="Illimitato"
+            />
             <div>
-              <label style={labelStyle}>Data inizio</label>
-              <input
-                type="date"
-                style={inputStyle}
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Data fine</label>
-              <input
-                type="date"
-                style={inputStyle}
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
-            <div>
-              <label style={labelStyle}>Massimo iscritti</label>
-              <input
+              <GlassInput
+                label="Durata pianificata (settimane)"
                 type="number"
-                style={inputStyle}
-                value={maxPlayers}
-                onChange={(e) => setMaxPlayers(e.target.value)}
-                min={2}
-                max={200}
-                placeholder="Illimitato"
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>
-                Durata pianificata (settimane)
-              </label>
-              <input
-                type="number"
-                style={inputStyle}
                 value={plannedDurationWeeks}
-                onChange={(e) => setPlannedDurationWeeks(e.target.value)}
+                onChange={setPlannedDurationWeeks}
                 min={6}
                 max={52}
                 placeholder={`Suggerito: ${suggestion.weeks}`}
               />
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '4px 0 0' }}>
+              <p className="text-[11px] text-muted-glass mt-1">
                 Formula suggerisce {suggestion.weeks} settimane
               </p>
             </div>
           </div>
 
-          {error && (
-            <div
-              style={{
-                background: 'rgba(240,100,100,0.12)',
-                border: '1px solid rgba(240,100,100,0.2)',
-                borderRadius: 8,
-                padding: '10px 14px',
-                color: '#f09090',
-                fontSize: 13,
-                marginBottom: 16,
-              }}
-            >
-              {error}
-            </div>
-          )}
+          {error && <Banner tone="danger">{error}</Banner>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: loading ? 'rgba(176,239,96,0.4)' : '#b0ef60',
-              color: '#0a0e1a',
-              border: 'none',
-              borderRadius: 10,
-              padding: '12px',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <Button type="submit" disabled={loading} loading={loading} className="w-full">
             {loading ? 'Creazione…' : 'Crea stagione'}
-          </button>
+          </Button>
         </form>
       </GlassCard>
     </div>

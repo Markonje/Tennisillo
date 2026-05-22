@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, GlassInput, Textarea, Button, Banner } from '@tennisillo/ui';
 import { apiClient } from '@/lib/api-client';
 import type { LeagueContextValue } from '@/lib/league-context';
 
@@ -58,7 +58,7 @@ export function LeagueSettingsClient({ league, pendingMembers, labels }: Props) 
       const res = await apiClient.post<{ inviteCode: string }>(`/leagues/${league.id}/invite`, {});
       setInviteCode(res.inviteCode ?? '');
     } catch {
-      // silent — keep existing code
+      // keep existing code
     }
   }
 
@@ -72,69 +72,67 @@ export function LeagueSettingsClient({ league, pendingMembers, labels }: Props) 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 540 }}>
-      {/* Name + description */}
-      <GlassCard style={{ padding: 24 }}>
-        <form onSubmit={(e) => { void handleSave(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <label style={labelStyle}>
-            {labels.name}
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              maxLength={80}
-              required
-              style={inputStyle}
-            />
-          </label>
-          <label style={labelStyle}>
-            {labels.description}
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              maxLength={500}
-              rows={3}
-              style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
-            />
-          </label>
-          {saveError && <p style={{ color: '#f09090', fontSize: 13, margin: 0 }}>{saveError}</p>}
-          {saved && <p style={{ color: '#b0ef60', fontSize: 13, margin: 0 }}>Salvato!</p>}
-          <button type="submit" style={btnStyle}>{labels.save}</button>
+    <div className="flex flex-col gap-5 max-w-lg">
+      <GlassCard className="p-6">
+        <form onSubmit={(e) => { void handleSave(e); }} className="flex flex-col gap-4">
+          <GlassInput
+            label={labels.name}
+            value={form.name}
+            onChange={(v) => setForm({ ...form, name: v })}
+            maxLength={80}
+            required
+          />
+          <Textarea
+            label={labels.description}
+            value={form.description}
+            onChange={(v) => setForm({ ...form, description: v })}
+            maxLength={500}
+            rows={3}
+          />
+          {saveError && <Banner tone="danger">{saveError}</Banner>}
+          {saved && <Banner tone="success">Salvato!</Banner>}
+          <Button type="submit" className="w-full">{labels.save}</Button>
         </form>
       </GlassCard>
 
-      {/* Invite code */}
-      <GlassCard style={{ padding: 24 }}>
-        <p style={{ margin: '0 0 12px', fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+      <GlassCard className="p-6">
+        <p className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider mb-3">
           Codice invito
         </p>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="flex gap-2.5 items-center">
           {inviteCode && (
-            <code style={codeStyle}>{inviteCode}</code>
+            <code className="flex-1 bg-success/10 border border-success/20 rounded-input px-3.5 py-2 font-mono text-base font-bold text-accent-light tracking-widest">
+              {inviteCode}
+            </code>
           )}
-          <button onClick={() => { void handleGenerateCode(); }} style={{ ...btnStyle, flex: 'none' }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => { void handleGenerateCode(); }}
+          >
             {labels.generateCode}
-          </button>
+          </Button>
         </div>
       </GlassCard>
 
-      {/* Pending members */}
-      <GlassCard style={{ padding: 24 }}>
-        <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+      <GlassCard className="p-6">
+        <p className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider mb-3.5">
           {labels.pendingTitle}
         </p>
         {pending.length === 0 ? (
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>{labels.noPending}</p>
+          <p className="text-tertiary-glass text-sm">{labels.noPending}</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {pending.map((m) => (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>{m.user.displayName}</span>
-                <button
+              <div key={m.id} className="flex justify-between items-center">
+                <span className="text-secondary-glass text-sm">{m.user.displayName}</span>
+                <Button
+                  type="button"
+                  size="sm"
                   onClick={() => { void handleApprove(m.id); }}
-                  style={{ ...btnStyle, padding: '7px 14px', fontSize: 12 }}
                 >
                   {labels.approve}
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -143,45 +141,3 @@ export function LeagueSettingsClient({ league, pendingMembers, labels }: Props) 
     </div>
   );
 }
-
-const labelStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 6,
-  fontSize: 13,
-  color: 'rgba(255,255,255,0.55)',
-  fontWeight: 500,
-};
-
-const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
-  padding: '10px 14px',
-  color: 'rgba(255,255,255,0.9)',
-  fontSize: 14,
-  outline: 'none',
-};
-
-const btnStyle: React.CSSProperties = {
-  background: '#b0ef60',
-  color: '#0a0e1a',
-  border: 'none',
-  borderRadius: 10,
-  padding: '10px 18px',
-  fontWeight: 700,
-  fontSize: 13,
-  cursor: 'pointer',
-};
-
-const codeStyle: React.CSSProperties = {
-  background: 'rgba(176,239,96,0.08)',
-  border: '1px solid rgba(176,239,96,0.2)',
-  borderRadius: 8,
-  padding: '8px 14px',
-  fontFamily: 'monospace',
-  fontSize: 16,
-  fontWeight: 700,
-  color: '#b0ef60',
-  letterSpacing: '0.08em',
-};

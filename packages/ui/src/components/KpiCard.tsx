@@ -3,7 +3,7 @@ import { cn } from '../lib/cn';
 import { GlassCard } from './GlassCard';
 
 export interface KpiCardProps {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   value: string | number;
   delta?: string;
@@ -13,14 +13,21 @@ export interface KpiCardProps {
 
 export function KpiCard({ icon, label, value, delta, positive = true, className }: KpiCardProps) {
   return (
-    <GlassCard style={{ padding: '20px 22px' }} hover className={cn(className)}>
-      <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 800, color: 'rgba(255,255,255,0.96)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+    <GlassCard interactive className={cn('p-5', className)}>
+      <div className="text-xl mb-1.5">{icon}</div>
+      <div className="text-[11px] font-medium text-secondary-glass uppercase tracking-wider mb-1">
+        {label}
+      </div>
+      <div className="text-3xl font-extrabold text-primary-glass leading-none tracking-tight">
         {value}
       </div>
       {delta && (
-        <div style={{ fontSize: 12, color: positive ? '#b0ef60' : '#f09090', marginTop: 5, fontWeight: 600 }}>
+        <div
+          className={cn(
+            'text-[11px] font-semibold mt-1.5',
+            positive ? 'text-accent-light' : 'text-danger-light',
+          )}
+        >
           {positive ? '▲' : '▼'} {delta}
         </div>
       )}

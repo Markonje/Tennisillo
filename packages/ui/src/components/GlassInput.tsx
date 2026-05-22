@@ -3,12 +3,13 @@
 import React from 'react';
 import { cn } from '../lib/cn';
 
-export interface GlassInputProps {
+export interface GlassInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   label?: string;
   value: string;
   onChange: (value: string) => void;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel';
-  placeholder?: string;
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
   className?: string;
 }
 
@@ -16,41 +17,57 @@ export function GlassInput({
   label,
   value,
   onChange,
+  iconLeft,
+  iconRight,
+  className,
   type = 'text',
   placeholder,
-  className,
+  disabled,
+  id,
+  ...rest
 }: GlassInputProps) {
-  const [focused, setFocused] = React.useState(false);
+  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <div className={cn(className)} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+        <label
+          htmlFor={inputId}
+          className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider"
+        >
           {label}
         </label>
       )}
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          background: focused ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)',
-          border: `1px solid ${focused ? 'rgba(185,255,90,0.5)' : 'rgba(255,255,255,0.14)'}`,
-          borderRadius: 12,
-          padding: '10px 14px',
-          color: 'rgba(255,255,255,0.9)',
-          fontSize: 14,
-          outline: 'none',
-          width: '100%',
-          boxSizing: 'border-box',
-          backdropFilter: 'blur(12px)',
-          boxShadow: focused ? '0 0 0 3px rgba(185,255,90,0.12)' : 'none',
-          transition: 'all 0.18s ease',
-        }}
-      />
+      <div className="relative flex items-center">
+        {iconLeft && (
+          <span className="absolute left-3 text-tertiary-glass pointer-events-none flex items-center">
+            {iconLeft}
+          </span>
+        )}
+        <input
+          id={inputId}
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            'w-full rounded-input border border-glass bg-glass-input backdrop-glass',
+            'px-3.5 py-2.5 text-sm text-primary-glass placeholder:text-muted-glass',
+            'transition-all duration-150 outline-none',
+            'focus:bg-glass-input-focus focus:border-accent/50 focus:shadow-[0_0_0_3px_rgba(185,255,90,0.12)]',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            iconLeft  && 'pl-9',
+            iconRight && 'pr-9',
+          )}
+          {...rest}
+        />
+        {iconRight && (
+          <span className="absolute right-3 text-tertiary-glass pointer-events-none flex items-center">
+            {iconRight}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

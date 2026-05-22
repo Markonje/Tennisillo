@@ -1,175 +1,140 @@
 // packages/ui/src/tokens.ts
-// Source: docs/specs/02_specifiche_sviluppo.md §11 (v1.0) + §11.1 (v2.0 additions)
-// Apple-inspired design system tokens.
+// Single source of truth for the Tennisillo glass design system.
+// Replaces the old Apple-iOS palette. See ADR 004 for rationale.
+
+// --- Palette ---
+
+export const colors = {
+  // App background layers
+  bgBase:        '#0B1A1C',
+  bgDeep:        '#071517',
+  bgMid:         '#17304A',
+
+  // Primary accent — lime green
+  accent:        '#B9FF5A',
+  accentLight:   '#c8ff78',
+  accentDark:    '#8ee044',
+  accentGlow:    'rgba(185,255,90,0.22)',
+
+  // Secondary accent — ice blue
+  blue:          'rgba(121,167,216,1)',
+  blueLight:     '#9abfdd',
+  blueFaint:     'rgba(121,167,216,0.18)',
+
+  // Semantic
+  danger:        '#E96D6D',
+  dangerLight:   '#f09090',
+  dangerFaint:   'rgba(233,109,109,0.12)',
+  warning:       '#F2D35E',
+  warningLight:  '#f5d96a',
+  warningFaint:  'rgba(242,211,94,0.12)',
+  success:       '#B9FF5A',
+
+  // Glass surface layers
+  glass11:       'rgba(255,255,255,0.11)',
+  glass07:       'rgba(255,255,255,0.07)',
+  glass05:       'rgba(255,255,255,0.05)',
+  glassBorder:   'rgba(255,255,255,0.13)',
+  glassBorderHov:'rgba(255,255,255,0.22)',
+
+  // Text scale
+  textPrimary:   'rgba(255,255,255,0.97)',
+  textSecondary: 'rgba(255,255,255,0.70)',
+  textTertiary:  'rgba(255,255,255,0.42)',
+  textMuted:     'rgba(255,255,255,0.28)',
+
+  // v2.0 domain tokens — preserved, do not remove
+  frequency: {
+    GREEN:   '#34C759',
+    YELLOW:  '#FFCC00',
+    RED:     '#FF3B30',
+    UNKNOWN: '#8E8E93',
+  },
+  training: {
+    SPARRING:      '#5AC8FA',
+    MASTER_LESSON: '#BF5AF2',
+  },
+  venue: {
+    ACTIVE:   '#34C759',
+    PENDING:  '#FF9500',
+    ARCHIVED: '#8E8E93',
+  },
+} as const;
+
+// --- Shape ---
+
+export const radius = {
+  card:   20,
+  input:  11,
+  btn:    12,
+  badge:  999,
+  avatar: '50%',
+  icon:   10,
+  chip:   8,
+} as const;
+
+export const spacing = {
+  cardPad:   '22px 24px',
+  cardPadSm: '16px 20px',
+  sidebarW:  230,
+  mainPad:   '26px 30px',
+  gap:       14,
+  gapSm:     10,
+} as const;
+
+// --- Typography ---
+
+export const typography = {
+  h1:        { fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em' },
+  h2:        { fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' },
+  h3:        { fontSize: 15, fontWeight: 700 },
+  body:      { fontSize: 13, fontWeight: 400 },
+  labelCaps: { fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const },
+  mono:      { fontFamily: 'monospace', fontWeight: 700 },
+} as const;
+
+// --- Glass morphism values ---
+
+export const glass = {
+  cardBg:          'linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))',
+  cardBgHover:     'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.07))',
+  // Includes '1px solid' for direct use in border CSS property
+  cardBorder:      '1px solid rgba(255,255,255,0.13)',
+  cardBlur:        'blur(26px) saturate(140%)',
+  cardShadow:      '0 14px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.16)',
+  cardShadowHover: '0 22px 55px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.2)',
+  inputBg:         'rgba(255,255,255,0.07)',
+  inputBgFocus:    'rgba(255,255,255,0.12)',
+  inputBorderFocus:'rgba(185,255,90,0.5)',
+  overlayBg:       'rgba(0,0,0,0.55)',
+  overlayBlur:     'blur(10px)',
+} as const;
+
+// --- Animation durations (seconds) ---
+
+export const animations = {
+  fadeUp:  '0.3s',
+  slideIn: '0.22s',
+  modalIn: '0.2s',
+  hover:   '0.16s',
+} as const;
+
+// --- App background gradient ---
+
+export const APP_BG =
+  'radial-gradient(ellipse at 8% 0%, rgba(185,255,90,0.12) 0%, transparent 28%), ' +
+  'radial-gradient(ellipse at 85% 15%, rgba(121,167,216,0.18) 0%, transparent 30%), ' +
+  'linear-gradient(145deg, #071517 0%, #17304A 52%, #0B1A1C 100%)';
+
+// --- Aggregated export (backward compat for existing components during migration) ---
 
 export const tokens = {
-  colors: {
-    // Primary palette — iOS Blue
-    primary: {
-      50: '#EBF5FF',
-      100: '#DBEAFE',
-      200: '#BFDBFE',
-      300: '#93C5FD',
-      400: '#60A5FA',
-      500: '#007AFF', // SystemBlue iOS
-      600: '#0066D6',
-      700: '#0052A8',
-      800: '#003D7A',
-      900: '#00284D',
-    },
-
-    // Neutral — matches iOS gray scale
-    neutral: {
-      50: '#F9F9F9',
-      100: '#F2F2F7', // iOS systemGroupedBackground
-      200: '#E5E5EA',
-      300: '#D1D1D6',
-      400: '#AEAEB2',
-      500: '#8E8E93', // iOS SystemGray
-      600: '#636366',
-      700: '#48484A',
-      800: '#3A3A3C',
-      900: '#1C1C1E', // iOS label dark
-    },
-
-    // Semantic — iOS system colors
-    success: '#34C759',   // SystemGreen
-    warning: '#FF9500',   // SystemOrange
-    error: '#FF3B30',     // SystemRed
-    info: '#5AC8FA',      // SystemTeal
-
-    // [NEW-v2] Frequency traffic-light
-    frequency: {
-      GREEN: '#34C759',  // under idealFrequency — "play more"
-      YELLOW: '#FFCC00', // between ideal and max
-      RED: '#FF3B30',    // at or above maxFrequency
-      UNKNOWN: '#8E8E93',
-    },
-
-    // [NEW-v2] Training session type
-    training: {
-      SPARRING: '#5AC8FA',      // SystemTeal
-      MASTER_LESSON: '#BF5AF2', // SystemPurple
-    },
-
-    // [NEW-v2] Venue status
-    venue: {
-      ACTIVE: '#34C759',
-      PENDING: '#FF9500',
-      ARCHIVED: '#8E8E93',
-    },
-  },
-
-  typography: {
-    fontFamily: {
-      sans: [
-        '-apple-system',
-        'BlinkMacSystemFont',
-        '"SF Pro Display"',
-        '"SF Pro Text"',
-        '"Helvetica Neue"',
-        'Arial',
-        'sans-serif',
-      ],
-      mono: ['"SF Mono"', '"Fira Code"', '"Fira Mono"', '"Roboto Mono"', 'monospace'],
-    },
-    fontSize: {
-      xs: ['0.75rem', { lineHeight: '1rem' }],
-      sm: ['0.875rem', { lineHeight: '1.25rem' }],
-      base: ['1rem', { lineHeight: '1.5rem' }],
-      lg: ['1.125rem', { lineHeight: '1.75rem' }],
-      xl: ['1.25rem', { lineHeight: '1.75rem' }],
-      '2xl': ['1.5rem', { lineHeight: '2rem' }],
-      '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
-      '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
-    },
-    fontWeight: {
-      regular: '400',
-      medium: '500',
-      semibold: '600',
-      bold: '700',
-    },
-  },
-
-  spacing: {
-    0: '0px',
-    1: '4px',
-    2: '8px',
-    3: '12px',
-    4: '16px',
-    5: '20px',
-    6: '24px',
-    8: '32px',
-    10: '40px',
-    12: '48px',
-    16: '64px',
-    20: '80px',
-    24: '96px',
-  },
-
-  borderRadius: {
-    none: '0px',
-    sm: '6px',
-    DEFAULT: '10px', // iOS-style rounded
-    md: '12px',
-    lg: '16px',
-    xl: '20px',
-    '2xl': '24px',
-    full: '9999px',
-  },
-
-  shadows: {
-    sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-    DEFAULT: '0 2px 8px 0 rgb(0 0 0 / 0.08)',
-    md: '0 4px 12px 0 rgb(0 0 0 / 0.10)',
-    lg: '0 8px 24px 0 rgb(0 0 0 / 0.12)',
-    xl: '0 16px 48px 0 rgb(0 0 0 / 0.16)',
-    card: '0 2px 8px 0 rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.04)',
-  },
-  // Glass morphism values — used via style prop (not Tailwind)
-  glass: {
-    cardBg: 'linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05))',
-    cardBgHover: 'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.07))',
-    cardBorder: '1px solid rgba(255,255,255,0.14)',
-    cardBlur: 'blur(26px) saturate(140%)',
-    cardShadow: '0 14px 40px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.18)',
-    cardShadowHover: '0 20px 50px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.2)',
-    inputBg: 'rgba(255,255,255,0.07)',
-    inputBgFocus: 'rgba(255,255,255,0.12)',
-    inputBorder: '1px solid rgba(255,255,255,0.14)',
-    inputBorderFocus: '1px solid rgba(185,255,90,0.5)',
-    inputBlur: 'blur(12px)',
-    modalBg: 'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
-    modalBlur: 'blur(36px) saturate(150%)',
-    overlayBg: 'rgba(0,0,0,0.55)',
-    overlayBlur: 'blur(10px)',
-  },
-
-  // Accent lime
-  accent: {
-    DEFAULT: '#B9FF5A',
-    light: '#C8FF78',
-    dark: '#8EE044',
-    muted: '#B0EF60',
-    text: '#C8FF78',
-    bg: 'rgba(185,255,90,0.12)',
-    bgHover: 'rgba(185,255,90,0.20)',
-    border: 'rgba(185,255,90,0.35)',
-    shadow: 'rgba(185,255,90,0.25)',
-    shadowHover: 'rgba(185,255,90,0.40)',
-  },
-
-  // Status colors
-  status: {
-    confirmed: { bg: 'rgba(185,255,90,0.18)',  border: 'rgba(185,255,90,0.4)',  text: '#C8FF78'  },
-    pending:   { bg: 'rgba(242,211,94,0.18)',  border: 'rgba(242,211,94,0.4)',  text: '#F5D96A'  },
-    completed: { bg: 'rgba(121,167,216,0.18)', border: 'rgba(121,167,216,0.4)', text: '#9ABFDD'  },
-    cancelled: { bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.15)', text: 'rgba(255,255,255,0.5)' },
-    disputed:  { bg: 'rgba(233,109,109,0.18)', border: 'rgba(233,109,109,0.4)', text: '#F09090'  },
-    win:       { bg: 'rgba(185,255,90,0.18)',  border: 'rgba(185,255,90,0.4)',  text: '#C8FF78'  },
-    loss:      { bg: 'rgba(233,109,109,0.18)', border: 'rgba(233,109,109,0.4)', text: '#F09090'  },
-    training:  { bg: 'rgba(121,167,216,0.18)', border: 'rgba(121,167,216,0.4)', text: '#9ABFDD'  },
-  },
+  colors,
+  radius,
+  spacing,
+  typography,
+  glass,
+  animations,
 } as const;
 
 export type Tokens = typeof tokens;

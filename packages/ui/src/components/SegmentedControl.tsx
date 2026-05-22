@@ -3,50 +3,55 @@
 import React from 'react';
 import { cn } from '../lib/cn';
 
+type Option = string | { label: string; value: string };
+
+function normalise(opt: Option): { label: string; value: string } {
+  return typeof opt === 'string' ? { label: opt, value: opt } : opt;
+}
+
 export interface SegmentedControlProps {
-  options: string[];
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
   className?: string;
 }
 
 export function SegmentedControl({ options, value, onChange, className }: SegmentedControlProps) {
+  const normalised = options.map(normalise);
+  const activeIndex = normalised.findIndex((o) => o.value === value);
+  const pct = 100 / options.length;
+
   return (
     <div
-      className={cn(className)}
-      style={{
-        display: 'inline-flex',
-        background: 'rgba(255,255,255,0.07)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: 12,
-        padding: 3,
-        gap: 2,
-      }}
+      className={cn(
+        'relative inline-flex bg-glass-subtle border border-glass rounded-[12px] p-0.5',
+        className,
+      )}
     >
-      {options.map((opt) => {
-        const active = opt === value;
-        return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 10,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 600,
-              transition: 'all 0.18s ease',
-              background: active ? 'rgba(185,255,90,0.2)' : 'transparent',
-              color: active ? '#c8ff78' : 'rgba(255,255,255,0.5)',
-              boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.15)' : 'none',
-            }}
-          >
-            {opt}
-          </button>
-        );
-      })}
+      {/* Sliding indicator — inline style justified: position computed from runtime index */}
+      <span
+        aria-hidden="true"
+        className="absolute top-0.5 bottom-0.5 rounded-[10px] bg-accent/20 border border-accent/30 transition-all duration-200 ease-out"
+        style={{
+          left:  `calc(${activeIndex * pct}% + 2px)`,
+          width: `calc(${pct}% - 4px)`,
+        }}
+      />
+      {normalised.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'relative z-10 flex-1 px-3.5 py-1.5 rounded-[10px] text-[13px] font-semibold transition-colors duration-150',
+            opt.value === value
+              ? 'text-accent-light'
+              : 'text-tertiary-glass hover:text-secondary-glass',
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }

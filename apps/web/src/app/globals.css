@@ -2,33 +2,147 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS safe-area bottom padding utility */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Base reset & global styles ─────────────────────────────────────────── */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 11%; /* neutral-900 */
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
-
-    --primary: 211 100% 50%; /* primary-500 #007AFF */
-    --primary-foreground: 0 0% 100%;
-
-    --muted: 240 5% 96%; /* neutral-100 */
-    --muted-foreground: 240 4% 46%; /* neutral-500 */
-
-    --border: 240 6% 90%; /* neutral-200 */
-    --input: 240 6% 90%;
-
-    --radius: 10px; /* iOS-style default */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
-  * {
-    @apply border-border;
+  html {
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    margin: 0;
+    font-family: var(--font-inter), Inter, system-ui, sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Fallback background in case app-bg div is not yet rendered */
+    background-color: #0b1a1c;
+    color: rgba(255, 255, 255, 0.97);
+  }
+
+  /* Custom scrollbar — webkit only */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 99px;
+  }
+
+  /* Focus visible outline — lime accent */
+  :focus-visible {
+    outline: 2px solid rgba(185, 255, 90, 0.7);
+    outline-offset: 2px;
+  }
+
+  /* Remove default button/input appearance */
+  button {
+    cursor: pointer;
+  }
+}
+
+/* ── Global keyframes ────────────────────────────────────────────────────── */
+/* These mirror the Tailwind keyframes in the preset so both animate-* */
+/* utilities and direct animation: CSS properties work. */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes splashIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blobA {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.18) translate(30px, -20px);
+  }
+}
+
+@keyframes blobB {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.22) translate(-25px, 30px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
   }
 }

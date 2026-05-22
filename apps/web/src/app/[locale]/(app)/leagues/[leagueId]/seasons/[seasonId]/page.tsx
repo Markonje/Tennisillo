@@ -1,7 +1,8 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, KpiCard, Badge, Avatar } from '@tennisillo/ui';
+import Link from 'next/link';
 import { apiServer } from '@/lib/api-server';
-import type { SeasonPlayerEntry, SeasonRankingEntry } from '@tennisillo/shared-types';
+import type { SeasonPlayerEntry, SeasonRankingEntry, SeasonStatus } from '@tennisillo/shared-types';
 import type { SeasonContextValue } from '@/lib/season-context';
 import { SeasonDashboardClient } from './SeasonDashboardClient';
 
@@ -15,6 +16,16 @@ function weeksElapsed(startsAt: string): number {
   return Math.max(0, Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000)));
 }
 
+function statusTone(status: SeasonStatus): 'green' | 'blue' | 'gray' {
+  if (status === 'ACTIVE') return 'green';
+  if (status === 'REGISTRATION') return 'blue';
+  return 'gray';
+}
+
+function nameToHue(name: string): number {
+  return Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+}
+
 export default async function SeasonDashboardPage({ params }: Props) {
   const { leagueId, seasonId } = params;
   const locale = await getLocale();
@@ -26,7 +37,7 @@ export default async function SeasonDashboardPage({ params }: Props) {
     apiServer.get<SeasonRankingEntry[]>(`/seasons/${seasonId}/ranking`),
   ]);
 
-  if (!season) return <p style={{ color: 'rgba(255,255,255,0.4)' }}>{t('notFound')}</p>;
+  if (!season) return <p className="text-tertiary-glass">{t('notFound')}</p>;
 
   const safeRanking = ranking ?? [];
   const safePlayers = players ?? [];
@@ -35,168 +46,96 @@ export default async function SeasonDashboardPage({ params }: Props) {
   const weekElapsed = season.startsAt ? weeksElapsed(season.startsAt) : 0;
   const totalWeeks = season.plannedDurationWeeks ?? null;
 
-  const statusKey = `status.${season.status}` as `status.DRAFT` | `status.REGISTRATION` | `status.ACTIVE` | `status.COMPLETED`;
+  const statusKey = `status.${season.status}` as
+    | 'status.DRAFT'
+    | 'status.REGISTRATION'
+    | 'status.ACTIVE'
+    | 'status.COMPLETED';
   const statusLabel = t(statusKey);
-  const statusColors: Record<string, string> = {
-    DRAFT: 'rgba(255,255,255,0.5)',
-    REGISTRATION: '#64b4ff',
-    ACTIVE: '#b0ef60',
-    COMPLETED: 'rgba(255,255,255,0.35)',
-  };
-  const statusColor = statusColors[season.status] ?? 'rgba(255,255,255,0.5)';
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
-            {season.name}
-          </h1>
-          <span
-            style={{
-              background: `${statusColor}1a`,
-              color: statusColor,
-              borderRadius: 8,
-              padding: '3px 10px',
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-1">
+          <h1 className="text-2xl font-extrabold text-primary-glass m-0">{season.name}</h1>
+          <Badge tone={statusTone(season.status)} dot>
             {statusLabel}
-          </span>
+          </Badge>
         </div>
       </div>
 
-      {/* KPI Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14, marginBottom: 28 }}>
-        <GlassCard style={{ padding: '16px 20px' }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('playersCount')}
-          </p>
-          <p style={{ fontSize: 28, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
-            {season.playerCount}
-            {season.maxPlayers ? <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>/{season.maxPlayers}</span> : null}
-          </p>
-        </GlassCard>
-
-        <GlassCard style={{ padding: '16px 20px' }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Status
-          </p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: statusColor, margin: 0 }}>
-            {statusLabel}
-          </p>
-        </GlassCard>
-
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5 mb-7">
+        <KpiCard
+          icon="👥"
+          label={t('playersCount')}
+          value={season.maxPlayers ? `${season.playerCount}/${season.maxPlayers}` : season.playerCount}
+        />
         {season.status === 'ACTIVE' && totalWeeks && (
-          <GlassCard style={{ padding: '16px 20px' }}>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {t('week')}
-            </p>
-            <p style={{ fontSize: 28, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
-              {weekElapsed}
-              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>/{totalWeeks}</span>
-            </p>
-          </GlassCard>
+          <KpiCard
+            icon="📅"
+            label={t('week')}
+            value={`${weekElapsed}/${totalWeeks}`}
+          />
         )}
-
-        <GlassCard style={{ padding: '16px 20px' }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('matches')}
-          </p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-            {t('matchesPlaceholder')}
-          </p>
-        </GlassCard>
+        <KpiCard icon="🎾" label={t('matches')} value={0} />
       </div>
 
-      {/* Client component handles admin actions + member registration */}
-      <SeasonDashboardClient
-        season={season}
-        locale={locale}
-        playerCount={season.playerCount}
-      />
+      <SeasonDashboardClient season={season} locale={locale} playerCount={season.playerCount} />
 
-      {/* Players preview */}
       {topPlayers.length > 0 && (
-        <GlassCard style={{ padding: '20px 22px', marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-              {t('players')}
-            </h2>
+        <GlassCard className="px-5 py-5 mb-5">
+          <div className="flex justify-between items-center mb-3.5">
+            <h2 className="text-sm font-bold text-secondary-glass m-0">{t('players')}</h2>
             {safePlayers.length > 5 && (
-              <a
+              <Link
                 href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/players`}
-                style={{ fontSize: 13, color: '#b0ef60', textDecoration: 'none' }}
+                className="text-xs text-accent-light no-underline hover:underline"
               >
                 {t('seeAll')} ({safePlayers.length})
-              </a>
+              </Link>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {topPlayers.map((p: SeasonPlayerEntry) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: 'rgba(176,239,96,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: '#b0ef60',
-                  }}
-                >
-                  {p.displayName[0]?.toUpperCase()}
-                </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>{p.displayName}</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>
-                  @{p.username}
-                </span>
+              <div key={p.id} className="flex items-center gap-2.5">
+                <Avatar
+                  initials={p.displayName[0] ?? '?'}
+                  hue={nameToHue(p.displayName)}
+                  size={32}
+                />
+                <span className="text-sm text-secondary-glass">{p.displayName}</span>
+                <span className="text-xs text-tertiary-glass ml-auto">@{p.username}</span>
               </div>
             ))}
           </div>
         </GlassCard>
       )}
 
-      {/* Ranking */}
-      <GlassCard style={{ padding: '20px 22px' }}>
-        <h2 style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)', margin: '0 0 14px' }}>
-          {t('ranking')}
-        </h2>
+      <GlassCard className="px-5 py-5">
+        <h2 className="text-sm font-bold text-secondary-glass m-0 mb-3.5">{t('ranking')}</h2>
         {season.status === 'DRAFT' || season.status === 'REGISTRATION' ? (
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
-            {t('rankingPlaceholderRegistration')}
-          </p>
+          <p className="text-tertiary-glass text-sm m-0">{t('rankingPlaceholderRegistration')}</p>
         ) : safeRanking.length === 0 ? (
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, margin: 0 }}>
-            {t('rankingPlaceholderRegistration')}
-          </p>
+          <p className="text-tertiary-glass text-sm m-0">{t('rankingPlaceholderRegistration')}</p>
         ) : (
           <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {safeRanking.map((r: SeasonRankingEntry, i: number) => (
                 <div
                   key={r.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < safeRanking.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+                  className={`flex items-center gap-3 py-2 ${
+                    i < safeRanking.length - 1 ? 'border-b border-glass' : ''
+                  }`}
                 >
-                  <span style={{ width: 28, fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                  <span className="w-7 text-sm text-tertiary-glass font-semibold">
                     {r.rank ?? '—'}
                   </span>
-                  <span style={{ flex: 1, fontSize: 14, color: 'rgba(255,255,255,0.85)' }}>
-                    {r.displayName}
-                  </span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#b0ef60' }}>
-                    {r.points} pt
-                  </span>
+                  <span className="flex-1 text-sm text-secondary-glass">{r.displayName}</span>
+                  <span className="text-sm font-bold text-accent-light">{r.points} pt</span>
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '12px 0 0' }}>
+            <p className="text-[11px] text-muted-glass mt-3 mb-0">
               {t('rankingPlaceholderScoring')}
             </p>
           </>

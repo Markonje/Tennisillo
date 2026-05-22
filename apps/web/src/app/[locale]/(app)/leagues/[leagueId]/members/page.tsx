@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, Avatar, Badge, EmptyState } from '@tennisillo/ui';
 import { apiServer } from '@/lib/api-server';
 import type { LeagueContextValue } from '@/lib/league-context';
 
@@ -7,76 +7,46 @@ interface Props {
   params: { leagueId: string };
 }
 
+function nameToHue(name: string): number {
+  return Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+}
+
 export default async function MembersPage({ params }: Props) {
   const { leagueId } = params;
   const t = await getTranslations('leagues');
 
   const league = await apiServer.get<LeagueContextValue>(`/leagues/${leagueId}`);
-
   const members = league?.members ?? [];
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
-        {t('members')}
-      </h1>
+      <h1 className="text-2xl font-extrabold text-primary-glass mb-6">{t('members')}</h1>
 
       {members.length === 0 ? (
-        <p style={{ color: 'rgba(255,255,255,0.4)' }}>Nessun membro.</p>
+        <EmptyState icon="👥" title="Nessun membro." />
       ) : (
-        <GlassCard style={{ padding: '8px 0' }}>
+        <GlassCard className="py-2">
           {members.map((m, i) => (
             <div
               key={m.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 20px',
-                borderBottom: i < members.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-              }}
+              className={`flex items-center justify-between px-5 py-3.5 ${
+                i < members.length - 1 ? 'border-b border-glass' : ''
+              }`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: 'rgba(176,239,96,0.1)',
-                    border: '1px solid rgba(176,239,96,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: '#b0ef60',
-                  }}
-                >
-                  {m.user.displayName.charAt(0).toUpperCase()}
-                </div>
+              <div className="flex items-center gap-3.5">
+                <Avatar
+                  initials={m.user.displayName.charAt(0)}
+                  hue={nameToHue(m.user.displayName)}
+                  size={40}
+                />
                 <div>
-                  <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>
+                  <p className="m-0 text-sm font-semibold text-primary-glass">
                     {m.user.displayName}
                   </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-                    {m.user.globalLevel}
-                  </p>
+                  <p className="m-0 mt-0.5 text-xs text-tertiary-glass">{m.user.globalLevel}</p>
                 </div>
               </div>
-              <span
-                style={{
-                  background: m.role === 'ADMIN'
-                    ? 'rgba(176,239,96,0.12)'
-                    : 'rgba(255,255,255,0.05)',
-                  color: m.role === 'ADMIN' ? '#b0ef60' : 'rgba(255,255,255,0.45)',
-                  borderRadius: 6,
-                  padding: '3px 10px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                }}
-              >
-                {m.role}
-              </span>
+              <Badge tone={m.role === 'ADMIN' ? 'green' : 'gray'}>{m.role}</Badge>
             </div>
           ))}
         </GlassCard>

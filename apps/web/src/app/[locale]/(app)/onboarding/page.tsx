@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, GlassInput, GlassSelect, Button, StepDots, Banner } from '@tennisillo/ui';
 import { apiClient } from '@/lib/api-client';
 
 const LEVELS = ['ROOKIE', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'ELITE'];
@@ -13,7 +13,8 @@ export default function OnboardingPage() {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'it';
-  const [step, setStep] = useState(1);
+
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState({ skillLevel: 'ROOKIE', birthYear: '', city: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,80 +37,66 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0a0e1a 0%, #0d1530 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-      }}
-    >
-      <GlassCard style={{ width: '100%', maxWidth: 440, padding: '36px 32px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 8, textAlign: 'center' }}>
+    <div className="flex items-center justify-center min-h-[calc(100vh-120px)]">
+      <GlassCard className="w-full max-w-md p-9">
+        <h1 className="text-xl font-extrabold text-primary-glass text-center mb-2">
           {t('title')}
         </h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textAlign: 'center', marginBottom: 28 }}>
-          {step}/3
-        </p>
+        <div className="flex justify-center mb-6">
+          <StepDots total={3} current={step} />
+        </div>
 
-        {error && (
-          <p style={{ color: '#f09090', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>{error}</p>
-        )}
+        {error && <Banner tone="danger" className="mb-4">{error}</Banner>}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
+          {step === 0 && (
+            <>
+              <GlassSelect
+                label={t('level')}
+                value={form.skillLevel}
+                onChange={(v) => setForm({ ...form, skillLevel: v })}
+                options={LEVELS}
+              />
+              <Button onClick={() => setStep(1)} className="w-full">Avanti →</Button>
+            </>
+          )}
+
           {step === 1 && (
             <>
-              <p style={labelStyle}>{t('level')}</p>
-              <select
-                value={form.skillLevel}
-                onChange={(e) => setForm({ ...form, skillLevel: e.target.value })}
-                style={inputStyle}
-              >
-                {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
-              <button style={btnStyle} onClick={() => setStep(2)}>Avanti →</button>
+              <GlassInput
+                label={t('birthYear')}
+                type="number"
+                placeholder="Es. 1990"
+                value={form.birthYear}
+                onChange={(v) => setForm({ ...form, birthYear: v })}
+                min={1940}
+                max={2015}
+              />
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setStep(0)} className="flex-1">← Indietro</Button>
+                <Button onClick={() => setStep(2)} className="flex-1">Avanti →</Button>
+              </div>
             </>
           )}
 
           {step === 2 && (
             <>
-              <p style={labelStyle}>{t('birthYear')}</p>
-              <input
-                type="number"
-                placeholder="Es. 1990"
-                value={form.birthYear}
-                onChange={(e) => setForm({ ...form, birthYear: e.target.value })}
-                min={1940}
-                max={2015}
-                style={inputStyle}
-              />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{ ...btnStyle, background: 'rgba(255,255,255,0.08)', color: '#fff', flex: 1 }} onClick={() => setStep(1)}>← Indietro</button>
-                <button style={{ ...btnStyle, flex: 1 }} onClick={() => setStep(3)}>Avanti →</button>
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <p style={labelStyle}>{t('city')}</p>
-              <input
+              <GlassInput
+                label={t('city')}
                 placeholder="Es. Roma"
                 value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                style={inputStyle}
+                onChange={(v) => setForm({ ...form, city: v })}
               />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{ ...btnStyle, background: 'rgba(255,255,255,0.08)', color: '#fff', flex: 1 }} onClick={() => setStep(2)}>← Indietro</button>
-                <button
-                  style={{ ...btnStyle, flex: 1 }}
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">← Indietro</Button>
+                <Button
                   onClick={() => { void handleComplete(); }}
                   disabled={loading || !form.birthYear}
+                  loading={loading}
+                  className="flex-1"
                 >
-                  {loading ? '…' : 'Completa'}
-                </button>
+                  Completa
+                </Button>
               </div>
             </>
           )}
@@ -118,27 +105,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-
-const labelStyle: React.CSSProperties = { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: 600, margin: 0 };
-const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
-  padding: '11px 14px',
-  color: 'rgba(255,255,255,0.9)',
-  fontSize: 14,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-const btnStyle: React.CSSProperties = {
-  background: '#b0ef60',
-  color: '#0a0e1a',
-  border: 'none',
-  borderRadius: 10,
-  padding: '12px',
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-  width: '100%',
-};

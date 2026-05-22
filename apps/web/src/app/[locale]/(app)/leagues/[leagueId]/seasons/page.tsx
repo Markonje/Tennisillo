@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, Badge, EmptyState } from '@tennisillo/ui';
 import { apiServer } from '@/lib/api-server';
 import type { SeasonSummary, SeasonStatus } from '@tennisillo/shared-types';
 
@@ -9,28 +9,10 @@ interface Props {
   params: { leagueId: string };
 }
 
-function StatusBadge({ status }: { status: SeasonStatus; label: string }) {
-  const colors: Record<string, { bg: string; color: string }> = {
-    DRAFT: { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' },
-    REGISTRATION: { bg: 'rgba(100,180,255,0.12)', color: '#64b4ff' },
-    ACTIVE: { bg: 'rgba(176,239,96,0.12)', color: '#b0ef60' },
-    COMPLETED: { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' },
-  };
-  const c = colors[status] ?? { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' };
-  return (
-    <span
-      style={{
-        background: c.bg,
-        color: c.color,
-        borderRadius: 8,
-        padding: '3px 10px',
-        fontSize: 12,
-        fontWeight: 600,
-      }}
-    >
-      {status}
-    </span>
-  );
+function statusTone(status: SeasonStatus): 'green' | 'blue' | 'gray' {
+  if (status === 'ACTIVE') return 'green';
+  if (status === 'REGISTRATION') return 'blue';
+  return 'gray';
 }
 
 export default async function SeasonsPage({ params }: Props) {
@@ -47,55 +29,34 @@ export default async function SeasonsPage({ params }: Props) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
-          {t('title')}
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-primary-glass m-0">{t('title')}</h1>
         <Link
           href={`/${locale}/leagues/${leagueId}/seasons/new`}
-          style={{
-            background: '#b0ef60',
-            color: '#0a0e1a',
-            borderRadius: 10,
-            padding: '9px 18px',
-            fontSize: 14,
-            fontWeight: 700,
-            textDecoration: 'none',
-          }}
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-btn bg-gradient-to-br from-accent-light to-accent-dark text-[#0a1a0e] text-sm font-bold shadow-accent-glow hover:shadow-accent-glow-lg hover:-translate-y-px transition-all duration-150 no-underline"
         >
           {t('create')}
         </Link>
       </div>
 
       {seasons.length === 0 ? (
-        <GlassCard style={{ padding: '32px 24px', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.45)', margin: 0 }}>{t('empty')}</p>
-        </GlassCard>
+        <EmptyState icon="🏆" title={t('empty')} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {seasons.map((season) => (
             <Link
               key={season.id}
               href={`/${locale}/leagues/${leagueId}/seasons/${season.id}`}
-              style={{ textDecoration: 'none' }}
+              className="no-underline"
             >
-              <GlassCard
-                style={{
-                  padding: '18px 22px',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.92)' }}>
-                    {season.name}
-                  </span>
-                  <StatusBadge
-                    status={season.status}
-                    label={tSeason(`status.${season.status}`)}
-                  />
+              <GlassCard interactive className="px-[22px] py-[18px]">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-base font-bold text-primary-glass">{season.name}</span>
+                  <Badge tone={statusTone(season.status)}>
+                    {tSeason(`status.${season.status}`)}
+                  </Badge>
                 </div>
-                <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-tertiary-glass">
                   <span>
                     {season.startsAt && season.endsAt
                       ? `${new Date(season.startsAt).toLocaleDateString()} – ${new Date(season.endsAt).toLocaleDateString()}`
@@ -106,9 +67,7 @@ export default async function SeasonsPage({ params }: Props) {
                     {season.maxPlayers ? `/${season.maxPlayers}` : ''}
                   </span>
                   {season.plannedDurationWeeks && (
-                    <span>
-                      {season.plannedDurationWeeks} {tSeason('weeks')}
-                    </span>
+                    <span>{season.plannedDurationWeeks} {tSeason('weeks')}</span>
                   )}
                 </div>
               </GlassCard>
