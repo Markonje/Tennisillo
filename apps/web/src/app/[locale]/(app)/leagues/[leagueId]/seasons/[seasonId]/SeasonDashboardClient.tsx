@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, Button, Banner } from '@tennisillo/ui';
 import { apiClient } from '@/lib/api-client';
 import type { SeasonContextValue } from '@/lib/season-context';
 
@@ -64,84 +64,56 @@ export function SeasonDashboardClient({ season, locale: _locale, playerCount }: 
     }
   }
 
-  const btnBase: React.CSSProperties = {
-    border: 'none',
-    borderRadius: 10,
-    padding: '10px 18px',
-    fontSize: 14,
-    fontWeight: 700,
-    cursor: loading ? 'not-allowed' : 'pointer',
-    opacity: loading ? 0.6 : 1,
-  };
-
   return (
-    <GlassCard style={{ padding: '20px 22px', marginBottom: 20 }}>
-      {error && (
-        <div
-          style={{
-            background: 'rgba(240,100,100,0.12)',
-            border: '1px solid rgba(240,100,100,0.2)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            color: '#f09090',
-            fontSize: 13,
-            marginBottom: 14,
-          }}
-        >
-          {error}
-        </div>
-      )}
+    <GlassCard className="px-5 py-5 mb-5">
+      {error && <Banner tone="danger" className="mb-3.5">{error}</Banner>}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {/* Admin actions */}
+      <div className="flex flex-wrap gap-2.5">
         {season.status === 'DRAFT' && (
-          <button
-            style={{ ...btnBase, background: '#64b4ff', color: '#0a0e1a' }}
+          <Button
+            variant="secondary"
+            className="border-[rgba(121,167,216,0.4)] text-blue-light hover:bg-blue-faint"
             onClick={() => { void transition('REGISTRATION'); }}
             disabled={loading}
+            loading={loading}
           >
             Apri iscrizioni
-          </button>
+          </Button>
         )}
 
         {season.status === 'REGISTRATION' && (
           <>
-            <button
-              style={{
-                ...btnBase,
-                background: playerCount < 2 ? 'rgba(176,239,96,0.3)' : '#b0ef60',
-                color: '#0a0e1a',
-                cursor: playerCount < 2 || loading ? 'not-allowed' : 'pointer',
-              }}
+            <Button
               onClick={() => { void transition('ACTIVE'); }}
               disabled={loading || playerCount < 2}
+              loading={loading}
               title={playerCount < 2 ? 'Servono almeno 2 iscritti' : undefined}
             >
               Avvia stagione
-            </button>
+            </Button>
             {playerCount < 2 && (
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', alignSelf: 'center' }}>
+              <span className="text-xs text-tertiary-glass self-center">
                 Servono almeno 2 iscritti
               </span>
             )}
 
-            {/* Member register/unregister */}
             {!isRegistered ? (
-              <button
-                style={{ ...btnBase, background: 'rgba(176,239,96,0.12)', color: '#b0ef60', border: '1px solid rgba(176,239,96,0.2)' }}
+              <Button
+                variant="ghost"
+                className="border border-success/30 text-accent-light hover:bg-success/10"
                 onClick={() => { void register(); }}
                 disabled={loading}
               >
                 Iscriviti
-              </button>
+              </Button>
             ) : (
-              <button
-                style={{ ...btnBase, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+              <Button
+                variant="ghost"
                 onClick={() => { void unregister(); }}
                 disabled={loading}
               >
                 Annulla iscrizione
-              </button>
+              </Button>
             )}
           </>
         )}
@@ -149,32 +121,33 @@ export function SeasonDashboardClient({ season, locale: _locale, playerCount }: 
         {season.status === 'ACTIVE' && (
           <>
             {!showConfirm ? (
-              <button
-                style={{ ...btnBase, background: 'rgba(240,144,144,0.12)', color: '#f09090', border: '1px solid rgba(240,144,144,0.2)' }}
+              <Button
+                variant="danger"
                 onClick={() => setShowConfirm(true)}
                 disabled={loading}
               >
                 Chiudi stagione
-              </button>
+              </Button>
             ) : (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
+              <div className="flex flex-wrap gap-2.5 items-center">
+                <span className="text-sm text-tertiary-glass">
                   Sei sicuro? Questa azione è irreversibile.
                 </span>
-                <button
-                  style={{ ...btnBase, background: '#f09090', color: '#0a0e1a' }}
+                <Button
+                  variant="danger"
                   onClick={() => { void transition('COMPLETED'); }}
                   disabled={loading}
+                  loading={loading}
                 >
                   Conferma
-                </button>
-                <button
-                  style={{ ...btnBase, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => setShowConfirm(false)}
                   disabled={loading}
                 >
                   Annulla
-                </button>
+                </Button>
               </div>
             )}
           </>

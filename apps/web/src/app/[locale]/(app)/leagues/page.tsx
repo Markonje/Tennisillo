@@ -1,5 +1,5 @@
 import { getTranslations, getLocale } from 'next-intl/server';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, Avatar, EmptyState } from '@tennisillo/ui';
 import Link from 'next/link';
 import { apiServer } from '@/lib/api-server';
 import { JoinByCodeForm } from './JoinByCodeForm';
@@ -12,6 +12,10 @@ interface League {
   _count?: { members: number };
 }
 
+function nameToHue(name: string): number {
+  return Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+}
+
 export default async function LeaguesPage() {
   const t = await getTranslations('leagues');
   const locale = await getLocale();
@@ -20,24 +24,11 @@ export default async function LeaguesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
-          {t('title')}
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-primary-glass m-0">{t('title')}</h1>
         <Link
           href={`/${locale}/leagues/new`}
-          style={{
-            background: '#b0ef60',
-            color: '#0a0e1a',
-            border: 'none',
-            borderRadius: 10,
-            padding: '10px 18px',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: 'pointer',
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-btn bg-gradient-to-br from-accent-light to-accent-dark text-[#0a1a0e] text-sm font-bold shadow-accent-glow hover:shadow-accent-glow-lg hover:-translate-y-px transition-all duration-150 no-underline"
         >
           {t('create')}
         </Link>
@@ -46,50 +37,31 @@ export default async function LeaguesPage() {
       <JoinByCodeForm locale={locale} joinLabel={t('join')} placeholder={t('joinWithCode')} />
 
       {!leagues || leagues.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15, marginBottom: 20 }}>
-            {t('empty')}
-          </p>
-        </div>
+        <EmptyState icon="🎾" title={t('empty')} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {leagues.map((league) => (
             <Link
               key={league.id}
               href={`/${locale}/leagues/${league.id}`}
-              style={{ textDecoration: 'none' }}
+              className="no-underline"
             >
-              <GlassCard style={{ padding: 16 }} hover>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: 'rgba(176,239,96,0.15)',
-                        border: '1px solid rgba(176,239,96,0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 18,
-                        fontWeight: 900,
-                        color: '#b0ef60',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {league.name.charAt(0).toUpperCase()}
-                    </div>
+              <GlassCard interactive className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <Avatar
+                      initials={league.name.charAt(0)}
+                      hue={nameToHue(league.name)}
+                      size={44}
+                    />
                     <div>
-                      <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0, fontSize: 15 }}>
-                        {league.name}
-                      </p>
-                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
+                      <p className="font-bold text-primary-glass m-0 text-base">{league.name}</p>
+                      <p className="text-xs text-tertiary-glass m-0 mt-1">
                         {league.sport} · {league.type} · {league._count?.members ?? 0} {t('members')}
                       </p>
                     </div>
                   </div>
-                  <span style={{ color: '#b0ef60', fontSize: 20 }}>→</span>
+                  <span className="text-accent-light text-xl">→</span>
                 </div>
               </GlassCard>
             </Link>

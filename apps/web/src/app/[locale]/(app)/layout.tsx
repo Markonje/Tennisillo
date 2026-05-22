@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Sidebar } from '@/components/Sidebar';
+import { MobileNav } from '@/components/MobileNav';
+import { PageWrapper } from '@/components/PageWrapper';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -11,28 +13,24 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   const locale = await getLocale();
 
   const labels = {
-    leagues: t('leagues'),
-    profile: t('profile'),
-    members: t('members'),
-    seasons: t('seasons'),
-    settings: t('settings'),
-    back: t('back'),
+    leagues:   t('leagues'),
+    profile:   t('profile'),
+    members:   t('members'),
+    seasons:   t('seasons'),
+    settings:  t('settings'),
+    back:      t('back'),
     dashboard: t('dashboard'),
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0a0e1a 0%, #0d1530 100%)',
-      }}
-    >
+    <div className="flex min-h-screen p-3.5 gap-3.5">
       <Sidebar locale={locale} labels={labels} />
 
-      <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
-        {children}
+      <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-6">
+        <PageWrapper>{children}</PageWrapper>
       </main>
+
+      <MobileNav locale={locale} labels={labels} />
     </div>
   );
 }

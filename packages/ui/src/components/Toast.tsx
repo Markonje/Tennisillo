@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { cva } from 'class-variance-authority';
+import { cn } from '../lib/cn';
 
 export type ToastTone = 'success' | 'info' | 'warning' | 'danger';
 
@@ -15,66 +17,49 @@ interface ToastProps {
   onRemove: (id: number) => void;
 }
 
-const TONE: Record<ToastTone, { bg: string; border: string; icon: string; color: string }> = {
-  success: { bg: 'rgba(185,255,90,0.15)',  border: 'rgba(185,255,90,0.4)',  icon: '✓', color: '#c8ff78' },
-  info:    { bg: 'rgba(121,167,216,0.15)', border: 'rgba(121,167,216,0.4)', icon: 'ℹ', color: '#9abfdd' },
-  warning: { bg: 'rgba(242,211,94,0.15)',  border: 'rgba(242,211,94,0.4)',  icon: '!', color: '#f5d96a' },
-  danger:  { bg: 'rgba(233,109,109,0.15)', border: 'rgba(233,109,109,0.4)', icon: '✕', color: '#f09090' },
+const item = cva(
+  [
+    'flex items-center gap-2.5 rounded-[14px] border backdrop-glass pointer-events-auto',
+    'shadow-[0_10px_30px_rgba(0,0,0,0.3)] px-4 py-3 min-w-[260px] animate-slide-in',
+  ],
+  {
+    variants: {
+      tone: {
+        success: 'bg-success/15 border-success/40',
+        info:    'bg-blue-faint  border-[rgba(121,167,216,0.4)]',
+        warning: 'bg-warning-faint border-warning/40',
+        danger:  'bg-danger-faint  border-danger/40',
+      },
+    },
+  }
+);
+
+const ICON: Record<ToastTone, string>      = { success: '✓', info: 'ℹ', warning: '!', danger: '✕' };
+const ICON_CLS: Record<ToastTone, string>  = {
+  success: 'text-accent-light',
+  info:    'text-blue-light',
+  warning: 'text-warning-light',
+  danger:  'text-danger-light',
 };
 
 export function Toast({ toasts, onRemove }: ToastProps) {
   return (
-    <>
-      <style>{`
-        @keyframes _toast-slide-in {
-          from { transform: translateX(110%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
-        }
-        ._toast-item { animation: _toast-slide-in 0.25s ease both; }
-      `}</style>
-      <div style={{
-        position: 'fixed',
-        top: 20,
-        right: 20,
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        pointerEvents: 'none',
-      }}>
-        {toasts.map((t) => {
-          const s = TONE[t.tone];
-          return (
-            <div
-              key={t.id}
-              className="_toast-item"
-              style={{
-                background: s.bg,
-                border: `1px solid ${s.border}`,
-                borderRadius: 14,
-                padding: '12px 16px',
-                backdropFilter: 'blur(24px)',
-                pointerEvents: 'all',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                minWidth: 260,
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              }}
-            >
-              <span style={{ color: s.color, fontWeight: 700, fontSize: 14 }}>{s.icon}</span>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', flex: 1 }}>{t.message}</span>
-              <button
-                type="button"
-                onClick={() => onRemove(t.id)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: 0 }}
-              >
-                ✕
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    </>
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
+      {toasts.map((t) => (
+        <div key={t.id} className={item({ tone: t.tone })}>
+          <span className={cn('text-sm font-bold shrink-0', ICON_CLS[t.tone])} aria-hidden="true">
+            {ICON[t.tone]}
+          </span>
+          <span className="text-[13px] text-primary-glass flex-1">{t.message}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(t.id)}
+            className="p-0 bg-transparent border-none text-tertiary-glass hover:text-secondary-glass transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }

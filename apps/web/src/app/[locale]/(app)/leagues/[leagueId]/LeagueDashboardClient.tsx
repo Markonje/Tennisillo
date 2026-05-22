@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, Button, Avatar } from '@tennisillo/ui';
 import type { LeagueContextValue } from '@/lib/league-context';
 
 interface Member {
@@ -23,8 +23,10 @@ interface Props {
   inviteCodeLabel: string;
   copyLabel: string;
   membersLabel: string;
-  createSeasonLabel: string;
-  comingSoonLabel: string;
+}
+
+function nameToHue(name: string): number {
+  return Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
 }
 
 export function LeagueDashboardClient({
@@ -34,8 +36,6 @@ export function LeagueDashboardClient({
   inviteCodeLabel,
   copyLabel,
   membersLabel,
-  createSeasonLabel,
-  comingSoonLabel,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -48,123 +48,61 @@ export function LeagueDashboardClient({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Invite code */}
+    <div className="flex flex-col gap-5">
       {league.inviteCode && (
-        <GlassCard style={{ padding: '16px 20px' }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <GlassCard className="p-5">
+          <p className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider mb-2.5">
             {inviteCodeLabel}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <code
-              style={{
-                background: 'rgba(176,239,96,0.08)',
-                border: '1px solid rgba(176,239,96,0.2)',
-                borderRadius: 8,
-                padding: '8px 14px',
-                fontFamily: 'monospace',
-                fontSize: 16,
-                fontWeight: 700,
-                color: '#b0ef60',
-                letterSpacing: '0.08em',
-                flex: 1,
-              }}
-            >
+          <div className="flex items-center gap-3">
+            <code className="flex-1 bg-success/10 border border-success/20 rounded-input px-3.5 py-2 font-mono text-base font-bold text-accent-light tracking-widest">
               {league.inviteCode}
             </code>
-            <button
+            <Button
+              variant={copied ? 'ghost' : 'secondary'}
+              size="sm"
               onClick={handleCopy}
-              style={{
-                background: copied ? 'rgba(176,239,96,0.15)' : 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 8,
-                padding: '8px 14px',
-                color: copied ? '#b0ef60' : 'rgba(255,255,255,0.7)',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                whiteSpace: 'nowrap',
-              }}
+              className={copied ? 'text-accent-light' : ''}
             >
               {copied ? '✓ Copiato' : copyLabel}
-            </button>
+            </Button>
           </div>
         </GlassCard>
       )}
 
-      {/* Members preview */}
-      <GlassCard style={{ padding: '20px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.8)', margin: 0 }}>
-            {membersLabel}
-          </p>
+      <GlassCard className="p-5">
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-sm font-bold text-secondary-glass m-0">{membersLabel}</p>
           <Link
             href={`/${locale}/leagues/${league.id}/members`}
-            style={{ fontSize: 12, color: '#b0ef60', textDecoration: 'none', fontWeight: 600 }}
+            className="text-xs text-accent-light no-underline font-semibold hover:underline"
           >
             Vedi tutti →
           </Link>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {topMembers.map((m) => (
-            <div
-              key={m.id}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: 'rgba(176,239,96,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: '#b0ef60',
-                  }}
-                >
-                  {m.user.displayName.charAt(0).toUpperCase()}
-                </div>
+            <div key={m.id} className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Avatar
+                  initials={m.user.displayName.charAt(0)}
+                  hue={nameToHue(m.user.displayName)}
+                  size={32}
+                />
                 <div>
-                  <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
+                  <p className="m-0 text-sm text-secondary-glass font-semibold">
                     {m.user.displayName}
                   </p>
-                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                    {m.role}
-                  </p>
+                  <p className="m-0 text-[11px] text-tertiary-glass">{m.role}</p>
                 </div>
               </div>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>
+              <span className="text-[11px] text-tertiary-glass font-medium">
                 {m.user.globalLevel}
               </span>
             </div>
           ))}
         </div>
       </GlassCard>
-
-      {/* Create season CTA (disabled — Sprint 3) */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <button
-          disabled
-          title={comingSoonLabel}
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10,
-            padding: '12px 22px',
-            color: 'rgba(255,255,255,0.25)',
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: 'not-allowed',
-          }}
-        >
-          {createSeasonLabel} — {comingSoonLabel}
-        </button>
-      </div>
     </div>
   );
 }
