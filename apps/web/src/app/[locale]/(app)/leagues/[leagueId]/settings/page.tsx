@@ -34,7 +34,7 @@ export default async function LeagueSettingsPage({ params }: Props) {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
+      <h1 className="text-2xl font-extrabold text-primary-glass mb-6">
         {t('settings')}
       </h1>
 

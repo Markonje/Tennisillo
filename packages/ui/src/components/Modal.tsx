@@ -2,88 +2,71 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { cn } from '../lib/cn';
 
 export interface ModalProps {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
-  maxWidth?: number;
+  maxWidth?: number | string;
 }
 
 export function Modal({ title, children, onClose, maxWidth = 480 }: ModalProps) {
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const content = (
-    <>
-      <style>{`
-        @keyframes _modal-in {
-          from { opacity: 0; transform: scale(0.95) translateY(8px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        ._modal-card { animation: _modal-in 0.22s ease both; }
-      `}</style>
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-        }}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      >
-        <div
-          className="_modal-card"
-          style={{
-            background: 'linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: 24,
-            backdropFilter: 'blur(36px) saturate(150%)',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
-            padding: '28px 32px',
-            width: '100%',
-            maxWidth,
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.95)' }}>{title}</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer',
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              ✕
-            </button>
-          </div>
-          {children}
-        </div>
-      </div>
-    </>
-  );
+  React.useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    return () => prev?.focus();
+  }, []);
 
   if (typeof document === 'undefined') return null;
-  return ReactDOM.createPortal(content, document.body);
+
+  return ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/55 backdrop-blur-[10px]"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="modal-title"
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className={cn(
+          'animate-modal-in w-full rounded-[24px] border border-glass-hover',
+          'bg-glass-card-hover backdrop-glass shadow-[0_32px_80px_rgba(0,0,0,0.5)]',
+          'p-7 outline-none',
+        )}
+        style={{ maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 id="modal-title" className="m-0 text-lg font-bold text-primary-glass">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className={cn(
+              'flex items-center justify-center w-7 h-7 rounded-icon',
+              'border border-glass bg-glass-subtle',
+              'text-sm text-tertiary-glass hover:text-primary-glass transition-colors',
+            )}
+          >
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
 }

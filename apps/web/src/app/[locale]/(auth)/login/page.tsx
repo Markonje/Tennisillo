@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { createClient } from '../../../../lib/supabase/client';
-import { GlassCard } from '@tennisillo/ui';
+import { GlassCard, GlassInput, Button, Banner } from '@tennisillo/ui';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
@@ -68,70 +68,60 @@ export default function LoginPage() {
   }
 
   return (
-    <GlassCard style={{ width: '100%', maxWidth: 400, padding: '36px 32px' }}>
-      <h1
-        style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: 'rgba(255,255,255,0.95)',
-          marginBottom: 24,
-          textAlign: 'center',
-        }}
-      >
+    <GlassCard className="w-full max-w-sm p-9">
+      <h1 className="text-xl font-extrabold text-primary-glass text-center mb-6">
         {isRegister ? t('register') : t('login')}
       </h1>
 
-      <form onSubmit={(e) => { void handleSubmit(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <input
+      <form onSubmit={(e) => { void handleSubmit(e); }} className="flex flex-col gap-3.5">
+        <GlassInput
           type="email"
           placeholder={t('email')}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={setEmail}
           required
-          style={inputStyle}
         />
-        <input
+        <GlassInput
           type="password"
           placeholder={t('password')}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           required
-          style={inputStyle}
         />
         {isRegister && (
-          <input
+          <GlassInput
             type="password"
             placeholder="Conferma password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={setConfirmPassword}
             required
-            style={inputStyle}
           />
         )}
 
-        {error && (
-          <p style={{ color: '#f09090', fontSize: 13, textAlign: 'center' }}>{error}</p>
-        )}
+        {error && <Banner tone="danger">{error}</Banner>}
+        {message && <Banner tone="success">{message}</Banner>}
 
-        {message && (
-          <p style={{ color: '#b0ef60', fontSize: 13, textAlign: 'center' }}>{message}</p>
-        )}
-
-        <button type="submit" disabled={loading} style={primaryBtnStyle}>
-          {loading ? '…' : isRegister ? t('register') : t('login')}
-        </button>
+        <Button type="submit" loading={loading} className="w-full mt-1">
+          {isRegister ? t('register') : t('login')}
+        </Button>
       </form>
 
       {!isRegister && (
-        <button onClick={() => { void handleGoogle(); }} style={{ ...primaryBtnStyle, marginTop: 10, background: 'rgba(255,255,255,0.08)' }}>
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => { void handleGoogle(); }}
+          className="w-full mt-2.5"
+        >
           {t('loginWithGoogle')}
-        </button>
+        </Button>
       )}
 
-      <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-center mt-4 text-xs text-tertiary-glass">
         <button
+          type="button"
           onClick={switchMode}
-          style={{ background: 'none', border: 'none', color: '#b0ef60', cursor: 'pointer', fontSize: 13 }}
+          className="text-accent-light hover:underline bg-transparent border-none cursor-pointer text-xs"
         >
           {isRegister ? t('alreadyHaveAccount') : t('noAccount')}
         </button>
@@ -139,27 +129,3 @@ export default function LoginPage() {
     </GlassCard>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 10,
-  padding: '12px 14px',
-  color: 'rgba(255,255,255,0.9)',
-  fontSize: 14,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-  background: '#b0ef60',
-  color: '#0a0e1a',
-  border: 'none',
-  borderRadius: 10,
-  padding: '12px',
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-  width: '100%',
-};

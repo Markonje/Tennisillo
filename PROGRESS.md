@@ -78,7 +78,7 @@
   - `SeasonRanking.rank Int?` reso nullable
 - `shared-types`: aggiunto `SeasonStatus`, `SeasonSummary`, `SeasonPlayerEntry`, `computeOptimalDuration()` (funzione pura, 10/10 test)
 - `scoring-engine`, `training-engine`, `matchmaking-engine`: scaffold con tipi (implementazione Sprint 4/5/6)
-- `ui`: 15 componenti base + dominio
+- `ui`: 19 componenti atom (Sprint UI v2 Phase 2) + 6 componenti dominio (Phase 2 untouched)
 
 ### i18n
 - `it.json` e `en.json`: auth, onboarding, leagues, league, createLeague, profile, nav, seasons.*, season.*
@@ -136,9 +136,12 @@
 
 ## Prossimi passi
 
-### Design rework (parallelo allo sviluppo)
-- Revisione completa del design partendo dagli output di Claude design.
-- Da coordinare con Sprint 3b: le nuove pagine (matches, challenges) devono già usare il nuovo design system.
+### Sprint UI v2 — Design System Rewrite (branch: feat/sprint-ui-v2-design-rewrite)
+- **Phase 1 ✅**: Foundation — tokens.ts (glass palette), tailwind.preset.ts (plugin CVA), globals.css, layout.tsx, ADR 004
+- **Phase 2 ✅**: Atoms — 19 componenti rewriteati/creati con CVA + Tailwind (GlassCard, Button, Badge, Avatar, Toggle, GlassInput, GlassSelect, Textarea, SegmentedControl, StepDots, KpiCard, Banner, Modal, EmptyState, Toast, LogoMark, FrequencyBadge, TrainingSessionBadge, Skeleton); playground `/dev/playground`; sonner wrapper `apps/web/src/lib/toast.ts`; typecheck ✅ lint ✅
+- **Phase 3 ✅**: App Shell — Sidebar glass rewriteata (`hidden md:flex`, sticky, `rounded-[22px]`, nav items CVA), MobileNav bottom bar (`md:hidden`, iOS safe area), PageWrapper client animazione `animate-fade-up`, layout shell Tailwind
+- **Phase 4 ✅**: Page Migration — 16 file (auth layout, login, onboarding, profile, leagues, JoinByCodeForm, leagues/new, league dashboard, LeagueDashboardClient, members, LeagueSettingsClient, seasons, seasons/new, season dashboard, SeasonDashboardClient, players); zero inline styles; GlassInput/GlassSelect/Textarea/Button/Banner/Avatar/Badge/KpiCard/EmptyState/StepDots/LogoMark in uso; typecheck ✅ lint ✅
+- **Phase 5 ✅**: Performance + polish — `bg-app` utility sostituisce inline gradient in root layout, `LogoutButton.tsx` eliminato (inutilizzato), `not-found.tsx` riscritto, `settings/page.tsx` inline h1 rimosso, Sidebar import deduplicato, `(app)/loading.tsx` skeleton aggiunto; typecheck ✅ lint ✅
 
 ### Sprint 3b — Matches & Challenges (PR #16)
 Vedi ROADMAP.md per deliverable completi. In sintesi:
@@ -162,7 +165,12 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 |---|---|---|
 | Pre-Sprint 1 | Setup documentazione | ✅ Completo |
 | Sprint 1 | Fondamenta | ✅ Completo |
-| Sprint UI 1-4 | Design system | ✅ Completo |
+| Sprint UI 1-4 | Design system (legacy) | ✅ Completo |
+| Sprint UI v2 Phase 1 | Foundation (tokens, preset, globals, layout) | ✅ Completo |
+| Sprint UI v2 Phase 2 | Atoms — 19 componenti CVA + playground | ✅ Completo |
+| Sprint UI v2 Phase 3 | App Shell — sidebar + mobile shell | ✅ Completo |
+| Sprint UI v2 Phase 4 | Page Migration — 16 file | ✅ Completo |
+| Sprint UI v2 Phase 5 | Performance + polish | ✅ Completo |
 | Sprint 2 | Utenti e Leghe | ✅ Completo (PR #7) |
 | Sprint 2.5 | Architecture rework + auth fixes | ✅ Completo (PR #13) |
 | Sprint 3a | Seasons | ✅ Completo (PR #14) |

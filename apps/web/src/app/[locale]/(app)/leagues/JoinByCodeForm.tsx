@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GlassInput, Button, Banner } from '@tennisillo/ui';
 import { apiClient } from '@/lib/api-client';
 
 interface Props {
@@ -32,47 +33,27 @@ export function JoinByCodeForm({ locale, joinLabel, placeholder }: Props) {
   }
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input
+    <div className="mb-6">
+      <div className="flex gap-2">
+        <GlassInput
           placeholder={placeholder}
           value={code}
-          onChange={(e) => {
-            setCode(e.target.value);
+          onChange={(v) => {
+            setCode(v);
             setError(null);
           }}
           onKeyDown={(e) => { if (e.key === 'Enter') { void handleJoin(); } }}
-          style={{
-            flex: 1,
-            background: error ? 'rgba(240,144,144,0.05)' : 'rgba(255,255,255,0.07)',
-            border: error ? '1px solid #f09090' : '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 10,
-            padding: '10px 14px',
-            color: 'rgba(255,255,255,0.9)',
-            fontSize: 14,
-            outline: 'none',
-          }}
+          className="flex-1 min-w-0"
         />
-        <button
+        <Button
+          type="button"
           onClick={() => { void handleJoin(); }}
-          disabled={loading}
-          style={{
-            background: '#b0ef60',
-            color: '#0a0e1a',
-            border: 'none',
-            borderRadius: 10,
-            padding: '10px 18px',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: loading ? 'default' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            whiteSpace: 'nowrap',
-          }}
+          loading={loading}
         >
-          {loading ? '…' : joinLabel}
-        </button>
+          {joinLabel}
+        </Button>
       </div>
-      {error && <p style={{ color: '#f09090', fontSize: 12, marginTop: 6, marginBottom: 0 }}>{error}</p>}
+      {error && <Banner tone="danger" className="mt-2">{error}</Banner>}
     </div>
   );
 }

@@ -5,6 +5,10 @@ import { cn } from '../lib/cn';
 
 type SelectOption = string | { label: string; value: string };
 
+function normalise(opt: SelectOption): { label: string; value: string } {
+  return typeof opt === 'string' ? { label: opt, value: opt } : opt;
+}
+
 export interface GlassSelectProps {
   label?: string;
   value: string;
@@ -13,43 +17,52 @@ export interface GlassSelectProps {
   className?: string;
 }
 
-function normalise(opt: SelectOption): { label: string; value: string } {
-  return typeof opt === 'string' ? { label: opt, value: opt } : opt;
-}
-
 export function GlassSelect({ label, value, onChange, options, className }: GlassSelectProps) {
+  const id = label?.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <div className={cn(className)} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+        <label
+          htmlFor={id}
+          className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider"
+        >
           {label}
         </label>
       )}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          background: 'rgba(12,28,36,0.85)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          borderRadius: 12,
-          padding: '10px 14px',
-          color: 'rgba(255,255,255,0.9)',
-          fontSize: 14,
-          outline: 'none',
-          width: '100%',
-          backdropFilter: 'blur(12px)',
-          cursor: 'pointer',
-        }}
-      >
-        {options.map((opt) => {
-          const { label: l, value: v } = normalise(opt);
-          return (
-            <option key={v} value={v} style={{ background: '#0c1c24', color: 'rgba(255,255,255,0.9)' }}>
-              {l}
-            </option>
-          );
-        })}
-      </select>
+      <div className="relative">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            'w-full appearance-none rounded-input border border-glass bg-[#0c1c24]',
+            'px-3.5 py-2.5 pr-9 text-sm text-primary-glass cursor-pointer',
+            'transition-all duration-150 outline-none',
+            'focus:border-accent/50 focus:shadow-[0_0_0_3px_rgba(185,255,90,0.12)]',
+          )}
+        >
+          {options.map((opt) => {
+            const { label: l, value: v } = normalise(opt);
+            return (
+              <option key={v} value={v} className="bg-[#0c1c24] text-white/90">
+                {l}
+              </option>
+            );
+          })}
+        </select>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-tertiary-glass">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path
+              d="M2 4.5L6 8.5L10 4.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </div>
     </div>
   );
 }

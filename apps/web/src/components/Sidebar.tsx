@@ -1,11 +1,11 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { cn, LogoMark } from '@tennisillo/ui';
 
 interface LeagueInfo {
   name: string;
@@ -22,6 +22,30 @@ interface SidebarProps {
     back: string;
     dashboard: string;
   };
+}
+
+interface NavItemProps {
+  href: string;
+  icon: string;
+  label: string;
+  active: boolean;
+}
+
+function NavItem({ href, icon, label, active }: NavItemProps) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 no-underline',
+        active
+          ? 'bg-accent/[0.18] border border-accent/35 text-accent-light font-bold'
+          : 'text-secondary-glass hover:bg-white/[0.07] hover:text-primary-glass',
+      )}
+    >
+      <span className="text-base leading-none">{icon}</span>
+      {label}
+    </Link>
+  );
 }
 
 export function Sidebar({ locale, labels }: SidebarProps) {
@@ -54,133 +78,100 @@ export function Sidebar({ locale, labels }: SidebarProps) {
     router.push(`/${locale}/login`);
   }
 
-  function navLinkStyle(href: string, exact = false): React.CSSProperties {
-    const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
-    return {
-      display: 'block',
-      padding: '10px 14px',
-      borderRadius: 10,
-      color: active ? '#b0ef60' : 'rgba(255,255,255,0.7)',
-      background: active ? 'rgba(176,239,96,0.08)' : 'transparent',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 500,
-      transition: 'all 0.15s',
-    };
+  function isActive(href: string, exact = false) {
+    return exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
   }
 
   return (
     <aside
-      style={{
-        width: 220,
-        flexShrink: 0,
-        background: 'rgba(255,255,255,0.04)',
-        backdropFilter: 'blur(12px)',
-        borderRight: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '28px 0',
-      }}
+      className={cn(
+        'hidden md:flex flex-col w-[230px] shrink-0',
+        'sticky top-3.5 h-[calc(100vh-28px)] overflow-y-auto',
+        'rounded-[22px] border border-glass bg-glass-card backdrop-glass shadow-glass',
+        'p-[18px_12px]',
+      )}
     >
-      <div style={{ padding: '0 20px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontSize: 20, fontWeight: 900, color: '#b0ef60', letterSpacing: '-0.02em' }}>
-          Tennisillo
-        </span>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-2 pb-5 mb-2 border-b border-glass">
+        <LogoMark size={22} />
+        <span className="text-lg font-black text-accent tracking-tight">Tennisillo</span>
       </div>
 
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '16px 10px', flex: 1 }}>
+      {/* Nav */}
+      <nav className="flex flex-col gap-1 flex-1 py-2">
         {isLeagueScope ? (
           <>
+            {/* Back to leagues */}
             <Link
               href={`/${locale}/leagues`}
-              style={{
-                display: 'block',
-                padding: '8px 14px',
-                borderRadius: 10,
-                color: 'rgba(255,255,255,0.45)',
-                textDecoration: 'none',
-                fontSize: 12,
-                fontWeight: 500,
-                marginBottom: 4,
-              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-[12px] font-medium text-tertiary-glass hover:text-secondary-glass transition-colors mb-1"
             >
-              {labels.back}
+              ← {labels.back}
             </Link>
+
+            {/* League name */}
             {league && (
-              <div
-                style={{
-                  padding: '4px 14px 12px',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.9)',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  marginBottom: 8,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <div className="px-3.5 py-1.5 mb-1 text-[13px] font-bold text-primary-glass truncate border-b border-glass pb-3 mb-2">
                 {league.name}
               </div>
             )}
-            <Link
+
+            <NavItem
               href={`/${locale}/leagues/${leagueId}`}
-              style={navLinkStyle(`/${locale}/leagues/${leagueId}`, true)}
-            >
-              🏠 {labels.dashboard}
-            </Link>
-            <Link
+              icon="⊞"
+              label={labels.dashboard}
+              active={isActive(`/${locale}/leagues/${leagueId}`, true)}
+            />
+            <NavItem
               href={`/${locale}/leagues/${leagueId}/seasons`}
-              style={navLinkStyle(`/${locale}/leagues/${leagueId}/seasons`)}
-            >
-              🏆 {labels.seasons}
-            </Link>
-            <Link
+              icon="🏆"
+              label={labels.seasons}
+              active={isActive(`/${locale}/leagues/${leagueId}/seasons`)}
+            />
+            <NavItem
               href={`/${locale}/leagues/${leagueId}/members`}
-              style={navLinkStyle(`/${locale}/leagues/${leagueId}/members`)}
-            >
-              👥 {labels.members}
-            </Link>
-            <Link
+              icon="👥"
+              label={labels.members}
+              active={isActive(`/${locale}/leagues/${leagueId}/members`)}
+            />
+            <NavItem
               href={`/${locale}/leagues/${leagueId}/settings`}
-              style={navLinkStyle(`/${locale}/leagues/${leagueId}/settings`)}
-            >
-              ⚙️ {labels.settings}
-            </Link>
+              icon="⚙️"
+              label={labels.settings}
+              active={isActive(`/${locale}/leagues/${leagueId}/settings`)}
+            />
           </>
         ) : (
           <>
-            <Link href={`/${locale}/leagues`} style={navLinkStyle(`/${locale}/leagues`)}>
-              🏆 {labels.leagues}
-            </Link>
-            <Link href={`/${locale}/profile`} style={navLinkStyle(`/${locale}/profile`)}>
-              👤 {labels.profile}
-            </Link>
+            <NavItem
+              href={`/${locale}/leagues`}
+              icon="🏆"
+              label={labels.leagues}
+              active={isActive(`/${locale}/leagues`)}
+            />
+            <NavItem
+              href={`/${locale}/profile`}
+              icon="👤"
+              label={labels.profile}
+              active={isActive(`/${locale}/profile`)}
+            />
           </>
         )}
       </nav>
 
-      <div style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Footer */}
+      <div className="pt-3 border-t border-glass">
         <button
-          onClick={() => {
-            void handleLogout();
-          }}
-          style={{
-            width: '100%',
-            display: 'block',
-            padding: '10px 14px',
-            borderRadius: 10,
-            background: 'rgba(240,144,144,0.1)',
-            color: '#f09090',
-            border: '1px solid rgba(240,144,144,0.15)',
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.15s',
-            textAlign: 'left',
-          }}
+          type="button"
+          onClick={() => { void handleLogout(); }}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] text-[13.5px] font-medium',
+            'bg-danger/10 border border-danger/20 text-danger-light',
+            'hover:bg-danger/20 transition-colors',
+          )}
         >
-          🚪 Logout
+          <span>🚪</span>
+          Logout
         </button>
       </div>
     </aside>

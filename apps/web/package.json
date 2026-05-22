@@ -14,10 +14,14 @@
     "@supabase/supabase-js": "^2.104.1",
     "@tennisillo/shared-types": "workspace:*",
     "@tennisillo/ui": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "framer-motion": "^11.18.2",
     "next": "^14.2.35",
     "next-intl": "^3.15.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "sonner": "^1.7.4",
+    "vaul": "^0.9.9"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
