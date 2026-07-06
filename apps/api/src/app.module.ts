@@ -6,11 +6,12 @@ import { LeagueModule } from './leagues/league.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { SeasonModule } from './seasons/season.module';
 import { MatchesModule } from './matches/matches.module';
+import { ScoringModule } from './scoring/scoring.module';
 import { CommonModule } from './common/common.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
-  imports: [PrismaModule, CommonModule, AuthModule, UserModule, LeagueModule, OnboardingModule, SeasonModule, MatchesModule],
+  imports: [PrismaModule, CommonModule, AuthModule, UserModule, LeagueModule, OnboardingModule, SeasonModule, MatchesModule, ScoringModule],
   controllers: [HealthController],
 })
 export class AppModule {}

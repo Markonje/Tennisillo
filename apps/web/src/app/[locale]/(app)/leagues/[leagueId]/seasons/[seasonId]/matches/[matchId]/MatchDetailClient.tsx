@@ -205,6 +205,56 @@ export function MatchDetailClient({ match, meId, isAdmin, locale }: Props) {
         </GlassCard>
       )}
 
+      {/* Points breakdown card (algorithm transparency, spec §8) */}
+      {match.scoreDeltas.length > 0 && (
+        <GlassCard className="px-5 py-5">
+          <h2 className="text-sm font-bold text-secondary-glass m-0 mb-3">
+            {t('points.title')}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {match.scoreDeltas.map((delta) => (
+              <div key={delta.playerId} className="rounded-[12px] border border-glass px-4 py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-secondary-glass">
+                    {playerName(delta.playerId)}
+                  </span>
+                  <span className="text-lg font-extrabold text-accent-light">
+                    +{delta.deltaPoints} pt
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 text-xs text-tertiary-glass">
+                  {(
+                    [
+                      ['base', delta.breakdown.base],
+                      ['levelMult', delta.breakdown.levelMult],
+                      ['resultMult', delta.breakdown.resultMult],
+                      ['consistency', delta.breakdown.consistency],
+                      ['diversity', delta.breakdown.diversity],
+                      ['h2h', delta.breakdown.h2h],
+                      ['repeatPenalty', -delta.breakdown.repeatPenalty],
+                      ['decay', -delta.breakdown.decay],
+                    ] as const
+                  )
+                    .filter(([, value]) => value !== 0)
+                    .map(([key, value]) => (
+                      <div key={key} className="flex justify-between">
+                        <span>{t(`points.${key}`)}</span>
+                        <span
+                          className={
+                            value >= 0 ? 'text-accent-light font-semibold' : 'text-danger-light font-semibold'
+                          }
+                        >
+                          {value >= 0 ? `+${value}` : value}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
+
       {/* Dispute card */}
       {match.dispute && (
         <GlassCard className="px-5 py-5">

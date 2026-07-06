@@ -10,15 +10,17 @@ import { MatchesService } from '../matches.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
 import { MatchQueueService } from '../match-queue.service';
+import { ScoringQueueService } from '../../scoring/scoring-queue.service';
 import { DisputeStatus, MatchFormat, MatchStatus, SeasonStatus } from '@tennisillo/db';
 
 const mockPrisma = {
   season: { findUnique: jest.fn() },
   seasonSettings: { findUnique: jest.fn() },
-  seasonPlayer: { findUnique: jest.fn(), update: jest.fn() },
+  seasonPlayer: { findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
   leagueMember: { findUnique: jest.fn() },
   match: {
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
     create: jest.fn(),
@@ -37,6 +39,9 @@ const mockAudit = { record: jest.fn() };
 const mockQueue = {
   scheduleAutoConfirm: jest.fn().mockResolvedValue(true),
   cancelAutoConfirm: jest.fn().mockResolvedValue(undefined),
+};
+const mockScoringQueue = {
+  scheduleScoring: jest.fn().mockResolvedValue(undefined),
 };
 
 const user = (id: string) => ({
@@ -74,6 +79,7 @@ const makeMatch = (overrides: Record<string, unknown> = {}) => ({
   result: null,
   validation: null,
   dispute: null,
+  scoreDeltas: [],
   season: { id: 'season1', leagueId: 'league1', status: SeasonStatus.ACTIVE, name: 'S1' },
   ...overrides,
 });
@@ -101,6 +107,8 @@ describe('MatchesService', () => {
       resultWindowHours: 12,
       autoConfirmHours: 24,
     });
+    mockPrisma.seasonPlayer.count.mockResolvedValue(8);
+    mockPrisma.match.findFirst.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -108,6 +116,7 @@ describe('MatchesService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditService, useValue: mockAudit },
         { provide: MatchQueueService, useValue: mockQueue },
+        { provide: ScoringQueueService, useValue: mockScoringQueue },
       ],
     }).compile();
 

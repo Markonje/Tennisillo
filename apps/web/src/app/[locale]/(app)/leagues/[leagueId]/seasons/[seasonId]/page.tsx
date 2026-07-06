@@ -188,27 +188,22 @@ export default async function SeasonDashboardPage({ params }: Props) {
         ) : safeRanking.length === 0 ? (
           <p className="text-tertiary-glass text-sm m-0">{t('rankingPlaceholderRegistration')}</p>
         ) : (
-          <>
-            <div className="flex flex-col gap-2">
-              {safeRanking.map((r: SeasonRankingEntry, i: number) => (
-                <div
-                  key={r.id}
-                  className={`flex items-center gap-3 py-2 ${
-                    i < safeRanking.length - 1 ? 'border-b border-glass' : ''
-                  }`}
-                >
-                  <span className="w-7 text-sm text-tertiary-glass font-semibold">
-                    {r.rank ?? '—'}
-                  </span>
-                  <span className="flex-1 text-sm text-secondary-glass">{r.displayName}</span>
-                  <span className="text-sm font-bold text-accent-light">{r.points} pt</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-glass mt-3 mb-0">
-              {t('rankingPlaceholderScoring')}
-            </p>
-          </>
+          <div className="flex flex-col gap-2">
+            {safeRanking.map((r: SeasonRankingEntry, i: number) => (
+              <div
+                key={r.id}
+                className={`flex items-center gap-3 py-2 ${
+                  i < safeRanking.length - 1 ? 'border-b border-glass' : ''
+                }`}
+              >
+                <span className="w-7 text-sm text-tertiary-glass font-semibold">
+                  {r.rank ?? '—'}
+                </span>
+                <span className="flex-1 text-sm text-secondary-glass">{r.displayName}</span>
+                <span className="text-sm font-bold text-accent-light">{r.points} pt</span>
+              </div>
+            ))}
+          </div>
         )}
       </GlassCard>
     </div>

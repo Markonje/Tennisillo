@@ -169,7 +169,18 @@
     "set": "Set {n}",
     "addSet": "Add set",
     "removeSet": "Remove last set",
-    "flaggedResult": "This result was flagged for review: {notes}"
+    "flaggedResult": "This result was flagged for review: {notes}",
+    "points": {
+      "title": "Season points",
+      "base": "Base points",
+      "levelMult": "Level multiplier",
+      "resultMult": "Result quality",
+      "consistency": "Consistency bonus",
+      "diversity": "Diversity bonus",
+      "h2h": "Head-to-head bonus",
+      "repeatPenalty": "Repeat-pair malus",
+      "decay": "Inactivity decay"
+    }
   },
   "challenges": {
     "title": "New challenge",

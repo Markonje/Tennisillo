@@ -10,8 +10,19 @@
 ## Sprint corrente
 
 **Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
-**Stato**: Sprint 3b — Matches & Challenges ✅ completato (API + UI + test + integrazione DB).
-**Prossimo**: Sprint 4 — Scoring Engine.
+**Stato**: Sprint 3b ✅ e Sprint 4 — Scoring Engine ✅ completati.
+**Prossimo**: Sprint 5 — Calendario, Frequenza, Venue, Matchmaking.
+
+### Sprint 4 — cosa è stato fatto (2026-07-06)
+- **`packages/scoring-engine` completo**: 9 componenti puri (base, levelMultiplier, resultMultiplier, consistency, winStreak, diversity, headToHead, repeatPenalty, decay) + `pairMatchLimit` + `calculateMatchScore`. 83 test, coverage 100% statements / 95% branches. Test determinismo 1000 invocazioni.
+- **Interpretazioni spec** (vedi ADR 0005): l'esempio §8.12 contraddice le tabelle §8.4/§8.5/§8.7 in 3 punti → vincono le tabelle (scenario §8.12 implementato: A +228, B +44 vs 235/38 dell'esempio). SOFT/HARD per interpolazione. Malus ripetizione piecewise sulle etichette spec. Semantica contatori: includono la partita corrente, streak/H2H pre-match.
+- **`ScoringModule` (API)**: `ScoringService` raccoglie i contesti da DB (SOLO match competitivi — mai TrainingSession), esegue l'engine, persiste 2 righe `ScoreDelta` (breakdown JSON), aggiorna `SeasonPlayer.currentPoints/currentRank` e refresh in-place di `SeasonRanking`. Idempotente per match. Audit `SCORE_COMPUTED`.
+- **Flusso asincrono**: coda BullMQ `scoring` + worker; senza Redis lo scoring gira **inline** alla validazione (engine puro/veloce, classifica sempre coerente).
+- **Decay sweep settimanale**: `runDecaySweep()` con bookkeeping su AuditLog (`DECAY_APPLIED`, max 1/settimana/giocatore, floor 0 sul totale); job repeatable BullMQ `0 3 * * 1` solo con Redis. Eccezioni decay (pause/infortuni) non modellate → FAQ.
+- **Anti-abuso §6.4 in `createChallenge`**: limite partite per coppia (dinamico `pairMatchLimit(N)` o `pairLimitOverride`) + cooldown rivincita `h2hCooldownDays` (default 7gg) → 409.
+- **UI**: dettaglio partita mostra il breakdown punti per giocatore (trasparenza algoritmo, i18n `matches.points.*`); classifica stagione ora live (rimosso placeholder "Sprint 4").
+- **Test integrazione aggiornato**: il flusso E2E su DB reale ora verifica anche ScoreDelta, punti, rank (5/5 verde, delta verificati a mano).
+- ⚠️ Cooldown bonus rivalsa fisso 21gg (campo mancante in SeasonSettings); regola secondaria §8.8 non implementata (mitigata) — dettagli ADR 0005/FAQ.
 
 ### Sprint 3b — cosa è stato fatto (2026-07-06)
 - **MatchesModule** (NestJS): 11 endpoint — crea sfida, lista/dettaglio, accept/decline/cancel/reschedule, submit result, confirm, dispute, resolve dispute (admin).
@@ -191,7 +202,7 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 2.5 | Architecture rework + auth fixes | ✅ Completo (PR #13) |
 | Sprint 3a | Seasons | ✅ Completo (PR #14) |
 | Sprint 3b | Matches & Challenges | ✅ Completo (branch feat/mvp-completion) |
-| Sprint 4 | Scoring Engine | ⏳ Non iniziato |
+| Sprint 4 | Scoring Engine | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |
 | Sprint 6 | Training: Sparring + Master Lesson | ⏳ Non iniziato |
 | Sprint 7 | Gamification, Admin, Rifinitura | ⏳ Non iniziato |

@@ -14,6 +14,8 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { LeagueSport, LeagueType, MatchStatus, MemberRole, SeasonStatus } from '@tennisillo/db';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
+import { ScoringService } from '../../scoring/scoring.service';
+import { ScoringQueueService } from '../../scoring/scoring-queue.service';
 import { MatchQueueService } from '../match-queue.service';
 import { MatchesService } from '../matches.service';
 
@@ -23,7 +25,13 @@ const RUN_ID = `e2e3b${Date.now().toString(36)}`;
 
 describe('Sprint 3b match flow (integration)', () => {
   const prisma = new PrismaService();
-  const service = new MatchesService(prisma, new AuditService(prisma), new MatchQueueService());
+  const audit = new AuditService(prisma);
+  const service = new MatchesService(
+    prisma,
+    audit,
+    new MatchQueueService(),
+    new ScoringQueueService(new ScoringService(prisma, audit)),
+  );
 
   let adminUserId: string;
   let playerUserId: string;
@@ -82,7 +90,16 @@ describe('Sprint 3b match flow (integration)', () => {
         name: `E2E Season ${RUN_ID}`,
         status: SeasonStatus.ACTIVE,
         startsAt: new Date(),
-        settings: { create: { autoConfirmHours: 24, resultWindowHours: 12 } },
+        settings: {
+          // cooldown/pair-limit disabled: this test plays many matches
+          // between the same pair on the same day
+          create: {
+            autoConfirmHours: 24,
+            resultWindowHours: 12,
+            h2hCooldownDays: 0,
+            pairLimitOverride: 99,
+          },
+        },
         players: {
           create: [{ memberId: adminMember.id }, { memberId: playerMember.id }],
         },
@@ -177,6 +194,23 @@ describe('Sprint 3b match flow (integration)', () => {
     expect(winner?.wins).toBe(1);
     expect(winner?.matchesPlayed).toBe(1);
     expect(loser?.losses).toBe(1);
+
+    // Sprint 4: scoring ran inline on validation — deltas persisted,
+    // points assigned, ranking recomputed
+    const deltas = await prisma.scoreDelta.findMany({ where: { matchId: challenge.id } });
+    expect(deltas).toHaveLength(2);
+    const winnerDelta = deltas.find((d) => d.playerId === adminPlayerId);
+    const loserDelta = deltas.find((d) => d.playerId === playerPlayerId);
+    expect(winnerDelta?.deltaPoints).toBeGreaterThan(0);
+    expect(winnerDelta?.breakdown).toMatchObject({ base: 100 });
+    expect(winner?.currentPoints).toBe(winnerDelta?.deltaPoints);
+    expect(loser?.currentPoints).toBe(loserDelta?.deltaPoints);
+    expect(winner?.currentRank).toBe(1);
+    const ranking = await prisma.seasonRanking.findMany({ where: { seasonId } });
+    expect(ranking).toHaveLength(2);
+    expect(ranking.find((r) => r.playerId === adminPlayerId)?.points).toBe(
+      winnerDelta?.deltaPoints,
+    );
 
     // head-to-head written once
     const h2h = await prisma.headToHead.findMany({ where: { seasonId } });

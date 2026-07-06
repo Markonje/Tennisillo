@@ -169,7 +169,18 @@
     "set": "Set {n}",
     "addSet": "Aggiungi set",
     "removeSet": "Rimuovi ultimo set",
-    "flaggedResult": "Risultato segnalato per revisione: {notes}"
+    "flaggedResult": "Risultato segnalato per revisione: {notes}",
+    "points": {
+      "title": "Punti stagione",
+      "base": "Punti base",
+      "levelMult": "Moltiplicatore livello",
+      "resultMult": "Qualità del risultato",
+      "consistency": "Bonus costanza",
+      "diversity": "Bonus diversificazione",
+      "h2h": "Bonus testa a testa",
+      "repeatPenalty": "Malus ripetizione",
+      "decay": "Decay inattività"
+    }
   },
   "challenges": {
     "title": "Nuova sfida",

@@ -12,8 +12,10 @@ import {
   Prisma,
   SeasonStatus,
 } from '@tennisillo/db';
+import { pairMatchLimit } from '@tennisillo/scoring-engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
+import { ScoringQueueService } from '../scoring/scoring-queue.service';
 import { MatchQueueService } from './match-queue.service';
 import { validateScore, type SetScore } from './utils/score-validation';
 import type { CreateChallengeDto } from './dto/create-challenge.dto';
@@ -40,6 +42,7 @@ const matchInclude = {
   result: true,
   validation: true,
   dispute: true,
+  scoreDeltas: true,
   season: { select: { id: true, leagueId: true, status: true, name: true } },
 } satisfies Prisma.MatchInclude;
 
@@ -88,6 +91,12 @@ export interface SerializedMatch {
     resolution: string | null;
     createdAt: Date;
   } | null;
+  scoreDeltas: {
+    playerId: string;
+    deltaPoints: number;
+    breakdown: unknown;
+    computedAt: Date;
+  }[];
 }
 
 @Injectable()
@@ -96,6 +105,7 @@ export class MatchesService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly queue: MatchQueueService,
+    private readonly scoringQueue: ScoringQueueService,
   ) {}
 
   // ─── Challenge creation ────────────────────────────────────────────────────
@@ -140,6 +150,49 @@ export class MatchesService {
       throw new ConflictException(
         `You already have ${MAX_OPEN_CHALLENGES} open challenges in this season`,
       );
+    }
+
+    // per-pair season limit (spec §6.4/§8.9): dynamic on league size, admin ±1
+    const pairWhere = {
+      seasonId,
+      OR: [
+        { player1Id: challenger.id, player2Id: opponent.id },
+        { player1Id: opponent.id, player2Id: challenger.id },
+      ],
+    };
+    const [pairMatches, activePlayers] = await Promise.all([
+      this.prisma.match.count({
+        where: { ...pairWhere, status: { notIn: [MatchStatus.CANCELLED] } },
+      }),
+      this.prisma.seasonPlayer.count({ where: { seasonId, isEligible: true } }),
+    ]);
+    const pairLimit =
+      season.settings?.pairLimitOverride && season.settings.pairLimitOverride > 0
+        ? season.settings.pairLimitOverride
+        : pairMatchLimit(activePlayers);
+    if (pairMatches >= pairLimit) {
+      throw new ConflictException(
+        `Pair match limit reached for this season (${pairLimit})`,
+      );
+    }
+
+    // rematch cooldown (spec §6.4): configurable days since the last
+    // validated match between the same pair
+    const cooldownDays = season.settings?.h2hCooldownDays ?? 7;
+    if (cooldownDays > 0) {
+      const lastPairMatch = await this.prisma.match.findFirst({
+        where: { ...pairWhere, status: MatchStatus.VALIDATED },
+        orderBy: { completedAt: 'desc' },
+        select: { completedAt: true },
+      });
+      if (lastPairMatch?.completedAt) {
+        const elapsedMs = Date.now() - lastPairMatch.completedAt.getTime();
+        if (elapsedMs < cooldownDays * 24 * 60 * 60 * 1000) {
+          throw new ConflictException(
+            `Rematch cooldown active: wait ${cooldownDays} days between matches against the same opponent`,
+          );
+        }
+      }
     }
 
     if (dto.scheduledAt && new Date(dto.scheduledAt) <= new Date()) {
@@ -502,6 +555,7 @@ export class MatchesService {
         });
         return this.finalizeValidationTx(tx, match, adminUserId, false);
       });
+      await this.scoringQueue.scheduleScoring(matchId);
     } else {
       // dispute upheld: discard the result, back to PENDING_RESULT
       updated = await this.prisma.$transaction(async (tx) => {
@@ -584,6 +638,9 @@ export class MatchesService {
     if (!autoValidated) {
       await this.queue.cancelAutoConfirm(match.id);
     }
+
+    // async scoring flow (specs/02 §7.4); inline fallback without Redis
+    await this.scoringQueue.scheduleScoring(match.id);
 
     return updated;
   }
@@ -832,6 +889,12 @@ export class MatchesService {
             createdAt: match.dispute.createdAt,
           }
         : null,
+      scoreDeltas: match.scoreDeltas.map((d) => ({
+        playerId: d.playerId,
+        deltaPoints: d.deltaPoints,
+        breakdown: d.breakdown,
+        computedAt: d.computedAt,
+      })),
     };
   }
 }

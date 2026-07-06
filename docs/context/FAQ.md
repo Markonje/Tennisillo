@@ -146,3 +146,33 @@ forEach") non serve ADR.
 pesanti o poco mantenute, preferire ciò che Turborepo e Next.js già ottimizzano.
 Se la libreria è davvero necessaria, apri la PR citando il motivo e l'alternativa
 valutata.
+
+---
+
+### Q: L'esempio §8.12 della spec non torna con le tabelle. Chi vince?
+
+**Le tabelle normative.** L'esempio contiene tre incongruenze rispetto a §8.4/§8.5/§8.7
+(diversificazione 0.75 → +8 e non +15; sconfitto contro -1 livello → ×0.8 e non ×1.1;
+bonus primo incontro e resistenza omessi per lo sconfitto). Lo scenario §8.12
+implementato dà A = +228 e B = +44 (l'esempio dice 235/38). Dettagli in ADR 0005.
+
+---
+
+### Q: Le eccezioni al decay (pausa programmata, infortunio) funzionano?
+
+**Non ancora.** Non esiste un modello dati per pause dichiarate o infortuni
+(`pausesUsed` nel contesto engine è sempre 0). Il decay si applica: (a) come
+componente della partita quando un giocatore torna dopo 3+ settimane, (b) con lo
+sweep settimanale (`ScoringService.runDecaySweep`, job BullMQ solo con Redis
+configurato). Quando serviranno le eccezioni, andrà aggiunto un modello
+`SeasonPause` o simile — chiedere all'utente prima.
+
+---
+
+### Q: Il cooldown del bonus rivalsa è configurabile?
+
+**No, è fisso a 21 giorni** (`RIVAL_COOLDOWN_DAYS` in `scoring.service.ts`).
+`SeasonSettings.h2hCooldownDays` (default 7) è un'altra cosa: è il cooldown
+**rivincita** di §6.4 che blocca la creazione di nuove sfide tra la stessa coppia.
+La regola secondaria §8.8 ("azzeramento bonus dopo 2 partite consecutive della
+coppia") non è implementata: mitigata da cooldown 21gg + limite coppia (ADR 0005).

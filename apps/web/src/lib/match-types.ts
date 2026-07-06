@@ -60,6 +60,25 @@ export interface MatchDto {
     resolution: string | null;
     createdAt: string;
   } | null;
+  scoreDeltas: ScoreDeltaDto[];
+}
+
+export interface ScoreBreakdownDto {
+  base: number;
+  levelMult: number;
+  resultMult: number;
+  consistency: number;
+  diversity: number;
+  h2h: number;
+  repeatPenalty: number;
+  decay: number;
+}
+
+export interface ScoreDeltaDto {
+  playerId: string;
+  deltaPoints: number;
+  breakdown: ScoreBreakdownDto;
+  computedAt: string;
 }
 
 export function formatSets(sets: SetScoreDto[]): string {
