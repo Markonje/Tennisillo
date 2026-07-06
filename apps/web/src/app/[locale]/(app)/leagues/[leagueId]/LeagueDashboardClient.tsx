@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { GlassCard, Button, Avatar } from '@tennisillo/ui';
+import { toast } from '@/lib/toast';
 import type { LeagueContextValue } from '@/lib/league-context';
 
 interface Member {
@@ -20,8 +21,10 @@ interface Props {
   league: LeagueContextValue;
   topMembers: Member[];
   locale: string;
+  inviteTitleLabel: string;
   inviteCodeLabel: string;
   copyLabel: string;
+  copiedLabel: string;
   membersLabel: string;
 }
 
@@ -33,8 +36,10 @@ export function LeagueDashboardClient({
   league,
   topMembers,
   locale,
+  inviteTitleLabel,
   inviteCodeLabel,
   copyLabel,
+  copiedLabel,
   membersLabel,
 }: Props) {
   const [copied, setCopied] = useState(false);
@@ -43,32 +48,40 @@ export function LeagueDashboardClient({
     if (!league.inviteCode) return;
     void navigator.clipboard.writeText(league.inviteCode).then(() => {
       setCopied(true);
+      toast.success(copiedLabel);
       setTimeout(() => setCopied(false), 2000);
     });
   }
 
   return (
     <div className="flex flex-col gap-5">
-      {league.inviteCode && (
-        <GlassCard className="p-5">
-          <p className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider mb-2.5">
-            {inviteCodeLabel}
-          </p>
+      <GlassCard className="p-5">
+        <p className="text-[11px] font-medium text-tertiary-glass uppercase tracking-wider mb-2.5">
+          {inviteTitleLabel}
+        </p>
+        {league.inviteCode ? (
           <div className="flex items-center gap-3">
-            <code className="flex-1 bg-success/10 border border-success/20 rounded-input px-3.5 py-2 font-mono text-base font-bold text-accent-light tracking-widest">
-              {league.inviteCode}
-            </code>
+            <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+              <span className="text-[10px] text-tertiary-glass uppercase tracking-wider">
+                {inviteCodeLabel}
+              </span>
+              <code className="bg-success/10 border border-success/20 rounded-input px-3.5 py-2 font-mono text-base font-bold text-accent-light tracking-widest truncate">
+                {league.inviteCode}
+              </code>
+            </div>
             <Button
               variant={copied ? 'ghost' : 'secondary'}
               size="sm"
               onClick={handleCopy}
-              className={copied ? 'text-accent-light' : ''}
+              className={copied ? 'text-accent-light shrink-0' : 'shrink-0'}
             >
-              {copied ? '✓ Copiato' : copyLabel}
+              {copied ? '✓' : copyLabel}
             </Button>
           </div>
-        </GlassCard>
-      )}
+        ) : (
+          <p className="text-sm text-tertiary-glass">—</p>
+        )}
+      </GlassCard>
 
       <GlassCard className="p-5">
         <div className="flex justify-between items-center mb-4">

@@ -9,6 +9,7 @@ import { LeagueType, MemberRole } from '@tennisillo/db';
 import type { CreateLeagueDto } from './dto/create-league.dto';
 import type { UpdateLeagueSettingsDto } from './dto/update-settings.dto';
 import { randomBytes } from 'node:crypto';
+import { generateInviteCode } from './utils/invite-code';
 
 function generateSlug(name: string): string {
   const base = name
@@ -24,6 +25,7 @@ export class LeagueService {
 
   async create(dto: CreateLeagueDto, creatorId: string) {
     const slug = generateSlug(dto.name);
+    const inviteCode = await this.generateUniqueInviteCode();
 
     return this.prisma.league.create({
       data: {
@@ -33,6 +35,7 @@ export class LeagueService {
         type: dto.type,
         description: dto.description ?? null,
         ownerId: creatorId,
+        inviteCode,
         members: {
           create: { userId: creatorId, role: MemberRole.ADMIN },
         },
@@ -93,13 +96,22 @@ export class LeagueService {
   async generateInviteCode(leagueId: string, adminId: string) {
     await this.assertAdmin(leagueId, adminId);
 
-    const code = randomBytes(6).toString('hex').toUpperCase();
+    const code = await this.generateUniqueInviteCode();
 
     return this.prisma.league.update({
       where: { id: leagueId },
       data: { inviteCode: code },
       select: { inviteCode: true },
     });
+  }
+
+  private async generateUniqueInviteCode(): Promise<string> {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = generateInviteCode();
+      const existing = await this.prisma.league.findUnique({ where: { inviteCode: code } });
+      if (!existing) return code;
+    }
+    throw new Error('Failed to generate a unique invite code after 5 attempts');
   }
 
   async joinByCode(code: string, userId: string) {

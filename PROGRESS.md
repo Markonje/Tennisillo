@@ -3,21 +3,37 @@
 > **Aggiornare questo file alla fine di ogni sessione di lavoro.**
 > Claude Code lo legge all'inizio di ogni chat per sapere da dove ripartire.
 > Formato: conciso, basato sui fatti.
-> **Last updated**: 2026-05-22
+> **Last updated**: 2026-07-06
 
 ---
 
 ## Sprint corrente
 
-**Sprint**: Sprint 3a — Seasons completato e mergiato (PR #14).
-**Stato**: ✅ Smoke test E2E verde (15/15 punti). Prod operativa.
-**Prossimo**: Sprint 3b — Matches & Challenges (PR #16).
+**Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
+**Stato**: Sprint 3b — Matches & Challenges ✅ completato (API + UI + test + integrazione DB).
+**Prossimo**: Sprint 4 — Scoring Engine.
+
+### Sprint 3b — cosa è stato fatto (2026-07-06)
+- **MatchesModule** (NestJS): 11 endpoint — crea sfida, lista/dettaglio, accept/decline/cancel/reschedule, submit result, confirm, dispute, resolve dispute (admin).
+- Flusso stati: `PENDING_ACCEPTANCE → SCHEDULED → PENDING_RESULT → PENDING_VALIDATION → VALIDATED | DISPUTED`; transizioni esplicite, audit log su ogni mutazione.
+- **Plausibility check** (`utils/score-validation.ts`, funzione pura, 23 test): rifiuta punteggi impossibili per formato (BEST_OF_1/3, SUPER_TIEBREAK, CUSTOM) con 400.
+- **Time-window flag** (specs §7.2.2): risultato fuori finestra `resultWindowHours` → flag di revisione, mai rifiutato.
+- **Auto-confirm 24h**: job ritardato BullMQ (`match-queue.service.ts` + worker) **più fallback lazy** — ogni lettura/azione su match `PENDING_VALIDATION` scaduto lo finalizza. Funziona anche senza Redis. ⚠️ REDIS_URL Upstash non ancora configurato (localhost placeholder): job proattivi disabilitati, correttezza garantita dal lazy check.
+- **Doppia validazione**: il submitter non può confermare/contestare il proprio risultato; alla validazione aggiornati `SeasonPlayer` (wins/losses/matchesPlayed) e `HeadToHead` (coppia canonica per stagione). Nessun punto assegnato (Sprint 4).
+- **Disputa base**: apertura con motivo (min 10 char), risoluzione admin `UPHELD` (risultato scartato → PENDING_RESULT) / `REJECTED` (risultato valido → VALIDATED), motivazione obbligatoria in audit.
+- **Anti-abuso**: max 3 sfide `PENDING_ACCEPTANCE` per giocatore per stagione.
+- **Notifiche in-app**: righe `Notification` per challenge/result/dispute (UI notifiche in Sprint 7).
+- **UI**: `/leagues/[id]/seasons/[id]/matches` (lista + filtri segmented), `/matches/new` (form sfida), `/matches/[matchId]` (dettaglio con tutte le azioni per stato + form risultato dinamico + disputa + pannello admin). Dashboard stagione: KPI partite reale + sezione ultime 5 partite.
+- **i18n**: blocchi `matches.*`, `challenges.*`, `dispute.*` in EN e IT.
+- **apiClient** web: ora propaga i messaggi di errore del body API (per mostrare gli errori di plausibilità).
+- **Fix codice invito** (known bug chiuso): generazione codice alla creazione lega, util `generateInviteCode` (charset non ambiguo, 8 char, retry unicità), migration backfill `20260522000000` (già applicata al DB), UI dashboard/settings.
+- **Test**: 65 unit (jest) + 5 test integrazione contro DB reale (`__integration__/matches.flow.int.ts`, esclusi dalla CI, run: `pnpm --filter api exec jest --testMatch "**/*.int.ts"`).
 
 ---
 
 ## Known bug aperti
 
-- **Codice invito non visibile** nella dashboard lega (`/leagues/[id]`): il campo non è mai apparso. Non bloccante per Sprint 3b. Da fixare in seguito (potrebbe essere campo `null` nel DB o mancato render UI).
+- Nessuno.
 
 ---
 
@@ -174,7 +190,7 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 2 | Utenti e Leghe | ✅ Completo (PR #7) |
 | Sprint 2.5 | Architecture rework + auth fixes | ✅ Completo (PR #13) |
 | Sprint 3a | Seasons | ✅ Completo (PR #14) |
-| Sprint 3b | Matches & Challenges | ⏳ Prossimo (PR #16) |
+| Sprint 3b | Matches & Challenges | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 4 | Scoring Engine | ⏳ Non iniziato |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |
 | Sprint 6 | Training: Sparring + Master Lesson | ⏳ Non iniziato |
