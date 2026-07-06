@@ -10,7 +10,10 @@
     "seasons": "Seasons",
     "settings": "Settings",
     "back": "← All Leagues",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "availability": "Availability",
+    "frequency": "Frequency",
+    "venues": "Venues"
   },
   "auth": {
     "login": "Sign In",
@@ -189,6 +192,7 @@
     "format": "Match format",
     "proposedDate": "Proposed date (optional)",
     "venue": "Venue (free text, optional)",
+    "venueSelect": "Venue (from league registry)",
     "message": "Message (optional)",
     "send": "Send challenge",
     "sent": "Challenge sent!",
@@ -196,6 +200,115 @@
     "sentTo": "You challenged {name}",
     "noOpponents": "No other registered players available to challenge.",
     "onlyActiveSeason": "Challenges can only be created while the season is active."
+  },
+  "availability": {
+    "title": "Availability calendar",
+    "patternHint": "Click the hour cells to mark your weekly recurring availability, then save.",
+    "save": "Save pattern",
+    "saved": "Pattern saved",
+    "overridesTitle": "Date-specific overrides",
+    "overridesHint": "Add extraordinary availability or block specific dates (holidays, commitments).",
+    "overrideType": "Type",
+    "typeAVAILABLE": "Extra availability",
+    "typeUNAVAILABLE": "Unavailable",
+    "from": "From",
+    "to": "To",
+    "note": "Note (optional)",
+    "addOverride": "Add override",
+    "delete": "Delete",
+    "noOverrides": "No overrides in the next 60 days.",
+    "days": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
+  },
+  "frequency": {
+    "title": "Desired frequency",
+    "hint": "Declare how often you want to play: it drives Smart Match and what other players see as a traffic light.",
+    "ideal": "Ideal matches per period",
+    "max": "Maximum matches per period",
+    "unit": "Period",
+    "unitWEEKLY": "Weekly",
+    "unitMONTHLY": "Monthly",
+    "save": "Save",
+    "saved": "Preference saved",
+    "current": "Matches this period",
+    "notDeclared": "You have not declared a frequency yet.",
+    "status": {
+      "GREEN": "Available for challenges",
+      "YELLOW": "Near the limit",
+      "RED": "Saturated",
+      "UNKNOWN": "Not declared"
+    }
+  },
+  "venues": {
+    "title": "League venues",
+    "empty": "No venues yet.",
+    "name": "Name",
+    "address": "Address",
+    "surface": "Surface",
+    "cover": "Cover",
+    "courtCount": "Courts",
+    "bookingUrl": "Booking link",
+    "phone": "Phone",
+    "notes": "Notes",
+    "book": "Book",
+    "add": "Add venue",
+    "propose": "Propose venue",
+    "proposalSent": "Proposal sent: a league admin will review it.",
+    "archive": "Archive",
+    "archived": "Archived",
+    "pendingProposals": "Pending proposals",
+    "proposedBy": "Proposed by {name}",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectReason": "Rejection motivation",
+    "favoritesTitle": "My favorite venues",
+    "favoritesHint": "Pick up to 3 favorite venues, in order of preference. They feed geographic matching.",
+    "favoritesSave": "Save favorites",
+    "favoritesSaved": "Favorites saved",
+    "noFavorite": "—",
+    "priority": "Choice {n}",
+    "surfaces": {
+      "CLAY": "Clay",
+      "HARD": "Hard",
+      "GRASS": "Grass",
+      "SYNTHETIC": "Synthetic",
+      "OTHER": "Other"
+    },
+    "covers": {
+      "INDOOR": "Indoor",
+      "OUTDOOR": "Outdoor",
+      "MIXED": "Mixed"
+    }
+  },
+  "smartMatch": {
+    "title": "Find an opponent",
+    "hint": "Candidates ranked by acceptance likelihood: level, new opponents, calendar overlap and declared frequency.",
+    "empty": "No candidates available right now.",
+    "score": "Score",
+    "challenge": "Challenge",
+    "suggestedSlots": "Suggested slots",
+    "noSlots": "No common calendar slots",
+    "requireAvailability": "Only with common slots",
+    "breakdown": {
+      "level": "Level",
+      "diversity": "Diversity",
+      "availability": "Calendar",
+      "frequency": "Frequency",
+      "geo": "Distance"
+    },
+    "status": {
+      "GREEN": "Available",
+      "YELLOW": "Near limit",
+      "RED": "Saturated",
+      "UNKNOWN": "No frequency"
+    }
   },
   "dispute": {
     "title": "Dispute",

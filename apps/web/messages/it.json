@@ -10,7 +10,10 @@
     "seasons": "Stagioni",
     "settings": "Impostazioni",
     "back": "← Tutte le leghe",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "availability": "Disponibilità",
+    "frequency": "Frequenza",
+    "venues": "Campi"
   },
   "auth": {
     "login": "Accedi",
@@ -189,6 +192,7 @@
     "format": "Formato partita",
     "proposedDate": "Data proposta (opzionale)",
     "venue": "Campo (testo libero, opzionale)",
+    "venueSelect": "Campo (dall'anagrafica)",
     "message": "Messaggio (opzionale)",
     "send": "Invia sfida",
     "sent": "Sfida inviata!",
@@ -196,6 +200,115 @@
     "sentTo": "Hai sfidato {name}",
     "noOpponents": "Nessun altro giocatore iscritto disponibile da sfidare.",
     "onlyActiveSeason": "Le sfide si possono creare solo con la stagione attiva."
+  },
+  "availability": {
+    "title": "Calendario disponibilità",
+    "patternHint": "Clicca sulle celle orarie per indicare la tua disponibilità settimanale ricorrente, poi salva.",
+    "save": "Salva pattern",
+    "saved": "Pattern salvato",
+    "overridesTitle": "Eccezioni su date specifiche",
+    "overridesHint": "Aggiungi disponibilità straordinarie o blocca date specifiche (ferie, impegni).",
+    "overrideType": "Tipo",
+    "typeAVAILABLE": "Disponibilità extra",
+    "typeUNAVAILABLE": "Non disponibile",
+    "from": "Dal",
+    "to": "Al",
+    "note": "Nota (opzionale)",
+    "addOverride": "Aggiungi eccezione",
+    "delete": "Elimina",
+    "noOverrides": "Nessuna eccezione nei prossimi 60 giorni.",
+    "days": {
+      "0": "Dom",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mer",
+      "4": "Gio",
+      "5": "Ven",
+      "6": "Sab"
+    }
+  },
+  "frequency": {
+    "title": "Frequenza desiderata",
+    "hint": "Dichiara quanto vuoi giocare: guida lo Smart Match e il semaforo visibile agli altri giocatori.",
+    "ideal": "Partite ideali per periodo",
+    "max": "Partite massime per periodo",
+    "unit": "Periodo",
+    "unitWEEKLY": "Settimanale",
+    "unitMONTHLY": "Mensile",
+    "save": "Salva",
+    "saved": "Preferenza salvata",
+    "current": "Partite in questo periodo",
+    "notDeclared": "Non hai ancora dichiarato una frequenza.",
+    "status": {
+      "GREEN": "Disponibile per sfide",
+      "YELLOW": "Vicino al limite",
+      "RED": "Saturato",
+      "UNKNOWN": "Non dichiarata"
+    }
+  },
+  "venues": {
+    "title": "Campi della lega",
+    "empty": "Nessun campo ancora.",
+    "name": "Nome",
+    "address": "Indirizzo",
+    "surface": "Superficie",
+    "cover": "Copertura",
+    "courtCount": "Numero campi",
+    "bookingUrl": "Link prenotazione",
+    "phone": "Telefono",
+    "notes": "Note",
+    "book": "Prenota",
+    "add": "Aggiungi campo",
+    "propose": "Proponi campo",
+    "proposalSent": "Proposta inviata: un admin della lega la esaminerà.",
+    "archive": "Archivia",
+    "archived": "Archiviato",
+    "pendingProposals": "Proposte in attesa",
+    "proposedBy": "Proposto da {name}",
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "rejectReason": "Motivazione del rifiuto",
+    "favoritesTitle": "I miei campi preferiti",
+    "favoritesHint": "Scegli fino a 3 campi preferiti, in ordine di preferenza. Alimentano il matching geografico.",
+    "favoritesSave": "Salva preferiti",
+    "favoritesSaved": "Preferiti salvati",
+    "noFavorite": "—",
+    "priority": "Scelta {n}",
+    "surfaces": {
+      "CLAY": "Terra rossa",
+      "HARD": "Cemento",
+      "GRASS": "Erba",
+      "SYNTHETIC": "Sintetico",
+      "OTHER": "Altro"
+    },
+    "covers": {
+      "INDOOR": "Coperto",
+      "OUTDOOR": "Scoperto",
+      "MIXED": "Misto"
+    }
+  },
+  "smartMatch": {
+    "title": "Cerca avversario",
+    "hint": "Candidati ordinati per probabilità di accettazione: livello, avversari nuovi, calendario compatibile e frequenza dichiarata.",
+    "empty": "Nessun candidato disponibile al momento.",
+    "score": "Punteggio",
+    "challenge": "Sfida",
+    "suggestedSlots": "Slot suggeriti",
+    "noSlots": "Nessuno slot comune a calendario",
+    "requireAvailability": "Solo con slot comuni",
+    "breakdown": {
+      "level": "Livello",
+      "diversity": "Diversificazione",
+      "availability": "Calendario",
+      "frequency": "Frequenza",
+      "geo": "Distanza"
+    },
+    "status": {
+      "GREEN": "Disponibile",
+      "YELLOW": "Vicino al limite",
+      "RED": "Saturato",
+      "UNKNOWN": "Senza frequenza"
+    }
   },
   "dispute": {
     "title": "Disputa",

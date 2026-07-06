@@ -167,9 +167,22 @@ export function MatchDetailClient({ match, meId, isAdmin, locale }: Props) {
           <span>
             {t('format')}: {t(`formats.${match.format}`)}
           </span>
-          {match.venueTextFallback && (
+          {(match.venue || match.venueTextFallback) && (
             <span>
-              {t('venue')}: {match.venueTextFallback}
+              {t('venue')}: {match.venue?.name ?? match.venueTextFallback}
+              {match.venue?.bookingUrl && (
+                <>
+                  {' '}
+                  <a
+                    href={match.venue.bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-light no-underline hover:underline"
+                  >
+                    ↗
+                  </a>
+                </>
+              )}
             </span>
           )}
         </div>

@@ -44,6 +44,9 @@ importers:
       '@tennisillo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@tennisillo/matchmaking-engine':
+        specifier: workspace:^
+        version: link:../../packages/matchmaking-engine
       '@tennisillo/scoring-engine':
         specifier: workspace:^
         version: link:../../packages/scoring-engine

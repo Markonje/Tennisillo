@@ -36,6 +36,7 @@ export interface MatchDto {
   player1: MatchPlayerDto;
   player2: MatchPlayerDto;
   scheduledAt: string | null;
+  venue: { id: string; name: string; address: string; bookingUrl: string | null } | null;
   venueTextFallback: string | null;
   completedAt: string | null;
   resultWindowExpiresAt: string | null;

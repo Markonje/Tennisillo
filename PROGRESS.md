@@ -10,8 +10,20 @@
 ## Sprint corrente
 
 **Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
-**Stato**: Sprint 3b ✅ e Sprint 4 — Scoring Engine ✅ completati.
-**Prossimo**: Sprint 5 — Calendario, Frequenza, Venue, Matchmaking.
+**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅ completati.
+**Prossimo**: Sprint 6 — Training: Sparring + Master Lesson.
+
+### Sprint 5 — cosa è stato fatto (2026-07-06)
+- **`packages/matchmaking-engine` completo**: types spec §6.2, `findCandidates` + 5 scorer (level, diversity, availability con matching asimmetrico 35, frequency semaforo, geo haversine) + aggregator pesato + `slotIntersection` (materialize/merge/subtract/intersect). 38 test, coverage 100%. `referenceDate` nel config per purezza (ADR 0006).
+- **AvailabilityModule**: pattern ricorrente (griglia JSON su `AvailabilityPattern`), override AVAILABLE/UNAVAILABLE, overview di lega. Visibilità solo membri. 5 endpoint.
+- **FrequencyModule**: upsert preferenza (ideale/max/unità), dettaglio owner con contatore periodo (settimana ISO / mese), **semaforo pubblico** senza numeri. Le partite programmate contano nel periodo.
+- **VenuesModule**: CRUD admin (archive, mai delete), proposte giocatori con approvazione/rifiuto motivato admin + notifiche, campi preferiti (max 3 ordinati), geocoding Mapbox (503 senza `MAPBOX_TOKEN`, cache in-process). Guard dedicate venue/proposal→league admin.
+- **MatchmakingModule**: `GET /seasons/:id/matchmaking/candidates` (+`requireAvailability`, `enableGeo`, `limit`) e `/slots`. Contesti da DB: pair count, frequenza, occupazione automatica (match SCHEDULED bloccano 2h di calendario), venue preferito per geo.
+- **Flusso partita**: `venueId` strutturato in crea sfida/accetta/riprogramma (validato su venue ATTIVO della lega, retrocompatibile con testo libero); venue + link prenotazione nel dettaglio partita.
+- **UI**: `/leagues/[id]/availability` (griglia settimanale 7×16 clic-toggle + eccezioni), `/frequency` (form + semaforo), `/venues` (lista, form admin/proposta, approvazioni admin, preferiti), `/matches/find` (Smart Match Panel: score, breakdown, semaforo, slot suggeriti, CTA sfida con prefill avversario+slot). Sidebar: 3 nuove voci. Selettore campo nel form sfida.
+- **i18n**: blocchi `availability.*`, `frequency.*`, `venues.*`, `smartMatch.*` + `nav.*` EN/IT.
+- **Test**: engine 38 (100% coverage), integrazione DB reale `sprint5.flow.int.ts` 4/4 (pattern/override → semaforo → venue+proposta+notifica → candidati Smart Match con slot intersecati corretti).
+- ⚠️ Mappa Mapbox GL e caching Redis matchmaking rimandati (ADR 0006 §6-7).
 
 ### Sprint 4 — cosa è stato fatto (2026-07-06)
 - **`packages/scoring-engine` completo**: 9 componenti puri (base, levelMultiplier, resultMultiplier, consistency, winStreak, diversity, headToHead, repeatPenalty, decay) + `pairMatchLimit` + `calculateMatchScore`. 83 test, coverage 100% statements / 95% branches. Test determinismo 1000 invocazioni.
@@ -203,6 +215,6 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 3a | Seasons | ✅ Completo (PR #14) |
 | Sprint 3b | Matches & Challenges | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 4 | Scoring Engine | ✅ Completo (branch feat/mvp-completion) |
-| Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |
+| Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 6 | Training: Sparring + Master Lesson | ⏳ Non iniziato |
 | Sprint 7 | Gamification, Admin, Rifinitura | ⏳ Non iniziato |

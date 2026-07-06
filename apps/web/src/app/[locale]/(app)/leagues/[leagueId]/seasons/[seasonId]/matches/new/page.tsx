@@ -3,10 +3,11 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { apiServer } from '@/lib/api-server';
 import type { SeasonContextValue } from '@/lib/season-context';
 import type { SeasonPlayerEntry } from '@tennisillo/shared-types';
-import { NewChallengeClient } from './NewChallengeClient';
+import { NewChallengeClient, type VenueOption } from './NewChallengeClient';
 
 interface Props {
   params: { leagueId: string; seasonId: string };
+  searchParams: { opponent?: string; slot?: string };
 }
 
 interface MeDto {
@@ -14,15 +15,16 @@ interface MeDto {
   username: string;
 }
 
-export default async function NewChallengePage({ params }: Props) {
+export default async function NewChallengePage({ params, searchParams }: Props) {
   const { leagueId, seasonId } = params;
   const locale = await getLocale();
   const t = await getTranslations('challenges');
 
-  const [season, players, me] = await Promise.all([
+  const [season, players, me, venues] = await Promise.all([
     apiServer.get<SeasonContextValue>(`/seasons/${seasonId}`),
     apiServer.get<SeasonPlayerEntry[]>(`/seasons/${seasonId}/players`),
     apiServer.get<MeDto>('/users/me'),
+    apiServer.get<VenueOption[]>(`/leagues/${leagueId}/venues`),
   ]);
 
   if (!season || season.status !== 'ACTIVE') {
@@ -34,10 +36,13 @@ export default async function NewChallengePage({ params }: Props) {
       <h1 className="text-2xl font-extrabold text-primary-glass m-0 mb-6">{t('title')}</h1>
       <NewChallengeClient
         players={players ?? []}
+        venues={venues ?? []}
         meUsername={me?.username ?? ''}
         locale={locale}
         leagueId={leagueId}
         seasonId={seasonId}
+        initialOpponentId={searchParams.opponent ?? ''}
+        initialSlot={searchParams.slot ?? ''}
       />
     </div>
   );

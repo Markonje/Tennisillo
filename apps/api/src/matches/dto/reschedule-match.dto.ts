@@ -6,6 +6,10 @@ export class RescheduleMatchDto {
 
   @IsOptional()
   @IsString()
+  venueId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(200)
   venueTextFallback?: string;
 }

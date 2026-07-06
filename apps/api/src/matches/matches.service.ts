@@ -43,6 +43,7 @@ const matchInclude = {
   validation: true,
   dispute: true,
   scoreDeltas: true,
+  venue: { select: { id: true, name: true, address: true, bookingUrl: true } },
   season: { select: { id: true, leagueId: true, status: true, name: true } },
 } satisfies Prisma.MatchInclude;
 
@@ -67,6 +68,7 @@ export interface SerializedMatch {
   player1: SerializedMatchPlayer;
   player2: SerializedMatchPlayer;
   scheduledAt: Date | null;
+  venue: { id: string; name: string; address: string; bookingUrl: string | null } | null;
   venueTextFallback: string | null;
   completedAt: Date | null;
   resultWindowExpiresAt: Date | null;
@@ -199,6 +201,10 @@ export class MatchesService {
       throw new BadRequestException('scheduledAt must be in the future');
     }
 
+    if (dto.venueId) {
+      await this.assertActiveLeagueVenue(dto.venueId, season.leagueId);
+    }
+
     const match = await this.prisma.match.create({
       data: {
         seasonId,
@@ -208,6 +214,7 @@ export class MatchesService {
         status: MatchStatus.PENDING_ACCEPTANCE,
         ...(dto.format !== undefined && { format: dto.format }),
         ...(dto.scheduledAt !== undefined && { scheduledAt: new Date(dto.scheduledAt) }),
+        ...(dto.venueId !== undefined && { venueId: dto.venueId }),
         ...(dto.venueTextFallback !== undefined && { venueTextFallback: dto.venueTextFallback }),
       },
       include: matchInclude,
@@ -278,11 +285,16 @@ export class MatchesService {
       throw new BadRequestException('scheduledAt must be in the future');
     }
 
+    if (dto.venueId) {
+      await this.assertActiveLeagueVenue(dto.venueId, match.season.leagueId);
+    }
+
     const updated = await this.prisma.match.update({
       where: { id: matchId },
       data: {
         status: MatchStatus.SCHEDULED,
         scheduledAt,
+        ...(dto.venueId !== undefined && { venueId: dto.venueId }),
         ...(dto.venueTextFallback !== undefined && { venueTextFallback: dto.venueTextFallback }),
       },
       include: matchInclude,
@@ -364,10 +376,15 @@ export class MatchesService {
       throw new BadRequestException('scheduledAt must be in the future');
     }
 
+    if (dto.venueId) {
+      await this.assertActiveLeagueVenue(dto.venueId, match.season.leagueId);
+    }
+
     const updated = await this.prisma.match.update({
       where: { id: matchId },
       data: {
         scheduledAt,
+        ...(dto.venueId !== undefined && { venueId: dto.venueId }),
         ...(dto.venueTextFallback !== undefined && { venueTextFallback: dto.venueTextFallback }),
       },
       include: matchInclude,
@@ -765,6 +782,13 @@ export class MatchesService {
     }
   }
 
+  private async assertActiveLeagueVenue(venueId: string, leagueId: string): Promise<void> {
+    const venue = await this.prisma.venue.findUnique({ where: { id: venueId } });
+    if (!venue || venue.leagueId !== leagueId || venue.status !== 'ACTIVE') {
+      throw new BadRequestException('venueId must reference an active venue of this league');
+    }
+  }
+
   private async getSeasonSettings(seasonId: string) {
     const settings = await this.prisma.seasonSettings.findUnique({ where: { seasonId } });
     return {
@@ -859,6 +883,14 @@ export class MatchesService {
       player1: toPlayer(match.player1),
       player2: toPlayer(match.player2),
       scheduledAt: match.scheduledAt,
+      venue: match.venue
+        ? {
+            id: match.venue.id,
+            name: match.venue.name,
+            address: match.venue.address,
+            bookingUrl: match.venue.bookingUrl,
+          }
+        : null,
       venueTextFallback: match.venueTextFallback,
       completedAt: match.completedAt,
       resultWindowExpiresAt: match.resultWindowExpiresAt,

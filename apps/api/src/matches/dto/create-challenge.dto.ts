@@ -23,7 +23,12 @@ export class CreateChallengeDto {
   @IsISO8601()
   scheduledAt?: string;
 
-  /** Freeform venue text (structured Venue FK arrives in Sprint 5) */
+  /** Structured venue (active Venue of the league) */
+  @IsOptional()
+  @IsString()
+  venueId?: string;
+
+  /** Freeform venue text (fallback when no structured venue is picked) */
   @IsOptional()
   @IsString()
   @MaxLength(200)

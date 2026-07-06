@@ -14,6 +14,7 @@ export default async function MatchesPage({ params }: Props) {
   const { leagueId, seasonId } = params;
   const locale = await getLocale();
   const t = await getTranslations('matches');
+  const tSmart = await getTranslations('smartMatch');
 
   const [season, matches] = await Promise.all([
     apiServer.get<SeasonContextValue>(`/seasons/${seasonId}`),
@@ -27,9 +28,14 @@ export default async function MatchesPage({ params }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-extrabold text-primary-glass m-0">{t('title')}</h1>
         {canChallenge && (
-          <Link href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches/new`}>
-            <Button>{t('newChallenge')}</Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches/find`}>
+              <Button variant="secondary">{tSmart('title')}</Button>
+            </Link>
+            <Link href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches/new`}>
+              <Button>{t('newChallenge')}</Button>
+            </Link>
+          </div>
         )}
       </div>
 
