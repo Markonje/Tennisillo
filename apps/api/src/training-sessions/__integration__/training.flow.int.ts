@@ -14,6 +14,7 @@ import {
 } from '@tennisillo/db';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
+import { AchievementsService } from '../../achievements/achievements.service';
 import { ScoringService } from '../../scoring/scoring.service';
 import { TrainingSessionsService } from '../training-sessions.service';
 import { MastersService } from '../../masters/masters.service';
@@ -25,7 +26,7 @@ const RUN_ID = `e2e6${Date.now().toString(36)}`;
 describe('Sprint 6 training flow (integration)', () => {
   const prisma = new PrismaService();
   const audit = new AuditService(prisma);
-  const scoring = new ScoringService(prisma, audit);
+  const scoring = new ScoringService(prisma, audit, new AchievementsService(prisma));
   const training = new TrainingSessionsService(prisma, audit, scoring);
   const masters = new MastersService(prisma, audit);
 

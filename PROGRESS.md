@@ -10,8 +10,28 @@
 ## Sprint corrente
 
 **Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
-**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅, Sprint 6 ✅ completati.
-**Prossimo**: Sprint 7 — Gamification, Admin, Rifinitura.
+**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅, Sprint 6 ✅, Sprint 7 ✅ — **MVP completo**.
+**Prossimo**: review + merge della PR; configurare servizi esterni (Upstash, Mapbox, Resend) per attivare le feature predisposte.
+
+### Sprint 7 — cosa è stato fatto (2026-07-07)
+- **NotificationsModule + UI**: lista/contatore/mark-read API, pagina `/notifications` con deep-link per tipo (partita, training, venue, lega), voce sidebar. Disputa ora notifica anche gli admin (spec §13.1).
+- **Email Resend** (`MailService`, REST senza SDK): no-op loggato senza `RESEND_API_KEY`; cablata su sfida ricevuta / risultato da confermare / disputa aperta.
+- **AchievementsModule**: badge competitivi (Prima Vittoria, In Fiamme, Ammazzagiganti, Esploratore, Vendicatore) valutati post-scoring, Campione alla chiusura stagione; endpoint catalogo + `users/me/achievements`; sezione Badge nel profilo. I 4 badge training già in Sprint 6.
+- **Reputazione** (§7.2.5): +1 conferma manuale, -10 disputa persa, -5 disputa infondata, clamp [0,100]; visibile solo in dashboard admin.
+- **Anti-frode on-demand** (§7.2.4/§9.1.3): coppie al limite, vittorie alternate, farming sparring, giocatori solo-sparring, inattivi 21gg+, reputazione bassa.
+- **Dashboard admin** `/leagues/[id]/admin` (server-guarded): KPI stagione (partite validate/aperte/in attesa, partite/settimana, maestri), dispute aperte con link "Esamina", scorciatoia proposte campo, alert anti-frode, audit recente (query JSONB su `payload.leagueId`).
+- **Rinvii motivati** (ADR 0008): WebSocket, Growthbook, Stripe, caching Redis, Playwright (mancano credenziali test browser — coperto da 13 test integrazione DB reale), badge full-season, reminder schedulati, bacheca, export.
+
+---
+
+## Cosa serve per attivare le feature predisposte (azioni utente)
+
+| Servizio | Env var | Dove | Sblocca |
+| --- | --- | --- | --- |
+| Upstash Redis | `REDIS_URL` | Railway (api) | Job proattivi: auto-confirm 24h, scoring async, decay sweep settimanale |
+| Mapbox | `MAPBOX_TOKEN` | Railway (api) | Geocoding indirizzi venue (`POST /venues/geocode`) |
+| Resend | `RESEND_API_KEY`, `MAIL_FROM` | Railway (api) | Email transazionali |
+| 2 utenze test | — | — | E2E Playwright browser |
 
 ### Sprint 6 — cosa è stato fatto (2026-07-06)
 - **`packages/training-engine` completo**: `calculateSparring` (cap check + ricompensa fissa), `calculateMasterLesson` + `xpToGlobalRatingDelta` (curva rendimenti decrescenti 0.5/0.3/0.15/0.05), `capChecker` con `getIsoWeekBounds` senza date-fns. 21 test, coverage 100%.
@@ -228,4 +248,4 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 4 | Scoring Engine | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 6 | Training: Sparring + Master Lesson | ✅ Completo (branch feat/mvp-completion) |
-| Sprint 7 | Gamification, Admin, Rifinitura | ⏳ Non iniziato |
+| Sprint 7 | Gamification, Admin, Rifinitura | ✅ Completo (branch feat/mvp-completion) |

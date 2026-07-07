@@ -14,7 +14,9 @@
     "availability": "Availability",
     "frequency": "Frequency",
     "venues": "Venues",
-    "training": "Training"
+    "training": "Training",
+    "notifications": "Notifications",
+    "admin": "Admin"
   },
   "auth": {
     "login": "Sign In",
@@ -66,7 +68,8 @@
   },
   "profile": {
     "title": "Your Profile",
-    "save": "Save Changes"
+    "save": "Save Changes",
+    "badges": "Badges"
   },
   "onboarding": {
     "title": "Welcome to Tennisillo",
@@ -287,6 +290,62 @@
       "OUTDOOR": "Outdoor",
       "MIXED": "Mixed"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications.",
+    "markAllRead": "Mark all as read",
+    "open": "Open",
+    "types": {
+      "CHALLENGE_RECEIVED": "You received a challenge",
+      "CHALLENGE_ACCEPTED": "Your challenge was accepted",
+      "CHALLENGE_DECLINED": "Your challenge was declined",
+      "MATCH_REMINDER": "Match update",
+      "RESULT_PENDING_VALIDATION": "A result awaits your confirmation",
+      "RESULT_VALIDATED": "Match result validated",
+      "DISPUTE_OPENED": "A dispute was opened",
+      "DISPUTE_RESOLVED": "A dispute was resolved",
+      "RANKING_CHANGE": "Your ranking changed",
+      "SEASON_STARTING": "A season is starting",
+      "SEASON_ENDING": "A season is ending",
+      "BADGE_EARNED": "You earned a badge!",
+      "LEAGUE_INVITE": "League invite",
+      "SPARRING_PENDING_CONFIRM": "A sparring awaits your confirmation",
+      "SPARRING_CONFIRMED": "Sparring confirmed",
+      "MASTER_LESSON_PENDING_VALIDATION": "A lesson awaits your validation",
+      "MASTER_LESSON_VALIDATED": "Lesson validated, XP credited",
+      "MASTER_LESSON_REJECTED": "Training session update",
+      "VENUE_PROPOSAL_RECEIVED": "New venue proposal to review",
+      "VENUE_PROPOSAL_APPROVED": "Your venue proposal was approved",
+      "SPARRING_CAP_REACHED": "Weekly sparring cap reached",
+      "AVAILABILITY_MATCH_FOUND": "An opponent is available in your slots"
+    }
+  },
+  "adminDash": {
+    "title": "Admin dashboard",
+    "hint": "Season overview, open disputes, anti-fraud alerts and recent activity.",
+    "noSeason": "No active season.",
+    "players": "Players",
+    "validated": "Validated matches",
+    "openMatches": "Open matches",
+    "awaitingValidation": "Awaiting validation",
+    "matchesPerWeek": "Matches / week",
+    "masters": "Masters",
+    "proposals": "Pending venue proposals",
+    "disputesTitle": "Open disputes",
+    "noDisputes": "No open disputes.",
+    "review": "Review",
+    "alertsTitle": "Anti-fraud alerts",
+    "noAlerts": "No anomalies detected.",
+    "pairsAtLimit": "Pairs at the match limit",
+    "alternatingPairs": "Pairs with alternating wins",
+    "sparringFarmingPairs": "Possible sparring farming (pairs)",
+    "sparringOnlyPlayers": "Sparring-only players (no competitive matches in 4 weeks)",
+    "inactivePlayers": "Inactive players (3+ weeks)",
+    "lowReputation": "Low reputation",
+    "auditTitle": "Recent activity",
+    "noAudit": "No recent activity.",
+    "matchesLabel": "matches"
   },
   "training": {
     "title": "Training",

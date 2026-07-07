@@ -11,13 +11,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
 import { MatchQueueService } from '../match-queue.service';
 import { ScoringQueueService } from '../../scoring/scoring-queue.service';
+import { MailService } from '../../notifications/mail.service';
 import { DisputeStatus, MatchFormat, MatchStatus, SeasonStatus } from '@tennisillo/db';
 
 const mockPrisma = {
   season: { findUnique: jest.fn() },
   seasonSettings: { findUnique: jest.fn() },
   seasonPlayer: { findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
-  leagueMember: { findUnique: jest.fn() },
+  leagueMember: { findUnique: jest.fn(), findMany: jest.fn() },
+  user: { findUnique: jest.fn(), update: jest.fn() },
   match: {
     findUnique: jest.fn(),
     findFirst: jest.fn(),
@@ -43,6 +45,7 @@ const mockQueue = {
 const mockScoringQueue = {
   scheduleScoring: jest.fn().mockResolvedValue(undefined),
 };
+const mockMail = { send: jest.fn().mockResolvedValue(undefined) };
 
 const user = (id: string) => ({
   id,
@@ -109,6 +112,11 @@ describe('MatchesService', () => {
     });
     mockPrisma.seasonPlayer.count.mockResolvedValue(8);
     mockPrisma.match.findFirst.mockResolvedValue(null);
+    mockPrisma.leagueMember.findMany.mockResolvedValue([]);
+    mockPrisma.user.findUnique.mockResolvedValue({
+      email: 'user@test.local',
+      reputationScore: 100,
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -117,6 +125,7 @@ describe('MatchesService', () => {
         { provide: AuditService, useValue: mockAudit },
         { provide: MatchQueueService, useValue: mockQueue },
         { provide: ScoringQueueService, useValue: mockScoringQueue },
+        { provide: MailService, useValue: mockMail },
       ],
     }).compile();
 

@@ -8,6 +8,7 @@ import {
 import { SeasonStatus, MemberRole, MasterMode } from '@tennisillo/db';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
+import { AchievementsService } from '../achievements/achievements.service';
 import type { CreateSeasonDto } from './dto/create-season.dto';
 import type { UpdateSeasonDto } from './dto/update-season.dto';
 import type { TransitionSeasonDto } from './dto/transition-season.dto';
@@ -24,6 +25,7 @@ export class SeasonService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly achievements: AchievementsService,
   ) {}
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -218,6 +220,10 @@ export class SeasonService {
       from: season.status,
       to: targetStatus,
     });
+
+    if (targetStatus === SeasonStatus.COMPLETED) {
+      await this.achievements.onSeasonCompleted(seasonId);
+    }
 
     return updated;
   }

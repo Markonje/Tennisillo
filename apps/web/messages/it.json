@@ -14,7 +14,9 @@
     "availability": "Disponibilità",
     "frequency": "Frequenza",
     "venues": "Campi",
-    "training": "Allenamento"
+    "training": "Allenamento",
+    "notifications": "Notifiche",
+    "admin": "Admin"
   },
   "auth": {
     "login": "Accedi",
@@ -66,7 +68,8 @@
   },
   "profile": {
     "title": "Il tuo profilo",
-    "save": "Salva modifiche"
+    "save": "Salva modifiche",
+    "badges": "Badge"
   },
   "onboarding": {
     "title": "Benvenuto in Tennisillo",
@@ -287,6 +290,62 @@
       "OUTDOOR": "Scoperto",
       "MIXED": "Misto"
     }
+  },
+  "notifications": {
+    "title": "Notifiche",
+    "empty": "Nessuna notifica.",
+    "markAllRead": "Segna tutte come lette",
+    "open": "Apri",
+    "types": {
+      "CHALLENGE_RECEIVED": "Hai ricevuto una sfida",
+      "CHALLENGE_ACCEPTED": "La tua sfida è stata accettata",
+      "CHALLENGE_DECLINED": "La tua sfida è stata rifiutata",
+      "MATCH_REMINDER": "Aggiornamento partita",
+      "RESULT_PENDING_VALIDATION": "Un risultato attende la tua conferma",
+      "RESULT_VALIDATED": "Risultato partita validato",
+      "DISPUTE_OPENED": "È stata aperta una disputa",
+      "DISPUTE_RESOLVED": "Una disputa è stata risolta",
+      "RANKING_CHANGE": "La tua posizione in classifica è cambiata",
+      "SEASON_STARTING": "Una stagione sta per iniziare",
+      "SEASON_ENDING": "Una stagione sta per finire",
+      "BADGE_EARNED": "Hai conquistato un badge!",
+      "LEAGUE_INVITE": "Invito a una lega",
+      "SPARRING_PENDING_CONFIRM": "Uno sparring attende la tua conferma",
+      "SPARRING_CONFIRMED": "Sparring confermato",
+      "MASTER_LESSON_PENDING_VALIDATION": "Una lezione attende la tua validazione",
+      "MASTER_LESSON_VALIDATED": "Lezione validata, XP accreditati",
+      "MASTER_LESSON_REJECTED": "Aggiornamento sessione di allenamento",
+      "VENUE_PROPOSAL_RECEIVED": "Nuova proposta campo da esaminare",
+      "VENUE_PROPOSAL_APPROVED": "La tua proposta campo è stata approvata",
+      "SPARRING_CAP_REACHED": "Cap settimanale sparring raggiunto",
+      "AVAILABILITY_MATCH_FOUND": "Un avversario è disponibile nei tuoi slot"
+    }
+  },
+  "adminDash": {
+    "title": "Dashboard admin",
+    "hint": "Overview stagione, dispute aperte, alert anti-frode e attività recente.",
+    "noSeason": "Nessuna stagione attiva.",
+    "players": "Giocatori",
+    "validated": "Partite validate",
+    "openMatches": "Partite aperte",
+    "awaitingValidation": "In attesa di validazione",
+    "matchesPerWeek": "Partite / settimana",
+    "masters": "Maestri",
+    "proposals": "Proposte campo in attesa",
+    "disputesTitle": "Dispute aperte",
+    "noDisputes": "Nessuna disputa aperta.",
+    "review": "Esamina",
+    "alertsTitle": "Alert anti-frode",
+    "noAlerts": "Nessuna anomalia rilevata.",
+    "pairsAtLimit": "Coppie al limite partite",
+    "alternatingPairs": "Coppie con vittorie alternate",
+    "sparringFarmingPairs": "Possibile farming sparring (coppie)",
+    "sparringOnlyPlayers": "Giocatori solo-sparring (0 partite competitive in 4 settimane)",
+    "inactivePlayers": "Giocatori inattivi (3+ settimane)",
+    "lowReputation": "Reputazione bassa",
+    "auditTitle": "Attività recente",
+    "noAudit": "Nessuna attività recente.",
+    "matchesLabel": "partite"
   },
   "training": {
     "title": "Allenamento",

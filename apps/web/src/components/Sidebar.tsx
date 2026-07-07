@@ -25,6 +25,8 @@ interface SidebarProps {
     frequency: string;
     venues: string;
     training: string;
+    notifications: string;
+    admin: string;
   };
 }
 
@@ -163,6 +165,12 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               active={isActive(`/${locale}/leagues/${leagueId}/training`)}
             />
             <NavItem
+              href={`/${locale}/leagues/${leagueId}/admin`}
+              icon="🛡️"
+              label={labels.admin}
+              active={isActive(`/${locale}/leagues/${leagueId}/admin`)}
+            />
+            <NavItem
               href={`/${locale}/leagues/${leagueId}/settings`}
               icon="⚙️"
               label={labels.settings}
@@ -176,6 +184,12 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               icon="🏆"
               label={labels.leagues}
               active={isActive(`/${locale}/leagues`)}
+            />
+            <NavItem
+              href={`/${locale}/notifications`}
+              icon="🔔"
+              label={labels.notifications}
+              active={isActive(`/${locale}/notifications`)}
             />
             <NavItem
               href={`/${locale}/profile`}

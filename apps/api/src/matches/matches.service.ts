@@ -16,6 +16,7 @@ import { pairMatchLimit } from '@tennisillo/scoring-engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
 import { ScoringQueueService } from '../scoring/scoring-queue.service';
+import { MailService } from '../notifications/mail.service';
 import { MatchQueueService } from './match-queue.service';
 import { validateScore, type SetScore } from './utils/score-validation';
 import type { CreateChallengeDto } from './dto/create-challenge.dto';
@@ -108,6 +109,7 @@ export class MatchesService {
     private readonly audit: AuditService,
     private readonly queue: MatchQueueService,
     private readonly scoringQueue: ScoringQueueService,
+    private readonly mail: MailService,
   ) {}
 
   // ─── Challenge creation ────────────────────────────────────────────────────
@@ -227,6 +229,11 @@ export class MatchesService {
       challengerName: challenger.member.user.displayName,
       message: dto.message ?? null,
     });
+    await this.emailUser(
+      opponent.member.user.id,
+      'New challenge received',
+      `<p>${challenger.member.user.displayName} challenged you on Tennisillo. Log in to respond.</p>`,
+    );
     await this.audit.record('CHALLENGE_CREATED', userId, 'Match', match.id, {
       seasonId,
       opponentPlayerId: opponent.id,
@@ -477,6 +484,11 @@ export class MatchesService {
         expiresAt: expiresAt?.toISOString() ?? null,
       },
     );
+    await this.emailUser(
+      this.otherParticipantUserId(match, userId),
+      'Match result awaiting your confirmation',
+      '<p>Your opponent submitted a match result on Tennisillo. Confirm or contest it within the validation window.</p>',
+    );
     await this.audit.record('MATCH_RESULT_SUBMITTED', userId, 'Match', matchId, {
       sets: sets as unknown as Prisma.InputJsonValue,
       winnerId,
@@ -501,6 +513,9 @@ export class MatchesService {
     }
 
     const updated = await this.finalizeValidation(match, userId, false);
+
+    // manual confirmation is virtuous behaviour (spec 01 §7.2.5)
+    await this.adjustReputation(userId, 1);
 
     await this.audit.record('MATCH_VALIDATED', userId, 'Match', matchId, {
       winnerId: match.result.winnerId,
@@ -537,12 +552,31 @@ export class MatchesService {
 
     await this.queue.cancelAutoConfirm(matchId);
 
+    // spec 01 §13.1: dispute opened → both players + league admins
     await this.notify(match.result.submittedById, NotificationType.DISPUTE_OPENED, {
       matchId,
       seasonId: match.seasonId,
       leagueId: match.season.leagueId,
       reason: dto.reason,
     });
+    const admins = await this.prisma.leagueMember.findMany({
+      where: { leagueId: match.season.leagueId, role: 'ADMIN', isActive: true },
+      select: { userId: true },
+    });
+    for (const admin of admins) {
+      await this.notify(admin.userId, NotificationType.DISPUTE_OPENED, {
+        matchId,
+        seasonId: match.seasonId,
+        leagueId: match.season.leagueId,
+        reason: dto.reason,
+        forAdmin: true,
+      });
+    }
+    await this.emailUser(
+      match.result.submittedById,
+      'Your match result was contested',
+      '<p>Your opponent opened a dispute on a match result. A league admin will review it.</p>',
+    );
     await this.audit.record('DISPUTE_OPENED', userId, 'Match', matchId, {
       reason: dto.reason,
     });
@@ -573,6 +607,8 @@ export class MatchesService {
         return this.finalizeValidationTx(tx, match, adminUserId, false);
       });
       await this.scoringQueue.scheduleScoring(matchId);
+      // the dispute was unfounded: the opener loses reputation
+      await this.adjustReputation(match.dispute.openedById, -5);
     } else {
       // dispute upheld: discard the result, back to PENDING_RESULT
       updated = await this.prisma.$transaction(async (tx) => {
@@ -591,6 +627,10 @@ export class MatchesService {
           include: matchInclude,
         });
       });
+      // the submitted result was wrong: the submitter loses reputation
+      if (match.result) {
+        await this.adjustReputation(match.result.submittedById, -10);
+      }
     }
 
     for (const target of this.participantUserIds(match)) {
@@ -860,6 +900,31 @@ export class MatchesService {
   ): Promise<void> {
     await this.prisma.notification.create({
       data: { userId, type, payload: payload as Prisma.InputJsonValue },
+    });
+  }
+
+  private async emailUser(userId: string, subject: string, html: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (user?.email) await this.mail.send(user.email, subject, html);
+  }
+
+  /**
+   * Reputation adjustments (spec 01 §7.2.5): fast confirmations raise the
+   * score, lost disputes lower it. Clamped to [0, 100].
+   */
+  private async adjustReputation(userId: string, delta: number): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { reputationScore: true },
+    });
+    if (!user) return;
+    const next = Math.max(0, Math.min(100, user.reputationScore + delta));
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { reputationScore: next },
     });
   }
 

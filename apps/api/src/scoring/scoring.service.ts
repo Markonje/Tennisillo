@@ -9,6 +9,7 @@ import {
 } from '@tennisillo/scoring-engine';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit.service';
+import { AchievementsService } from '../achievements/achievements.service';
 import { toEngineLevel } from './utils/level-map';
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -37,6 +38,7 @@ export class ScoringService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly achievements: AchievementsService,
   ) {}
 
   /** Idempotent: returns false when the match is not scorable or already scored. */
@@ -142,6 +144,10 @@ export class ScoringService {
     this.logger.log(
       `Scored match ${matchId}: winner +${output.winner.deltaTotal}, loser +${output.loser.deltaTotal}`,
     );
+
+    // competitive badge checks (never throws — swallowed inside)
+    await this.achievements.onMatchScored(matchId);
+
     return true;
   }
 

@@ -13,6 +13,9 @@ import { VenuesModule } from './venues/venues.module';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
 import { TrainingSessionsModule } from './training-sessions/training-sessions.module';
 import { MastersModule } from './masters/masters.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AchievementsModule } from './achievements/achievements.module';
+import { AdminModule } from './admin/admin.module';
 import { CommonModule } from './common/common.module';
 import { HealthController } from './health/health.controller';
 
@@ -33,6 +36,9 @@ import { HealthController } from './health/health.controller';
     MatchmakingModule,
     TrainingSessionsModule,
     MastersModule,
+    NotificationsModule,
+    AchievementsModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

@@ -14,8 +14,10 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { LeagueSport, LeagueType, MatchStatus, MemberRole, SeasonStatus } from '@tennisillo/db';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
+import { AchievementsService } from '../../achievements/achievements.service';
 import { ScoringService } from '../../scoring/scoring.service';
 import { ScoringQueueService } from '../../scoring/scoring-queue.service';
+import { MailService } from '../../notifications/mail.service';
 import { MatchQueueService } from '../match-queue.service';
 import { MatchesService } from '../matches.service';
 
@@ -30,7 +32,10 @@ describe('Sprint 3b match flow (integration)', () => {
     prisma,
     audit,
     new MatchQueueService(),
-    new ScoringQueueService(new ScoringService(prisma, audit)),
+    new ScoringQueueService(
+      new ScoringService(prisma, audit, new AchievementsService(prisma)),
+    ),
+    new MailService(),
   );
 
   let adminUserId: string;
@@ -132,6 +137,9 @@ describe('Sprint 3b match flow (integration)', () => {
     await prisma.season.deleteMany({ where: { id: seasonId } });
     await prisma.leagueMember.deleteMany({ where: { leagueId } });
     await prisma.league.deleteMany({ where: { id: leagueId } });
+    await prisma.userAchievement.deleteMany({
+      where: { userId: { in: [adminUserId, playerUserId] } },
+    });
     await prisma.notification.deleteMany({
       where: { userId: { in: [adminUserId, playerUserId] } },
     });

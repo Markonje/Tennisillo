@@ -4,6 +4,7 @@ import { BadRequestException, ConflictException, ForbiddenException } from '@nes
 import { SeasonService } from '../season.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit.service';
+import { AchievementsService } from '../../achievements/achievements.service';
 import { SeasonStatus, MemberRole } from '@tennisillo/db';
 
 const mockPrisma = {
@@ -72,6 +73,10 @@ describe('SeasonService', () => {
         SeasonService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditService, useValue: mockAudit },
+        {
+          provide: AchievementsService,
+          useValue: { onSeasonCompleted: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 
