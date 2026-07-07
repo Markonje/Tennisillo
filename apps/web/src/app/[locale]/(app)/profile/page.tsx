@@ -15,9 +15,16 @@ interface UserProfile {
   globalLevel: string;
 }
 
+interface EarnedBadge {
+  id: string;
+  earnedAt: string;
+  achievement: { code: string; name: string; description: string };
+}
+
 export default function ProfilePage() {
   const t = useTranslations('profile');
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [form, setForm] = useState({ displayName: '', city: '', birthYear: '', globalLevel: 'ROOKIE' });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +41,11 @@ export default function ProfilePage() {
           birthYear: data.birthYear ? String(data.birthYear) : '',
           globalLevel: data.globalLevel,
         });
+        try {
+          setBadges(await apiClient.get<EarnedBadge[]>('/users/me/achievements'));
+        } catch {
+          // badges are decorative: never block the profile on failure
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : '';
         if (msg.includes('401') || msg.includes('403')) {
@@ -126,6 +138,25 @@ export default function ProfilePage() {
           <Button type="submit" className="w-full">{t('save')}</Button>
         </form>
       </GlassCard>
+
+      {badges.length > 0 && (
+        <GlassCard className="p-6 max-w-md mt-5">
+          <h2 className="text-sm font-bold text-secondary-glass m-0 mb-3">{t('badges')}</h2>
+          <div className="flex flex-col gap-2.5">
+            {badges.map((b) => (
+              <div key={b.id} className="flex items-center gap-3">
+                <span className="text-xl">🏅</span>
+                <div>
+                  <div className="text-sm font-semibold text-primary-glass">
+                    {b.achievement.name}
+                  </div>
+                  <div className="text-xs text-tertiary-glass">{b.achievement.description}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
     </div>
   );
 }

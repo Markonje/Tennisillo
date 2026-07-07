@@ -13,13 +13,19 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   const locale = await getLocale();
 
   const labels = {
-    leagues:   t('leagues'),
-    profile:   t('profile'),
-    members:   t('members'),
-    seasons:   t('seasons'),
-    settings:  t('settings'),
-    back:      t('back'),
-    dashboard: t('dashboard'),
+    leagues:      t('leagues'),
+    profile:      t('profile'),
+    members:      t('members'),
+    seasons:      t('seasons'),
+    settings:     t('settings'),
+    back:         t('back'),
+    dashboard:    t('dashboard'),
+    availability: t('availability'),
+    frequency:    t('frequency'),
+    venues:       t('venues'),
+    training:     t('training'),
+    notifications: t('notifications'),
+    admin:        t('admin'),
   };
 
   return (

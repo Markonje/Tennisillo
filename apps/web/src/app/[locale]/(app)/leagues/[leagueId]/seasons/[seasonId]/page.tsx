@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { apiServer } from '@/lib/api-server';
 import type { SeasonPlayerEntry, SeasonRankingEntry, SeasonStatus } from '@tennisillo/shared-types';
 import type { SeasonContextValue } from '@/lib/season-context';
+import type { MatchDto } from '@/lib/match-types';
+import { formatSets } from '@/lib/match-types';
 import { SeasonDashboardClient } from './SeasonDashboardClient';
 
 interface Props {
@@ -30,17 +32,21 @@ export default async function SeasonDashboardPage({ params }: Props) {
   const { leagueId, seasonId } = params;
   const locale = await getLocale();
   const t = await getTranslations('season');
+  const tMatches = await getTranslations('matches');
 
-  const [season, players, ranking] = await Promise.all([
+  const [season, players, ranking, matches] = await Promise.all([
     apiServer.get<SeasonContextValue>(`/seasons/${seasonId}`),
     apiServer.get<SeasonPlayerEntry[]>(`/seasons/${seasonId}/players`),
     apiServer.get<SeasonRankingEntry[]>(`/seasons/${seasonId}/ranking`),
+    apiServer.get<MatchDto[]>(`/seasons/${seasonId}/matches`),
   ]);
 
   if (!season) return <p className="text-tertiary-glass">{t('notFound')}</p>;
 
   const safeRanking = ranking ?? [];
   const safePlayers = players ?? [];
+  const safeMatches = matches ?? [];
+  const recentMatches = safeMatches.slice(0, 5);
   const topPlayers = safePlayers.slice(0, 5);
 
   const weekElapsed = season.startsAt ? weeksElapsed(season.startsAt) : 0;
@@ -77,10 +83,74 @@ export default async function SeasonDashboardPage({ params }: Props) {
             value={`${weekElapsed}/${totalWeeks}`}
           />
         )}
-        <KpiCard icon="🎾" label={t('matches')} value={0} />
+        <KpiCard icon="🎾" label={t('matches')} value={safeMatches.length} />
       </div>
 
       <SeasonDashboardClient season={season} locale={locale} playerCount={season.playerCount} />
+
+      <GlassCard className="px-5 py-5 mb-5">
+        <div className="flex justify-between items-center mb-3.5">
+          <h2 className="text-sm font-bold text-secondary-glass m-0">{tMatches('title')}</h2>
+          <div className="flex items-center gap-4">
+            {season.status === 'ACTIVE' && (
+              <Link
+                href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches/new`}
+                className="text-xs text-accent-light no-underline hover:underline"
+              >
+                {tMatches('newChallenge')}
+              </Link>
+            )}
+            {safeMatches.length > 0 && (
+              <Link
+                href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches`}
+                className="text-xs text-accent-light no-underline hover:underline"
+              >
+                {tMatches('seeAll')} ({safeMatches.length})
+              </Link>
+            )}
+          </div>
+        </div>
+        {recentMatches.length === 0 ? (
+          <p className="text-tertiary-glass text-sm m-0">{tMatches('empty')}</p>
+        ) : (
+          <div className="flex flex-col">
+            {recentMatches.map((m, i) => (
+              <Link
+                key={m.id}
+                href={`/${locale}/leagues/${leagueId}/seasons/${seasonId}/matches/${m.id}`}
+                className={`flex items-center gap-3 py-2.5 no-underline hover:bg-white/[0.04] -mx-2 px-2 rounded-[10px] transition-colors ${
+                  i < recentMatches.length - 1 ? 'border-b border-glass' : ''
+                }`}
+              >
+                <span className="flex-1 text-sm text-secondary-glass truncate">
+                  {m.player1.displayName} {tMatches('vs')} {m.player2.displayName}
+                </span>
+                {m.result && (
+                  <span className="text-xs font-bold text-primary-glass">
+                    {formatSets(m.result.sets)}
+                  </span>
+                )}
+                <Badge
+                  tone={
+                    m.status === 'VALIDATED'
+                      ? 'green'
+                      : m.status === 'DISPUTED'
+                        ? 'red'
+                        : m.status === 'PENDING_VALIDATION'
+                          ? 'yellow'
+                          : m.status === 'SCHEDULED' || m.status === 'PENDING_RESULT'
+                            ? 'blue'
+                            : 'gray'
+                  }
+                  dot
+                >
+                  {tMatches(`status.${m.status}`)}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+      </GlassCard>
 
       {topPlayers.length > 0 && (
         <GlassCard className="px-5 py-5 mb-5">
@@ -118,27 +188,22 @@ export default async function SeasonDashboardPage({ params }: Props) {
         ) : safeRanking.length === 0 ? (
           <p className="text-tertiary-glass text-sm m-0">{t('rankingPlaceholderRegistration')}</p>
         ) : (
-          <>
-            <div className="flex flex-col gap-2">
-              {safeRanking.map((r: SeasonRankingEntry, i: number) => (
-                <div
-                  key={r.id}
-                  className={`flex items-center gap-3 py-2 ${
-                    i < safeRanking.length - 1 ? 'border-b border-glass' : ''
-                  }`}
-                >
-                  <span className="w-7 text-sm text-tertiary-glass font-semibold">
-                    {r.rank ?? '—'}
-                  </span>
-                  <span className="flex-1 text-sm text-secondary-glass">{r.displayName}</span>
-                  <span className="text-sm font-bold text-accent-light">{r.points} pt</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-glass mt-3 mb-0">
-              {t('rankingPlaceholderScoring')}
-            </p>
-          </>
+          <div className="flex flex-col gap-2">
+            {safeRanking.map((r: SeasonRankingEntry, i: number) => (
+              <div
+                key={r.id}
+                className={`flex items-center gap-3 py-2 ${
+                  i < safeRanking.length - 1 ? 'border-b border-glass' : ''
+                }`}
+              >
+                <span className="w-7 text-sm text-tertiary-glass font-semibold">
+                  {r.rank ?? '—'}
+                </span>
+                <span className="flex-1 text-sm text-secondary-glass">{r.displayName}</span>
+                <span className="text-sm font-bold text-accent-light">{r.points} pt</span>
+              </div>
+            ))}
+          </div>
         )}
       </GlassCard>
     </div>

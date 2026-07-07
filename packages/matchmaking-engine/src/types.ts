@@ -1,50 +1,96 @@
 // packages/matchmaking-engine/src/types.ts
-// Implementation deferred to Sprint 5.
-// See: docs/specs/02_specifiche_sviluppo.md §6
+// Source: docs/specs/02_specifiche_sviluppo.md §6.2
 
-export interface AvailabilitySlot {
-  dayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday
+export type PlayerLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface TimeSlot {
+  dayOfWeek: number; // 0 (Sun) - 6 (Sat)
   startMinute: number; // 0-1439
-  endMinute: number;   // 0-1439
+  endMinute: number; // 0-1439
 }
 
-export interface CandidateInput {
-  requesterId: string; // LeagueMember.id of the player seeking a match
-  leagueId: string;
-  seasonId: string;
-  requesterLevel: number;        // 1-7
-  requesterSlots: AvailabilitySlot[];
-  requesterIdealFrequency: number;
-  requesterFrequencyUnit: 'WEEKLY' | 'MONTHLY';
-  requesterMatchesThisPeriod: number;
-  requesterFavoriteVenueIds: string[];
-  excludePlayerIds: string[];    // already challenged / pending
-  asOfDate: Date;
+export interface SpecificOverride {
+  type: 'AVAILABLE' | 'UNAVAILABLE';
+  startsAt: Date;
+  endsAt: Date;
 }
 
-export interface CandidateScorer {
-  playerId: string; // LeagueMember.id
-  level: number;
-  slots: AvailabilitySlot[];
-  matchesThisPeriod: number;
+export interface AbsoluteSlot {
+  startsAt: Date;
+  endsAt: Date;
+}
+
+export interface CandidateContext {
+  memberId: string;
+  level: PlayerLevel;
+  rating: number;
+  availabilityPattern: TimeSlot[]; // may be empty
+  availabilityOverrides: SpecificOverride[];
+  // Frequency
+  hasFrequencyDeclared: boolean;
+  currentPeriodMatches: number; // matches already played in the period
+  idealFrequency: number;
   maxFrequency: number;
-  favoriteVenueIds: string[];
-  uniqueOpponentsThisSeason: string[];
-  totalOpponentsInLeague: number;
+  // Match history (current season)
+  matchesWithRequesterThisSeason: number;
+  lastMatchWithRequesterAt: Date | null;
+  maxMatchesPerPair: number;
+  // Geo (optional)
+  favoriteVenueLat?: number;
+  favoriteVenueLng?: number;
 }
 
-export interface CandidateScore {
-  playerId: string;
-  totalScore: number; // 0-100 normalised
-  breakdown: {
-    levelCompatibility: number;
-    availabilityOverlap: number;
-    diversityBonus: number;
-    frequencyFit: number;
-    venueProximity: number;
+export interface RequesterContext {
+  memberId: string;
+  level: PlayerLevel;
+  rating: number;
+  // Slots to match against (next N days)
+  availabilityPattern: TimeSlot[];
+  availabilityOverrides: SpecificOverride[];
+  favoriteVenueLat?: number;
+  favoriteVenueLng?: number;
+}
+
+export interface MatchmakingConfig {
+  horizonDays: number; // default 14
+  maxCandidates: number; // default 20
+  requireAvailabilityIntersection: boolean; // default false
+  enableGeoScoring: boolean; // default false
+  /**
+   * Reference "now" for slot materialization. Required for engine purity
+   * (no Date.now() inside the engine) — the API layer passes the request time.
+   */
+  referenceDate: Date;
+  weights: {
+    level: number; // default 0.25
+    diversity: number; // default 0.20
+    availability: number; // default 0.25
+    frequency: number; // default 0.20
+    geo: number; // default 0.10
   };
 }
 
-export interface MatchmakingOutput {
-  candidates: CandidateScore[]; // sorted by totalScore desc
+export type FrequencyStatus = 'GREEN' | 'YELLOW' | 'RED' | 'UNKNOWN';
+
+export interface CandidateResult {
+  memberId: string;
+  finalScore: number; // 0-100
+  breakdown: {
+    level: number;
+    diversity: number;
+    availability: number;
+    frequency: number;
+    geo: number;
+  };
+  suggestedSlots: AbsoluteSlot[]; // top 3 common slots
+  frequencyStatus: FrequencyStatus;
+  warnings: string[];
 }
+
+export const DEFAULT_WEIGHTS: MatchmakingConfig['weights'] = {
+  level: 0.25,
+  diversity: 0.2,
+  availability: 0.25,
+  frequency: 0.2,
+  geo: 0.1,
+};

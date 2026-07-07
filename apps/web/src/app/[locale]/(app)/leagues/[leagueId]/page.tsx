@@ -44,8 +44,10 @@ export default async function LeagueDashboardPage({ params }: Props) {
         league={league}
         topMembers={topMembers}
         locale={locale}
+        inviteTitleLabel={t('inviteTitle')}
         inviteCodeLabel={t('inviteCode')}
         copyLabel={t('copyCode')}
+        copiedLabel={t('copied')}
         membersLabel={t('membersTitle')}
       />
     </div>

@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { SeasonController } from './season.controller';
 import { SeasonService } from './season.service';
 import { AuthModule } from '../auth/auth.module';
+import { AchievementsModule } from '../achievements/achievements.module';
 import { LeagueAdminGuard } from './guards/league-admin.guard';
 import { SeasonAdminGuard } from './guards/season-admin.guard';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, AchievementsModule],
   controllers: [SeasonController],
   providers: [SeasonService, LeagueAdminGuard, SeasonAdminGuard],
   exports: [SeasonService],

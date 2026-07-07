@@ -3,21 +3,91 @@
 > **Aggiornare questo file alla fine di ogni sessione di lavoro.**
 > Claude Code lo legge all'inizio di ogni chat per sapere da dove ripartire.
 > Formato: conciso, basato sui fatti.
-> **Last updated**: 2026-05-22
+> **Last updated**: 2026-07-06
 
 ---
 
 ## Sprint corrente
 
-**Sprint**: Sprint 3a — Seasons completato e mergiato (PR #14).
-**Stato**: ✅ Smoke test E2E verde (15/15 punti). Prod operativa.
-**Prossimo**: Sprint 3b — Matches & Challenges (PR #16).
+**Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
+**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅, Sprint 6 ✅, Sprint 7 ✅ — **MVP completo**.
+**Prossimo**: review + merge della PR; configurare servizi esterni (Upstash, Mapbox, Resend) per attivare le feature predisposte.
+
+### Sprint 7 — cosa è stato fatto (2026-07-07)
+- **NotificationsModule + UI**: lista/contatore/mark-read API, pagina `/notifications` con deep-link per tipo (partita, training, venue, lega), voce sidebar. Disputa ora notifica anche gli admin (spec §13.1).
+- **Email Resend** (`MailService`, REST senza SDK): no-op loggato senza `RESEND_API_KEY`; cablata su sfida ricevuta / risultato da confermare / disputa aperta.
+- **AchievementsModule**: badge competitivi (Prima Vittoria, In Fiamme, Ammazzagiganti, Esploratore, Vendicatore) valutati post-scoring, Campione alla chiusura stagione; endpoint catalogo + `users/me/achievements`; sezione Badge nel profilo. I 4 badge training già in Sprint 6.
+- **Reputazione** (§7.2.5): +1 conferma manuale, -10 disputa persa, -5 disputa infondata, clamp [0,100]; visibile solo in dashboard admin.
+- **Anti-frode on-demand** (§7.2.4/§9.1.3): coppie al limite, vittorie alternate, farming sparring, giocatori solo-sparring, inattivi 21gg+, reputazione bassa.
+- **Dashboard admin** `/leagues/[id]/admin` (server-guarded): KPI stagione (partite validate/aperte/in attesa, partite/settimana, maestri), dispute aperte con link "Esamina", scorciatoia proposte campo, alert anti-frode, audit recente (query JSONB su `payload.leagueId`).
+- **Rinvii motivati** (ADR 0008): WebSocket, Growthbook, Stripe, caching Redis, Playwright (mancano credenziali test browser — coperto da 13 test integrazione DB reale), badge full-season, reminder schedulati, bacheca, export.
+
+---
+
+## Cosa serve per attivare le feature predisposte (azioni utente)
+
+| Servizio | Env var | Dove | Sblocca |
+| --- | --- | --- | --- |
+| Upstash Redis | `REDIS_URL` | Railway (api) | Job proattivi: auto-confirm 24h, scoring async, decay sweep settimanale |
+| Mapbox | `MAPBOX_TOKEN` | Railway (api) | Geocoding indirizzi venue (`POST /venues/geocode`) |
+| Resend | `RESEND_API_KEY`, `MAIL_FROM` | Railway (api) | Email transazionali |
+| 2 utenze test | — | — | E2E Playwright browser |
+
+### Sprint 6 — cosa è stato fatto (2026-07-06)
+- **`packages/training-engine` completo**: `calculateSparring` (cap check + ricompensa fissa), `calculateMasterLesson` + `xpToGlobalRatingDelta` (curva rendimenti decrescenti 0.5/0.3/0.15/0.05), `capChecker` con `getIsoWeekBounds` senza date-fns. 21 test, coverage 100%.
+- **TrainingSessionsModule**: 11 endpoint spec §7.3 — dichiara/conferma/rifiuta sparring, dichiara/valida/rifiuta lezione, dettagli, lista lega, `users/me/master-lessons`, `users/me/global-xp`, revoca admin con motivazione. Elaborazione **inline transazionale** invece del processor BullMQ (ADR 0007).
+- **Invariante critico verificato**: sparring → solo `SeasonPlayer.currentPoints` (+refresh ranking); lezioni → solo profilo globale (XP, rating con curva, `globalLevel` da soglie §8.2). MAI ScoreDelta/HeadToHead/contatori competitivi. Test integrazione dedicato 4/4 su DB reale.
+- **Regole**: sparring richiede stagione ATTIVA + entrambi iscritti; cap settimanale ISO (pending+validati alla dichiarazione, solo validati alla conferma); `sparringEnabled`/`masterLessonsEnabled` + punti/XP/cap da `LeagueSettings`; conferma solo del partner; validazione lezione solo del maestro designato.
+- **Revoca admin**: storno punti (floor 0) / XP+rating (curva inversa approssimata), notifica alle parti, audit con motivazione.
+- **Badge**: Compagno di Banco (10 sparring), Studioso (10 lezioni), Dedicato (25 lezioni), Mentor (50 validazioni da maestro) — upsert `Achievement` + `UserAchievement` + notifica `BADGE_EARNED`.
+- **MastersModule**: promuovi/aggiorna modalità/revoca (admin), lista maestri, profilo maestro con statistiche, `PATCH /users/me/master-profile` (certificazioni/specializzazioni).
+- **UI** `/leagues/[id]/training`: KPI XP globali, sezione "In attesa di te"/pannello maestro (conferma/valida/rifiuta), form dichiara sparring e lezione, gestione maestri admin (promuovi HYBRID/PURE, revoca), lista sessioni con revoca admin. Voce sidebar "Allenamento". i18n `training.*` EN/IT.
+- ⚠️ Notifiche WebSocket e pattern-detection anti-abuso sparring → Sprint 7.
+
+### Sprint 5 — cosa è stato fatto (2026-07-06)
+- **`packages/matchmaking-engine` completo**: types spec §6.2, `findCandidates` + 5 scorer (level, diversity, availability con matching asimmetrico 35, frequency semaforo, geo haversine) + aggregator pesato + `slotIntersection` (materialize/merge/subtract/intersect). 38 test, coverage 100%. `referenceDate` nel config per purezza (ADR 0006).
+- **AvailabilityModule**: pattern ricorrente (griglia JSON su `AvailabilityPattern`), override AVAILABLE/UNAVAILABLE, overview di lega. Visibilità solo membri. 5 endpoint.
+- **FrequencyModule**: upsert preferenza (ideale/max/unità), dettaglio owner con contatore periodo (settimana ISO / mese), **semaforo pubblico** senza numeri. Le partite programmate contano nel periodo.
+- **VenuesModule**: CRUD admin (archive, mai delete), proposte giocatori con approvazione/rifiuto motivato admin + notifiche, campi preferiti (max 3 ordinati), geocoding Mapbox (503 senza `MAPBOX_TOKEN`, cache in-process). Guard dedicate venue/proposal→league admin.
+- **MatchmakingModule**: `GET /seasons/:id/matchmaking/candidates` (+`requireAvailability`, `enableGeo`, `limit`) e `/slots`. Contesti da DB: pair count, frequenza, occupazione automatica (match SCHEDULED bloccano 2h di calendario), venue preferito per geo.
+- **Flusso partita**: `venueId` strutturato in crea sfida/accetta/riprogramma (validato su venue ATTIVO della lega, retrocompatibile con testo libero); venue + link prenotazione nel dettaglio partita.
+- **UI**: `/leagues/[id]/availability` (griglia settimanale 7×16 clic-toggle + eccezioni), `/frequency` (form + semaforo), `/venues` (lista, form admin/proposta, approvazioni admin, preferiti), `/matches/find` (Smart Match Panel: score, breakdown, semaforo, slot suggeriti, CTA sfida con prefill avversario+slot). Sidebar: 3 nuove voci. Selettore campo nel form sfida.
+- **i18n**: blocchi `availability.*`, `frequency.*`, `venues.*`, `smartMatch.*` + `nav.*` EN/IT.
+- **Test**: engine 38 (100% coverage), integrazione DB reale `sprint5.flow.int.ts` 4/4 (pattern/override → semaforo → venue+proposta+notifica → candidati Smart Match con slot intersecati corretti).
+- ⚠️ Mappa Mapbox GL e caching Redis matchmaking rimandati (ADR 0006 §6-7).
+
+### Sprint 4 — cosa è stato fatto (2026-07-06)
+- **`packages/scoring-engine` completo**: 9 componenti puri (base, levelMultiplier, resultMultiplier, consistency, winStreak, diversity, headToHead, repeatPenalty, decay) + `pairMatchLimit` + `calculateMatchScore`. 83 test, coverage 100% statements / 95% branches. Test determinismo 1000 invocazioni.
+- **Interpretazioni spec** (vedi ADR 0005): l'esempio §8.12 contraddice le tabelle §8.4/§8.5/§8.7 in 3 punti → vincono le tabelle (scenario §8.12 implementato: A +228, B +44 vs 235/38 dell'esempio). SOFT/HARD per interpolazione. Malus ripetizione piecewise sulle etichette spec. Semantica contatori: includono la partita corrente, streak/H2H pre-match.
+- **`ScoringModule` (API)**: `ScoringService` raccoglie i contesti da DB (SOLO match competitivi — mai TrainingSession), esegue l'engine, persiste 2 righe `ScoreDelta` (breakdown JSON), aggiorna `SeasonPlayer.currentPoints/currentRank` e refresh in-place di `SeasonRanking`. Idempotente per match. Audit `SCORE_COMPUTED`.
+- **Flusso asincrono**: coda BullMQ `scoring` + worker; senza Redis lo scoring gira **inline** alla validazione (engine puro/veloce, classifica sempre coerente).
+- **Decay sweep settimanale**: `runDecaySweep()` con bookkeeping su AuditLog (`DECAY_APPLIED`, max 1/settimana/giocatore, floor 0 sul totale); job repeatable BullMQ `0 3 * * 1` solo con Redis. Eccezioni decay (pause/infortuni) non modellate → FAQ.
+- **Anti-abuso §6.4 in `createChallenge`**: limite partite per coppia (dinamico `pairMatchLimit(N)` o `pairLimitOverride`) + cooldown rivincita `h2hCooldownDays` (default 7gg) → 409.
+- **UI**: dettaglio partita mostra il breakdown punti per giocatore (trasparenza algoritmo, i18n `matches.points.*`); classifica stagione ora live (rimosso placeholder "Sprint 4").
+- **Test integrazione aggiornato**: il flusso E2E su DB reale ora verifica anche ScoreDelta, punti, rank (5/5 verde, delta verificati a mano).
+- ⚠️ Cooldown bonus rivalsa fisso 21gg (campo mancante in SeasonSettings); regola secondaria §8.8 non implementata (mitigata) — dettagli ADR 0005/FAQ.
+
+### Sprint 3b — cosa è stato fatto (2026-07-06)
+- **MatchesModule** (NestJS): 11 endpoint — crea sfida, lista/dettaglio, accept/decline/cancel/reschedule, submit result, confirm, dispute, resolve dispute (admin).
+- Flusso stati: `PENDING_ACCEPTANCE → SCHEDULED → PENDING_RESULT → PENDING_VALIDATION → VALIDATED | DISPUTED`; transizioni esplicite, audit log su ogni mutazione.
+- **Plausibility check** (`utils/score-validation.ts`, funzione pura, 23 test): rifiuta punteggi impossibili per formato (BEST_OF_1/3, SUPER_TIEBREAK, CUSTOM) con 400.
+- **Time-window flag** (specs §7.2.2): risultato fuori finestra `resultWindowHours` → flag di revisione, mai rifiutato.
+- **Auto-confirm 24h**: job ritardato BullMQ (`match-queue.service.ts` + worker) **più fallback lazy** — ogni lettura/azione su match `PENDING_VALIDATION` scaduto lo finalizza. Funziona anche senza Redis. ⚠️ REDIS_URL Upstash non ancora configurato (localhost placeholder): job proattivi disabilitati, correttezza garantita dal lazy check.
+- **Doppia validazione**: il submitter non può confermare/contestare il proprio risultato; alla validazione aggiornati `SeasonPlayer` (wins/losses/matchesPlayed) e `HeadToHead` (coppia canonica per stagione). Nessun punto assegnato (Sprint 4).
+- **Disputa base**: apertura con motivo (min 10 char), risoluzione admin `UPHELD` (risultato scartato → PENDING_RESULT) / `REJECTED` (risultato valido → VALIDATED), motivazione obbligatoria in audit.
+- **Anti-abuso**: max 3 sfide `PENDING_ACCEPTANCE` per giocatore per stagione.
+- **Notifiche in-app**: righe `Notification` per challenge/result/dispute (UI notifiche in Sprint 7).
+- **UI**: `/leagues/[id]/seasons/[id]/matches` (lista + filtri segmented), `/matches/new` (form sfida), `/matches/[matchId]` (dettaglio con tutte le azioni per stato + form risultato dinamico + disputa + pannello admin). Dashboard stagione: KPI partite reale + sezione ultime 5 partite.
+- **i18n**: blocchi `matches.*`, `challenges.*`, `dispute.*` in EN e IT.
+- **apiClient** web: ora propaga i messaggi di errore del body API (per mostrare gli errori di plausibilità).
+- **Fix codice invito** (known bug chiuso): generazione codice alla creazione lega, util `generateInviteCode` (charset non ambiguo, 8 char, retry unicità), migration backfill `20260522000000` (già applicata al DB), UI dashboard/settings.
+- **Test**: 65 unit (jest) + 5 test integrazione contro DB reale (`__integration__/matches.flow.int.ts`, esclusi dalla CI, run: `pnpm --filter api exec jest --testMatch "**/*.int.ts"`).
 
 ---
 
 ## Known bug aperti
 
-- **Codice invito non visibile** nella dashboard lega (`/leagues/[id]`): il campo non è mai apparso. Non bloccante per Sprint 3b. Da fixare in seguito (potrebbe essere campo `null` nel DB o mancato render UI).
+- Nessuno.
 
 ---
 
@@ -174,8 +244,8 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 2 | Utenti e Leghe | ✅ Completo (PR #7) |
 | Sprint 2.5 | Architecture rework + auth fixes | ✅ Completo (PR #13) |
 | Sprint 3a | Seasons | ✅ Completo (PR #14) |
-| Sprint 3b | Matches & Challenges | ⏳ Prossimo (PR #16) |
-| Sprint 4 | Scoring Engine | ⏳ Non iniziato |
-| Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ⏳ Non iniziato |
-| Sprint 6 | Training: Sparring + Master Lesson | ⏳ Non iniziato |
-| Sprint 7 | Gamification, Admin, Rifinitura | ⏳ Non iniziato |
+| Sprint 3b | Matches & Challenges | ✅ Completo (branch feat/mvp-completion) |
+| Sprint 4 | Scoring Engine | ✅ Completo (branch feat/mvp-completion) |
+| Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ✅ Completo (branch feat/mvp-completion) |
+| Sprint 6 | Training: Sparring + Master Lesson | ✅ Completo (branch feat/mvp-completion) |
+| Sprint 7 | Gamification, Admin, Rifinitura | ✅ Completo (branch feat/mvp-completion) |

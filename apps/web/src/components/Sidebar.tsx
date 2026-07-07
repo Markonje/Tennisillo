@@ -21,6 +21,12 @@ interface SidebarProps {
     settings: string;
     back: string;
     dashboard: string;
+    availability: string;
+    frequency: string;
+    venues: string;
+    training: string;
+    notifications: string;
+    admin: string;
   };
 }
 
@@ -135,6 +141,36 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               active={isActive(`/${locale}/leagues/${leagueId}/members`)}
             />
             <NavItem
+              href={`/${locale}/leagues/${leagueId}/availability`}
+              icon="📅"
+              label={labels.availability}
+              active={isActive(`/${locale}/leagues/${leagueId}/availability`)}
+            />
+            <NavItem
+              href={`/${locale}/leagues/${leagueId}/frequency`}
+              icon="🚦"
+              label={labels.frequency}
+              active={isActive(`/${locale}/leagues/${leagueId}/frequency`)}
+            />
+            <NavItem
+              href={`/${locale}/leagues/${leagueId}/venues`}
+              icon="📍"
+              label={labels.venues}
+              active={isActive(`/${locale}/leagues/${leagueId}/venues`)}
+            />
+            <NavItem
+              href={`/${locale}/leagues/${leagueId}/training`}
+              icon="🏋️"
+              label={labels.training}
+              active={isActive(`/${locale}/leagues/${leagueId}/training`)}
+            />
+            <NavItem
+              href={`/${locale}/leagues/${leagueId}/admin`}
+              icon="🛡️"
+              label={labels.admin}
+              active={isActive(`/${locale}/leagues/${leagueId}/admin`)}
+            />
+            <NavItem
               href={`/${locale}/leagues/${leagueId}/settings`}
               icon="⚙️"
               label={labels.settings}
@@ -148,6 +184,12 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               icon="🏆"
               label={labels.leagues}
               active={isActive(`/${locale}/leagues`)}
+            />
+            <NavItem
+              href={`/${locale}/notifications`}
+              icon="🔔"
+              label={labels.notifications}
+              active={isActive(`/${locale}/notifications`)}
             />
             <NavItem
               href={`/${locale}/profile`}
