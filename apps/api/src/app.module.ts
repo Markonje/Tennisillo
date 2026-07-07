@@ -11,6 +11,8 @@ import { AvailabilityModule } from './availability/availability.module';
 import { FrequencyModule } from './frequency/frequency.module';
 import { VenuesModule } from './venues/venues.module';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
+import { TrainingSessionsModule } from './training-sessions/training-sessions.module';
+import { MastersModule } from './masters/masters.module';
 import { CommonModule } from './common/common.module';
 import { HealthController } from './health/health.controller';
 
@@ -29,6 +31,8 @@ import { HealthController } from './health/health.controller';
     FrequencyModule,
     VenuesModule,
     MatchmakingModule,
+    TrainingSessionsModule,
+    MastersModule,
   ],
   controllers: [HealthController],
 })

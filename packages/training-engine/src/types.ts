@@ -1,44 +1,45 @@
 // packages/training-engine/src/types.ts
-// Implementation deferred to Sprint 6.
-// See: docs/specs/02_specifiche_sviluppo.md §5
+// Source: docs/specs/02_specifiche_sviluppo.md §5.2
 
-export interface WeekBounds {
-  weekStart: Date; // ISO Monday 00:00:00 UTC
-  weekEnd: Date;   // ISO Sunday 23:59:59 UTC
+export interface SparringConfig {
+  pointsPerPlayer: number; // default 12, range 5-15
+  weeklyCapPerPlayer: number; // default 2, range 1-2
 }
 
-// CRITICAL: sparring points are awarded independently of the competitive scoring engine.
-// They never feed ScoreDelta, HeadToHead, matchesLast4Weeks, or winStreak.
-export interface SparringInput {
-  leagueId: string;
-  seasonId: string;
+export interface SparringCalculationInput {
+  config: SparringConfig;
   player1Id: string;
   player2Id: string;
-  completedAt: Date;
-  pointsPerPlayer: number; // from LeagueSettings.sparringPointsPerPlayer (default 12)
-  weeklyCapPerPlayer: number; // from LeagueSettings.sparringWeeklyCapPerPlayer (default 2)
-  sparringsThisWeekP1: number; // count of already-validated sparrings this week for player1
-  sparringsThisWeekP2: number; // count for player2
+  // validated sparring count in the current ISO week for each player
+  player1SparringThisWeek: number;
+  player2SparringThisWeek: number;
 }
 
-export interface SparringOutput {
-  allowed: boolean;
-  rejectionReason?: 'CAP_EXCEEDED_P1' | 'CAP_EXCEEDED_P2';
-  pointsAwarded: number; // 0 if not allowed
+export type SparringRejectionReason =
+  | 'CAP_REACHED_P1'
+  | 'CAP_REACHED_P2'
+  | 'SPARRING_DISABLED';
+
+export interface SparringCalculationOutput {
+  accepted: boolean;
+  rejectionReason?: SparringRejectionReason;
+  pointsP1: number;
+  pointsP2: number;
 }
 
-// XP from master lessons feeds only globalExperiencePoints, never season ranking.
-export interface MasterLessonInput {
-  leagueId: string;
+export interface MasterLessonConfig {
+  xpPerSession: number; // default 20, range 10-30
+}
+
+export interface MasterLessonCalculationInput {
+  config: MasterLessonConfig;
   playerId: string;
   masterId: string;
-  completedAt: Date;
-  xpPerSession: number; // from LeagueSettings.masterXpPerSession (default 20)
-  currentGlobalXp: number;
+  // total XP already accumulated by the player (diminishing returns curve)
+  playerCurrentXp: number;
 }
 
-export interface MasterLessonOutput {
+export interface MasterLessonCalculationOutput {
   xpAwarded: number;
-  newGlobalXp: number;
-  newGlobalRating: number; // after applying diminishing-returns XP curve
+  globalRatingDelta: number; // XP contribution to the global rating
 }

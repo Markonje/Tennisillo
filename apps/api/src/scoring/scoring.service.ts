@@ -212,6 +212,13 @@ export class ScoringService {
     return applied;
   }
 
+  /** Public ranking refresh, reused by the training flow (sparring points). */
+  async refreshRanking(seasonId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.recomputeRanking(tx, seasonId);
+    });
+  }
+
   // ─── Internals ────────────────────────────────────────────────────────────
 
   private decayFor(weeksInactive: number, config: ScoringConfig): number {

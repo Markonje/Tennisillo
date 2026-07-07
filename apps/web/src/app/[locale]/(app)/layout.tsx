@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     availability: t('availability'),
     frequency:    t('frequency'),
     venues:       t('venues'),
+    training:     t('training'),
   };
 
   return (

@@ -13,7 +13,8 @@
     "dashboard": "Dashboard",
     "availability": "Availability",
     "frequency": "Frequency",
-    "venues": "Venues"
+    "venues": "Venues",
+    "training": "Training"
   },
   "auth": {
     "login": "Sign In",
@@ -285,6 +286,57 @@
       "INDOOR": "Indoor",
       "OUTDOOR": "Outdoor",
       "MIXED": "Mixed"
+    }
+  },
+  "training": {
+    "title": "Training",
+    "hint": "Sparring between members (+fixed season points, no bonuses) and lessons with a master (+XP on your global profile).",
+    "xpTitle": "My training XP",
+    "totalXp": "Total XP",
+    "validatedLessons": "Validated lessons",
+    "globalLevel": "Global level",
+    "pendingTitle": "Waiting for you",
+    "masterPanel": "Master panel",
+    "declareSparring": "Declare sparring",
+    "declareLesson": "Declare master lesson",
+    "partner": "Partner",
+    "selectPartner": "Select a partner",
+    "master": "Master",
+    "selectMaster": "Select a master",
+    "date": "Date (optional)",
+    "duration": "Duration (minutes, optional)",
+    "focusNote": "Technical focus (optional)",
+    "declare": "Declare",
+    "confirm": "Confirm",
+    "validate": "Validate",
+    "reject": "Reject",
+    "rejectReason": "Rejection reason",
+    "revoke": "Revoke (admin)",
+    "revokeReason": "Revocation motivation",
+    "sessionsTitle": "Sessions",
+    "empty": "No training sessions yet.",
+    "noMasters": "This league has no masters yet.",
+    "manageMasters": "Manage masters (admin)",
+    "promoteMember": "Promote member",
+    "masterMode": "Master mode",
+    "modeHYBRID": "Player + Master",
+    "modePURE": "Master only",
+    "promote": "Promote",
+    "revokeMaster": "Revoke role",
+    "sparringWith": "Sparring: {p1} + {p2}",
+    "lessonWith": "Lesson: {player} with {master}",
+    "points": "+{points} pts each",
+    "xp": "+{xp} XP",
+    "type": {
+      "SPARRING": "Sparring",
+      "MASTER_LESSON": "Master lesson"
+    },
+    "status": {
+      "PENDING_VALIDATION": "Pending",
+      "VALIDATED": "Validated",
+      "REJECTED": "Rejected",
+      "DISPUTED": "Disputed",
+      "REVOKED": "Revoked"
     }
   },
   "smartMatch": {

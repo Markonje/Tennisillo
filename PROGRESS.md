@@ -10,8 +10,19 @@
 ## Sprint corrente
 
 **Sprint**: MVP completion run (branch `feat/mvp-completion`, PR unica a fine lavori).
-**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅ completati.
-**Prossimo**: Sprint 6 — Training: Sparring + Master Lesson.
+**Stato**: Sprint 3b ✅, Sprint 4 ✅, Sprint 5 ✅, Sprint 6 ✅ completati.
+**Prossimo**: Sprint 7 — Gamification, Admin, Rifinitura.
+
+### Sprint 6 — cosa è stato fatto (2026-07-06)
+- **`packages/training-engine` completo**: `calculateSparring` (cap check + ricompensa fissa), `calculateMasterLesson` + `xpToGlobalRatingDelta` (curva rendimenti decrescenti 0.5/0.3/0.15/0.05), `capChecker` con `getIsoWeekBounds` senza date-fns. 21 test, coverage 100%.
+- **TrainingSessionsModule**: 11 endpoint spec §7.3 — dichiara/conferma/rifiuta sparring, dichiara/valida/rifiuta lezione, dettagli, lista lega, `users/me/master-lessons`, `users/me/global-xp`, revoca admin con motivazione. Elaborazione **inline transazionale** invece del processor BullMQ (ADR 0007).
+- **Invariante critico verificato**: sparring → solo `SeasonPlayer.currentPoints` (+refresh ranking); lezioni → solo profilo globale (XP, rating con curva, `globalLevel` da soglie §8.2). MAI ScoreDelta/HeadToHead/contatori competitivi. Test integrazione dedicato 4/4 su DB reale.
+- **Regole**: sparring richiede stagione ATTIVA + entrambi iscritti; cap settimanale ISO (pending+validati alla dichiarazione, solo validati alla conferma); `sparringEnabled`/`masterLessonsEnabled` + punti/XP/cap da `LeagueSettings`; conferma solo del partner; validazione lezione solo del maestro designato.
+- **Revoca admin**: storno punti (floor 0) / XP+rating (curva inversa approssimata), notifica alle parti, audit con motivazione.
+- **Badge**: Compagno di Banco (10 sparring), Studioso (10 lezioni), Dedicato (25 lezioni), Mentor (50 validazioni da maestro) — upsert `Achievement` + `UserAchievement` + notifica `BADGE_EARNED`.
+- **MastersModule**: promuovi/aggiorna modalità/revoca (admin), lista maestri, profilo maestro con statistiche, `PATCH /users/me/master-profile` (certificazioni/specializzazioni).
+- **UI** `/leagues/[id]/training`: KPI XP globali, sezione "In attesa di te"/pannello maestro (conferma/valida/rifiuta), form dichiara sparring e lezione, gestione maestri admin (promuovi HYBRID/PURE, revoca), lista sessioni con revoca admin. Voce sidebar "Allenamento". i18n `training.*` EN/IT.
+- ⚠️ Notifiche WebSocket e pattern-detection anti-abuso sparring → Sprint 7.
 
 ### Sprint 5 — cosa è stato fatto (2026-07-06)
 - **`packages/matchmaking-engine` completo**: types spec §6.2, `findCandidates` + 5 scorer (level, diversity, availability con matching asimmetrico 35, frequency semaforo, geo haversine) + aggregator pesato + `slotIntersection` (materialize/merge/subtract/intersect). 38 test, coverage 100%. `referenceDate` nel config per purezza (ADR 0006).
@@ -216,5 +227,5 @@ Vedi ROADMAP.md per deliverable completi. In sintesi:
 | Sprint 3b | Matches & Challenges | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 4 | Scoring Engine | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 5 | Calendario, Frequenza, Anagrafica Campi | ✅ Completo (branch feat/mvp-completion) |
-| Sprint 6 | Training: Sparring + Master Lesson | ⏳ Non iniziato |
+| Sprint 6 | Training: Sparring + Master Lesson | ✅ Completo (branch feat/mvp-completion) |
 | Sprint 7 | Gamification, Admin, Rifinitura | ⏳ Non iniziato |

@@ -13,7 +13,8 @@
     "dashboard": "Dashboard",
     "availability": "Disponibilità",
     "frequency": "Frequenza",
-    "venues": "Campi"
+    "venues": "Campi",
+    "training": "Allenamento"
   },
   "auth": {
     "login": "Accedi",
@@ -285,6 +286,57 @@
       "INDOOR": "Coperto",
       "OUTDOOR": "Scoperto",
       "MIXED": "Misto"
+    }
+  },
+  "training": {
+    "title": "Allenamento",
+    "hint": "Sparring tra membri (+punti fissi stagione, nessun bonus) e lezioni col maestro (+XP sul profilo globale).",
+    "xpTitle": "I miei XP allenamento",
+    "totalXp": "XP totali",
+    "validatedLessons": "Lezioni validate",
+    "globalLevel": "Livello globale",
+    "pendingTitle": "In attesa di te",
+    "masterPanel": "Pannello maestro",
+    "declareSparring": "Dichiara sparring",
+    "declareLesson": "Dichiara lezione con maestro",
+    "partner": "Compagno",
+    "selectPartner": "Seleziona un compagno",
+    "master": "Maestro",
+    "selectMaster": "Seleziona un maestro",
+    "date": "Data (opzionale)",
+    "duration": "Durata (minuti, opzionale)",
+    "focusNote": "Focus tecnico (opzionale)",
+    "declare": "Dichiara",
+    "confirm": "Conferma",
+    "validate": "Valida",
+    "reject": "Rifiuta",
+    "rejectReason": "Motivo del rifiuto",
+    "revoke": "Revoca (admin)",
+    "revokeReason": "Motivazione della revoca",
+    "sessionsTitle": "Sessioni",
+    "empty": "Nessuna sessione di allenamento ancora.",
+    "noMasters": "Questa lega non ha ancora maestri.",
+    "manageMasters": "Gestisci maestri (admin)",
+    "promoteMember": "Promuovi membro",
+    "masterMode": "Modalità maestro",
+    "modeHYBRID": "Giocatore + Maestro",
+    "modePURE": "Solo maestro",
+    "promote": "Promuovi",
+    "revokeMaster": "Revoca ruolo",
+    "sparringWith": "Sparring: {p1} + {p2}",
+    "lessonWith": "Lezione: {player} con {master}",
+    "points": "+{points} pt a testa",
+    "xp": "+{xp} XP",
+    "type": {
+      "SPARRING": "Sparring",
+      "MASTER_LESSON": "Lezione maestro"
+    },
+    "status": {
+      "PENDING_VALIDATION": "In attesa",
+      "VALIDATED": "Validata",
+      "REJECTED": "Rifiutata",
+      "DISPUTED": "Contestata",
+      "REVOKED": "Revocata"
     }
   },
   "smartMatch": {

@@ -24,6 +24,7 @@ interface SidebarProps {
     availability: string;
     frequency: string;
     venues: string;
+    training: string;
   };
 }
 
@@ -154,6 +155,12 @@ export function Sidebar({ locale, labels }: SidebarProps) {
               icon="📍"
               label={labels.venues}
               active={isActive(`/${locale}/leagues/${leagueId}/venues`)}
+            />
+            <NavItem
+              href={`/${locale}/leagues/${leagueId}/training`}
+              icon="🏋️"
+              label={labels.training}
+              active={isActive(`/${locale}/leagues/${leagueId}/training`)}
             />
             <NavItem
               href={`/${locale}/leagues/${leagueId}/settings`}
